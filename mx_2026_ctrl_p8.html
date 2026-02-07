@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم Ms. Mona | الإدارة</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --main: #6c5ce7; --dark: #4834d4; --bg: #f4f4f9; --danger: #ff7675; --success: #2ecc71; }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: var(--bg); padding: 20px; color: #333; }
+        
+        .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
+        .pass-container { position: relative; width: 100%; margin: 10px 0; }
+        .pass-container input { width: 100%; padding: 12px 12px 12px 45px; margin: 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
+        .toggle-pass { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
+
+        #adminDashboard { display: none; max-width: 850px; margin: 0 auto; }
+        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        
+        h2 { color: var(--dark); font-size: 1.3rem; margin-bottom: 15px; border-right: 5px solid var(--main); padding-right: 10px; text-align: right; }
+        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
+        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
+        button:hover { background: var(--dark); }
+        
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
+        .tab-menu button { background: #fff; color: var(--main); border: 1px solid var(--main); min-width: 110px; white-space: nowrap; margin: 0; }
+        .tab-menu button.active { background: var(--main); color: white; }
+        
+        .list-item { background: #f9f9f9; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border: 1px solid #eee; }
+        .delete-btn { background: var(--danger); width: auto; padding: 5px 15px; font-size: 0.8rem; margin: 0; }
+        .edit-btn { background: var(--success); width: auto; padding: 5px 15px; font-size: 0.8rem; margin: 0; margin-left: 5px; }
+        img.prev { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-left: 10px; }
+
+        .question-builder { background: #f0eeff; padding: 20px; border-radius: 15px; margin: 15px 0; border: 2px dashed var(--main); }
+        #ansGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; background: #fff; padding: 15px; border-radius: 10px; }
+        .ans-item { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 8px; border: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <div id="loginSection" class="login-box">
+        <h2 style="border:none; text-align:center;">دخول الإدارة 🔐</h2>
+        <div class="pass-container">
+            <input type="password" id="adminPass" placeholder="كلمة المرور">
+            <i class="fas fa-eye toggle-pass" onclick="togglePassword()"></i>
+        </div>
+        <button onclick="checkAuth()">دخول</button>
+    </div>
+
+    <div id="adminDashboard">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h1>لوحة التحكم | Ms. Mona 💎</h1>
+            <button onclick="logout()" style="width:auto; background:#636e72; padding:5px 15px;">خروج</button>
+        </div>
+
+        <div class="tab-menu">
+            <button onclick="showTab('coursesTab', this)" class="active">الكورسات</button>
+            <button onclick="showTab('examsTab', this)">الاختبارات</button>
+        </div>
+
+        <div id="coursesTab" class="tab-content">
+            <div class="card">
+                <h2>1. إنشاء كورس جديد</h2>
+                <input type="text" id="courseName" placeholder="اسم الكورس الجديد">
+                <input type="file" id="courseFile" accept="image/*">
+                <button id="addCourseBtn" onclick="createNewCourse()">إنشاء</button>
+                <div id="coursesListAdmin"></div>
+            </div>
+            <div class="card">
+                <h2>2. إضافة فيديو للكورس</h2>
+                <select id="targetCourseSelect"><option value="">اختر الكورس...</option></select>
+                <input type="text" id="videoTitle" placeholder="عنوان الدرس">
+                <input type="text" id="videoLink" placeholder="رابط اليوتيوب">
+                <button onclick="addVideoToCourse()">إضافة الفيديو</button>
+            </div>
+        </div>
+
+        <div id="examsTab" class="tab-content" style="display:none;">
+            <div class="card">
+                <h2>إنشاء امتحان جديد</h2>
+                <select id="quizFolderSelect"><option value="">اختر الكورس...</option></select>
+                <input type="text" id="quizName" placeholder="اسم الامتحان">
+                
+                <div class="question-builder" style="background: #fff0f0; border-color: #ff7675;">
+                    <strong>رفع امتحان PDF</strong>
+                    <input type="file" id="pdfFile" accept=".pdf">
+                    <input type="number" id="qTotal" placeholder="عدد أسئلة الـ PDF" oninput="generateAnsGrid()">
+                    <div id="ansGrid"></div>
+                </div>
+
+                <button onclick="saveFullQuiz()" style="background:var(--dark);">✅ نشر الامتحان النهائي</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
+            projectId: "monaacademy-cd983",
+            storageBucket: "monaacademy-cd983.appspot.com",
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
+        };
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const storage = getStorage(app);
+
+        const secret = "TW9uYUAyMDI2"; 
+
+        window.togglePassword = () => {
+            const pi = document.getElementById('adminPass');
+            pi.type = pi.type === 'password' ? 'text' : 'password';
+        };
+
+        window.checkAuth = () => {
+            if(btoa(document.getElementById('adminPass').value) === secret) {
+                document.getElementById('loginSection').style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                loadData();
+            } else { alert("خطأ!"); }
+        };
+
+        window.generateAnsGrid = () => {
+            const num = document.getElementById('qTotal').value;
+            const grid = document.getElementById('ansGrid');
+            grid.innerHTML = "";
+            for(let i=1; i<=num; i++) {
+                grid.innerHTML += `<div class="ans-item"><span>${i}</span><select class="pdf-val"><option>A</option><option>B</option><option>C</option><option>D</option></select></div>`;
+            }
+        };
+
+        window.saveFullQuiz = async () => {
+            const fId = document.getElementById('quizFolderSelect').value;
+            const name = document.getElementById('quizName').value;
+            const pdfFile = document.getElementById('pdfFile').files[0];
+            if(!fId || !name || !pdfFile) return alert("اكمل البيانات");
+
+            const r = sRef(storage, 'exams/' + Date.now());
+            await uploadBytes(r, pdfFile);
+            const url = await getDownloadURL(r);
+            const examData = { name, pdfUrl: url, type: "pdf", answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) };
+            push(ref(db, `quizzes/${fId}`), examData).then(() => alert("تم الحفظ"));
+        };
+
+        function loadData() {
+            onValue(ref(db, 'folders'), (snap) => {
+                const sQ = document.getElementById('quizFolderSelect');
+                const sT = document.getElementById('targetCourseSelect');
+                const list = document.getElementById('coursesListAdmin');
+                sQ.innerHTML = sT.innerHTML = '<option value="">اختر الكورس...</option>';
+                list.innerHTML = "";
+                snap.forEach(c => {
+                    const d = c.val();
+                    sQ.innerHTML += `<option value="${c.key}">${d.name}</option>`;
+                    sT.innerHTML += `<option value="${c.key}">${d.name}</option>`;
+                    list.innerHTML += `
+                    <div class="list-item">
+                        <div><img src="${d.img||'mona.jpg'}" class="prev">${d.name}</div>
+                        <div>
+                            <button class="edit-btn" onclick="editCourseImg('${c.key}')">تعديل الصورة</button>
+                            <button class="delete-btn" onclick="del('folders/${c.key}')">حذف</button>
+                        </div>
+                    </div>`;
+                });
+            });
+        }
+
+        window.editCourseImg = async (id) => {
+            const input = document.createElement('input');
+            input.type = 'file'; input.accept = 'image/*';
+            input.onchange = async () => {
+                const file = input.files[0];
+                if(!file) return;
+                alert("جاري رفع الصورة الجديدة...");
+                const r = sRef(storage, 'c/' + Date.now());
+                await uploadBytes(r, file);
+                const url = await getDownloadURL(r);
+                update(ref(db, `folders/${id}`), { img: url }).then(() => alert("تم التحديث"));
+            };
+            input.click();
+        };
+
+        window.createNewCourse = async () => {
+            const n = document.getElementById('courseName').value;
+            const f = document.getElementById('courseFile').files[0];
+            let url = "";
+            if(f) { const r = sRef(storage, 'c/' + Date.now()); await uploadBytes(r, f); url = await getDownloadURL(r); }
+            push(ref(db, 'folders'), { name: n, img: url });
+        };
+
+        window.addVideoToCourse = () => {
+            const id = document.getElementById('targetCourseSelect').value;
+            const title = document.getElementById('videoTitle').value;
+            const link = document.getElementById('videoLink').value;
+            if(id && title && link) push(ref(db, `folders/${id}/videos`), { title, link }).then(() => alert("تمت الإضافة"));
+        };
+
+        window.showTab = (id, btn) => {
+            document.querySelectorAll('.tab-content').forEach(t => t.style.display = 'none');
+            document.getElementById(id).style.display = 'block';
+            document.querySelectorAll('.tab-menu button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
+        window.del = (p) => confirm("هل أنت متأكد؟") && remove(ref(db, p));
+        window.logout = () => location.reload();
+    </script>
+</body>
+</html>
