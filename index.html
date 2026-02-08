@@ -237,18 +237,40 @@
 
         window.logout = () => signOut(auth);
 
-        onAuthStateChanged(auth, user => {
+         onAuthStateChanged(auth, user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
+            
             if(user) {
-                statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
-                reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل"><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
+                // التأكد إذا كان المستخدم هو الأدمن (حضرتك)
+                let adminBtn = "";
+                if(user.email === "mrsmonakamel6@gmail.com") {
+                    adminBtn = `<button onclick="window.location.href='mx_2026_ctrl_p8.html'" 
+                                 style="background:#f1c40f; color:#000; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer; margin-left:10px; font-family:'Cairo';">
+                                 <i class="fas fa-user-shield"></i> لوحة الإدارة
+                                 </button>`;
+                }
+
+                statusDiv.innerHTML = `
+                    ${adminBtn} 
+                    <span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> 
+                    <button class="logout-btn" onclick="logout()">خروج</button>
+                `;
+
+                reviewContainer.innerHTML = `
+                    <div class="add-review-box">
+                        <h3>أضف رأيك هنا 👇</h3>
+                        <input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل">
+                        <textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
+                        <button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button>
+                    </div>`;
             } else {
                 statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
                 reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
             }
         });
+
 
         window.onload = () => { loadFolders(); loadReviews(); };
 

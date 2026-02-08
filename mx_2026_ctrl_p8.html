@@ -11,17 +11,10 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); padding: 20px; color: #333; }
         
-        /* شاشة الدخول */
-        .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
-        .pass-container { position: relative; width: 100%; margin: 10px 0; }
-        .pass-container input { width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
-        .toggle-pass { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
-        .login-btns { display: flex; gap: 10px; margin-top: 15px; }
-
-        /* لوحة التحكم */
+        /* إخفاء اللوحة افتراضياً حتى يتم التحقق من الإيميل */
         #adminDashboard { display: none; max-width: 900px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         
+        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         h2 { color: var(--dark); font-size: 1.3rem; margin-bottom: 15px; border-right: 5px solid var(--main); padding-right: 10px; text-align: right; }
         input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
         button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
@@ -43,32 +36,20 @@
         #ansGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
         .ans-item { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 8px; }
         
-        #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
+        #loadingOverlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
 
     <div id="loadingOverlay">
-        <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--main)"></i>
-        <p style="margin-top:15px; font-weight:bold;">جاري الحفظ... برجاء الانتظار</p>
-    </div>
-
-    <div id="loginSection" class="login-box">
-        <h2 style="border:none; text-align:center;">دخول الإدارة 🔐</h2>
-        <div class="pass-container">
-            <input type="password" id="adminPass" placeholder="كلمة المرور">
-            <i class="fas fa-eye toggle-pass" onclick="togglePassword()"></i>
-        </div>
-        <div class="login-btns">
-            <button onclick="checkAuth()" style="flex: 2;">دخول</button>
-            <button onclick="window.location.href='index.html'" style="flex: 1; background:#636e72;">الرئيسية</button>
-        </div>
+        <i class="fas fa-user-shield fa-spin fa-3x" style="color:var(--main)"></i>
+        <p id="loadingText" style="margin-top:15px; font-weight:bold;">جاري التحقق من صلاحيات الإدارة...</p>
     </div>
 
     <div id="adminDashboard">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h1>لوحة التحكم | Ms. Mona 💎</h1>
-            <button onclick="window.location.href='index.html'" style="width:auto; background:#636e72; padding:5px 15px;">الصفحة الرئيسية</button>
+            <button onclick="window.location.href='index.html'" style="width:auto; background:#636e72; padding:5px 15px;">العودة للموقع</button>
         </div>
 
         <div class="tab-menu">
@@ -84,7 +65,7 @@
                 <input type="text" id="courseName" placeholder="اسم الكورس (مثال: Unit 1)">
                 <label style="font-size: 0.9rem; font-weight: bold;">اختر صورة الكورس:</label>
                 <input type="file" id="courseImgFile" accept="image/*">
-                <button onclick="createNewCourse()">إنشاء الكورس وصورته</button>
+                <button onclick="createNewCourse()">إنشاء الكورس</button>
             </div>
             <div class="card">
                 <h2>2. الكورسات الحالية</h2>
@@ -133,6 +114,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, push, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
@@ -145,8 +127,23 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const storage = getStorage(app);
-        const secret = "TW9uYUAyMDI2"; 
+        const auth = getAuth(app);
         const loading = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
+
+        // --- حماية الصفحة (الطرد التلقائي) ---
+        onAuthStateChanged(auth, (user) => {
+            if (user && user.email === "mrsmonakamel6@gmail.com") {
+                // مسموح له بالدخول
+                loading.style.display = 'none';
+                document.getElementById('adminDashboard').style.display = 'block';
+                loadData();
+            } else {
+                // غير مسموح - طرد
+                alert("⚠️ تنبيه: هذه الصفحة مخصصة للمسؤولة فقط. سيتم تحويلك للصفحة الرئيسية.");
+                window.location.href = "index.html";
+            }
+        });
 
         const toBase64 = file => new Promise((resolve, reject) => {
             const reader = new FileReader();
@@ -155,20 +152,8 @@
             reader.onerror = error => reject(error);
         });
 
-        window.togglePassword = () => {
-            const pi = document.getElementById('adminPass');
-            pi.type = pi.type === 'password' ? 'text' : 'password';
-        };
-
-        window.checkAuth = () => {
-            if(btoa(document.getElementById('adminPass').value) === secret) {
-                document.getElementById('loginSection').style.display = 'none';
-                document.getElementById('adminDashboard').style.display = 'block';
-                loadData();
-            } else { alert("كلمة المرور غير صحيحة!"); }
-        };
-
         function loadData() {
+            // جلب الكورسات
             onValue(ref(db, 'folders'), (snap) => {
                 const sQ = document.getElementById('quizFolderSelect'), 
                       sT = document.getElementById('targetCourseSelect'), 
@@ -190,6 +175,7 @@
                 });
             });
 
+            // جلب النتائج
             onValue(ref(db, 'results'), (snap) => {
                 const list = document.getElementById('resultsList'); list.innerHTML = "";
                 snap.forEach(c => {
@@ -198,6 +184,7 @@
                 });
             });
 
+            // جلب الآراء
             onValue(ref(db, 'reviews'), (snap) => {
                 const list = document.getElementById('reviewsListAdmin'); list.innerHTML = "";
                 snap.forEach(c => {
@@ -209,14 +196,14 @@
         window.createNewCourse = async () => {
             const name = document.getElementById('courseName').value.trim();
             const imgFile = document.getElementById('courseImgFile').files[0];
-            
             if(!name || !imgFile) return alert("يرجى كتابة اسم الكورس واختيار صورة");
             
             loading.style.display = 'flex';
+            loadingText.innerText = "جاري إنشاء الكورس...";
             try {
                 const imgBase64 = await toBase64(imgFile);
                 await push(ref(db, 'folders'), { name: name, img: imgBase64 });
-                alert("✅ تم إنشاء الكورس ورفع الصورة بنجاح");
+                alert("✅ تم إنشاء الكورس بنجاح");
                 document.getElementById('courseName').value = "";
                 document.getElementById('courseImgFile').value = "";
             } catch (e) { alert("خطأ في حفظ البيانات"); }
@@ -224,9 +211,8 @@
         };
 
         window.editCourseName = async (id, oldName) => {
-            const newName = prompt("أدخل الاسم الجديد للكورس (اترك الفراغ كما هو إذا كنت تريد تغيير الصورة فقط):", oldName);
+            const newName = prompt("أدخل الاسم الجديد للكورس:", oldName);
             const changeImg = confirm("هل تريد تغيير صورة الكورس أيضاً؟");
-            
             let updateData = {};
             if(newName && newName.trim() !== "") updateData.name = newName.trim();
 
@@ -244,9 +230,7 @@
                 };
                 fileInput.click();
             } else if (updateData.name) {
-                loading.style.display = 'flex';
                 await update(ref(db, `folders/${id}`), updateData);
-                loading.style.display = 'none';
                 alert("✅ تم تحديث الاسم بنجاح");
             }
         };
@@ -268,13 +252,21 @@
             const fId = document.getElementById('quizFolderSelect').value, name = document.getElementById('quizName').value, pdfFile = document.getElementById('pdfFile').files[0];
             if(!fId || !name || !pdfFile) return alert("اكمل كافة البيانات");
             loading.style.display = 'flex';
+            loadingText.innerText = "جاري رفع ملف PDF...";
             try {
                 const r = sRef(storage, `exams/${Date.now()}_${pdfFile.name}`);
                 await uploadBytes(r, pdfFile);
                 const url = await getDownloadURL(r);
-                await push(ref(db, `quizzes/${fId}`), { name, pdfUrl: url, type: "pdf", answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) });
-                alert("✅ تم نشر الامتحان بنجاح"); location.reload();
-            } catch (e) { alert("خطأ في رفع ملف الـ PDF"); }
+                await push(ref(db, `quizzes/${fId}`), { 
+                    name, 
+                    pdfUrl: url, 
+                    type: "pdf", 
+                    questions: document.getElementById('qTotal').value,
+                    answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) 
+                });
+                alert("✅ تم نشر الامتحان بنجاح");
+                location.reload();
+            } catch (e) { alert("خطأ في الرفع"); }
             finally { loading.style.display = 'none'; }
         };
 
@@ -293,6 +285,7 @@
             document.querySelectorAll('.tab-menu button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         };
+        
         window.del = (p) => confirm("هل أنت متأكد من الحذف النهائي؟") && remove(ref(db, p));
     </script>
 </body>
