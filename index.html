@@ -13,6 +13,9 @@
 
         header { background: #fff; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.03); position: sticky; top: 0; z-index: 1000; }
         .logo-text { font-weight: 900; color: var(--main); font-size: 1.6rem; cursor: pointer; }
+        
+        .auth-btn { background: var(--main); color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; }
+        .logout-btn { background: #ff7675; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
 
         #homePage { display: block; }
         .hero { background: linear-gradient(135deg, var(--main), var(--dark)); color: white; padding: 80px 5%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; border-radius: 0 0 50px 50px; }
@@ -63,18 +66,44 @@
         .reviews { padding: 60px 5%; background: #fff; text-align: center; }
         .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .review-card { background: #f9f9f9; padding: 25px; border-radius: 15px; border-top: 4px solid var(--main); text-align: right; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
+        
         .add-review-box { max-width: 600px; margin: 30px auto; background: #f0eeff; padding: 25px; border-radius: 25px; }
         .add-review-box input, .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; }
+        .review-locked { background: #eee; color: #777; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; }
 
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
-        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 90%; max-width: 420px; }
+        .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 90%; max-width: 420px; position: relative; }
+        .close-modal { position: absolute; left: 20px; top: 15px; font-size: 20px; cursor: pointer; }
+
+        .google-btn { background: white; color: #444; border: 1px solid #ddd; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; font-family: 'Cairo'; }
+
         footer { padding: 40px 5%; text-align: center; background: #fff; border-top: 1px solid #eee; position: relative; }
         .social-btn { text-decoration: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; color: #fff; margin: 5px; display: inline-block; cursor: pointer; font-family: 'Cairo'; }
         .wa { background: var(--whatsapp); } .fb { background: #1877f2; }
     </style>
 </head>
 <body>
-    <header><div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div></header>
+    <header>
+        <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
+        <div id="authStatus">
+            <button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>
+        </div>
+    </header>
+
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeLogin()">&times;</span>
+            <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب 🎓</h2>
+            <input type="email" id="stEmail" placeholder="البريد الإلكتروني" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:10px;">
+            <input type="password" id="stPass" placeholder="كلمة المرور" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:10px;">
+            <button class="auth-btn" onclick="loginEmail()" style="width:100%; margin-top:10px;">دخول</button>
+            <div style="margin:15px 0; color:#888;">أو</div>
+            <button class="google-btn" onclick="loginGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
+                الدخول بواسطة جوجل
+            </button>
+        </div>
+    </div>
 
     <div id="homePage">
         <section class="hero">
@@ -111,11 +140,11 @@
         <section class="reviews">
             <h2 style="margin-bottom: 40px; font-weight: 900;">قالوا عن Ms. Mona Kamal ✨</h2>
             <div class="reviews-grid" id="testiGrid"></div>
-            <div class="add-review-box">
-                <h3>أضف رأيك هنا 👇</h3>
-                <input type="text" id="stuName" placeholder="الاسم بالكامل">
-                <textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
-                <button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button>
+            
+            <div id="reviewSectionContainer">
+                <div class="review-locked">
+                    <i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.
+                </div>
             </div>
         </section>
     </div>
@@ -157,7 +186,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, get, child, push, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, get, child, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
@@ -167,12 +197,15 @@
         };
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
         const dbRef = ref(db);
 
-        let studentName = "";
+        let currentUser = null;
         let currentQuizData = null;
         let studentAnswers = [];
 
+        // --- وظائف التصفح الرئيسية ---
         window.goHome = () => {
             document.getElementById('homePage').style.display = "block";
             document.getElementById('contentArea').style.display = "none";
@@ -182,12 +215,56 @@
 
         window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; };
 
+        // --- وظائف الهوية (Auth) ---
+        window.openLogin = () => document.getElementById('loginModal').style.display = 'flex';
+        window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
+
+        window.loginEmail = () => {
+            const e = document.getElementById('stEmail').value, p = document.getElementById('stPass').value;
+            if(!e || !p) return alert("يرجى ملء البيانات");
+            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("البريد أو كلمة المرور غير صحيحة"));
+        };
+
+        window.loginGoogle = () => {
+            signInWithPopup(auth, provider).then(async (res) => {
+                await set(ref(db, 'students/' + res.user.uid), { name: res.user.displayName, email: res.user.email });
+                closeLogin();
+            }).catch(() => alert("فشل تسجيل الدخول"));
+        };
+
+        window.logout = () => signOut(auth);
+
+        // مراقبة حالة المستخدم
+        onAuthStateChanged(auth, user => {
+            currentUser = user;
+            const statusDiv = document.getElementById('authStatus');
+            const reviewContainer = document.getElementById('reviewSectionContainer');
+
+            if(user) {
+                // تحديث الهيدر
+                statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> 
+                                      <button class="logout-btn" onclick="logout()">خروج</button>`;
+                
+                // إظهار صندوق التعليقات
+                reviewContainer.innerHTML = `
+                    <div class="add-review-box">
+                        <h3>أضف رأيك هنا 👇</h3>
+                        <input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل">
+                        <textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
+                        <button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button>
+                    </div>`;
+            } else {
+                statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
+                reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+            }
+        });
+
+        // --- تحميل البيانات ---
         window.onload = () => {
             loadFolders();
             loadReviews();
-                    };
+        };
 
-        // دالة ذكية لاستخراج الـ ID الخاص باليوتيوب
         function getYouTubeId(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
             const match = url.match(regExp);
@@ -201,9 +278,10 @@
                     let html = "";
                     snapshot.forEach(c => {
                         const d = c.val();
+                        const imgSrc = d.img ? d.img : 'mona.jpg';
                         html += `
                         <div class="folder-card" onclick="openContent('${c.key}', '${d.name}')">
-                            <img src="${d.img || 'mona.jpg'}" onerror="this.src='mona.jpg'">
+                            <img src="${imgSrc}" onerror="this.src='mona.jpg'">
                             <h3>${d.name}</h3>
                         </div>`;
                     });
@@ -233,15 +311,20 @@
             const name = document.getElementById('stuName').value;
             const text = document.getElementById('stuText').value;
             if(name && text) {
-                push(ref(db, 'reviews'), { student: name, text: text }).then(() => {
+                push(ref(db, 'reviews'), { student: name, text: text, uid: currentUser.uid }).then(() => {
                     alert("شكراً لرأيك الجميل! ❤️");
-                    document.getElementById('stuName').value = "";
                     document.getElementById('stuText').value = "";
                 });
             } else { alert("من فضلك املأ البيانات"); }
         };
 
         window.openContent = async (folderId, folderName) => {
+            if(!currentUser) {
+                alert("يرجى تسجيل الدخول أولاً لمشاهدة المحتوى");
+                openLogin();
+                return;
+            }
+
             const grid = document.getElementById('combinedGrid');
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
@@ -297,21 +380,18 @@
         };
 
         window.startQuiz = (fId, qId) => {
-            let name = prompt("من فضلك ادخل اسمك بالكامل لبدء الامتحان:");
-            if(!name || name.trim() === "") return alert("يجب كتابة الاسم للمتابعة");
-            studentName = name;
-
             get(child(dbRef, `quizzes/${fId}/${qId}`)).then(snap => {
                 if(snap.exists()) {
                     currentQuizData = snap.val();
                     document.getElementById('quizTitle').innerText = currentQuizData.name;
                     document.getElementById('quizOverlay').style.display = 'block';
-                    if(currentQuizData.type === 'pdf') renderPdf();
+                    renderPdf();
                 }
             });
         };
 
         function renderPdf() {
+            studentAnswers = new Array(currentQuizData.answers.length).fill(null);
             let bubbles = "";
             currentQuizData.answers.forEach((_, i) => {
                 bubbles += `
@@ -324,42 +404,41 @@
             });
             document.getElementById('quizContainer').innerHTML = `
                 <div class="pdf-layout">
-                    <iframe src="${currentQuizData.pdfUrl}" class="pdf-viewer"></iframe>
+                    <iframe class="pdf-viewer" src="${currentQuizData.pdfUrl}"></iframe>
                     <div class="bubble-sheet">
-                        <h3 style="margin-bottom:15px;">اختر الإجابة:</h3>
+                        <h3 style="margin-bottom:15px; text-align:center;">ورقة الإجابة</h3>
                         ${bubbles}
-                        <button onclick="submitPdf()" style="background:var(--main); color:white; width:100%; padding:15px; border-radius:12px; border:none; margin-top:15px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الحل</button>
+                        <button onclick="finishQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button>
                     </div>
                 </div>`;
-            studentAnswers = new Array(currentQuizData.answers.length).fill("");
         }
 
-        window.setAns = (i, char, btn) => {
-            document.querySelectorAll(`.q${i}`).forEach(b => b.classList.remove('selected'));
+        window.setAns = (qIdx, val, btn) => {
+            studentAnswers[qIdx] = val;
+            document.querySelectorAll(`.q${qIdx}`).forEach(b => b.classList.remove('selected'));
             btn.classList.add('selected');
-            studentAnswers[i] = char;
         };
 
-        window.submitPdf = () => {
-            if(studentAnswers.includes("")) return alert("يرجى الإجابة على جميع الأسئلة");
+        window.finishQuiz = () => {
+            if(studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة");
+            
             let score = 0;
-            currentQuizData.answers.forEach((correct, i) => { if(studentAnswers[i] === correct) score++; });
-            let finalScore = Math.round((score/currentQuizData.answers.length)*100);
-            saveScore(finalScore);
-        };
+            currentQuizData.answers.forEach((correct, i) => {
+                if(correct === studentAnswers[i]) score++;
+            });
 
-        function saveScore(score) {
-            const data = {
-                student: studentName,
+            const percent = Math.round((score / currentQuizData.answers.length) * 100);
+            
+            push(ref(db, 'results'), {
+                student: currentUser.displayName || currentUser.email,
                 exam: currentQuizData.name,
-                score: score,
-                date: new Date().toLocaleString('ar-EG')
-            };
-            push(ref(db, 'results'), data).then(() => {
-                alert(`أحسنت يا ${studentName}! درجتك هي: ${score}% \n تم إرسال نتيجتك للمعلمة.`);
+                score: percent,
+                date: new Date().toLocaleDateString('ar-EG')
+            }).then(() => {
+                alert(`انتهى الامتحان! درجتك هي: ${percent}%`);
                 closeQuiz();
             });
-        }
+        };
     </script>
 </body>
 </html>

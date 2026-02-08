@@ -11,17 +11,20 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); padding: 20px; color: #333; }
         
+        /* شاشة الدخول */
         .login-box { max-width: 400px; margin: 100px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); text-align: center; }
         .pass-container { position: relative; width: 100%; margin: 10px 0; }
         .pass-container input { width: 100%; padding: 12px 12px 12px 45px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
         .toggle-pass { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #666; }
+        .login-btns { display: flex; gap: 10px; margin-top: 15px; }
 
+        /* لوحة التحكم */
         #adminDashboard { display: none; max-width: 900px; margin: 0 auto; }
         .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
         
         h2 { color: var(--dark); font-size: 1.3rem; margin-bottom: 15px; border-right: 5px solid var(--main); padding-right: 10px; text-align: right; }
         input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
-        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; margin-top: 10px; }
+        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
         button:hover { background: var(--dark); }
         
         .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
@@ -40,7 +43,6 @@
         #ansGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
         .ans-item { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 8px; }
         
-        /* Loading Overlay */
         #loadingOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.8); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
     </style>
 </head>
@@ -48,7 +50,7 @@
 
     <div id="loadingOverlay">
         <i class="fas fa-spinner fa-spin fa-3x" style="color:var(--main)"></i>
-        <p style="margin-top:15px; font-weight:bold;">جاري معالجة الرفع... برجاء الانتظار</p>
+        <p style="margin-top:15px; font-weight:bold;">جاري الحفظ... برجاء الانتظار</p>
     </div>
 
     <div id="loginSection" class="login-box">
@@ -57,13 +59,16 @@
             <input type="password" id="adminPass" placeholder="كلمة المرور">
             <i class="fas fa-eye toggle-pass" onclick="togglePassword()"></i>
         </div>
-        <button onclick="checkAuth()">دخول</button>
+        <div class="login-btns">
+            <button onclick="checkAuth()" style="flex: 2;">دخول</button>
+            <button onclick="window.location.href='index.html'" style="flex: 1; background:#636e72;">الرئيسية</button>
+        </div>
     </div>
 
     <div id="adminDashboard">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
             <h1>لوحة التحكم | Ms. Mona 💎</h1>
-            <button onclick="logout()" style="width:auto; background:#636e72; padding:5px 15px;">خروج</button>
+            <button onclick="window.location.href='index.html'" style="width:auto; background:#636e72; padding:5px 15px;">الصفحة الرئيسية</button>
         </div>
 
         <div class="tab-menu">
@@ -76,10 +81,10 @@
         <div id="coursesTab" class="tab-content">
             <div class="card">
                 <h2>1. إنشاء كورس جديد</h2>
-                <input type="text" id="courseName" placeholder="اسم الكورس الجديد">
-                <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">اختر صورة الكورس:</p>
-                <input type="file" id="courseFile" accept="image/*">
-                <button onclick="createNewCourse()">إنشاء كورس</button>
+                <input type="text" id="courseName" placeholder="اسم الكورس (مثال: Unit 1)">
+                <label style="font-size: 0.9rem; font-weight: bold;">اختر صورة الكورس:</label>
+                <input type="file" id="courseImgFile" accept="image/*">
+                <button onclick="createNewCourse()">إنشاء الكورس وصورته</button>
             </div>
             <div class="card">
                 <h2>2. الكورسات الحالية</h2>
@@ -99,7 +104,6 @@
                 <h2>إنشاء امتحان PDF</h2>
                 <select id="quizFolderSelect"><option value="">اختر الكورس...</option></select>
                 <input type="text" id="quizName" placeholder="اسم الامتحان">
-                <p style="font-size: 0.8rem; color: #666; margin-bottom: 5px;">ارفع ملف الأسئلة (PDF):</p>
                 <input type="file" id="pdfFile" accept=".pdf">
                 <input type="number" id="qTotal" placeholder="عدد الأسئلة" oninput="generateAnsGrid()">
                 <div id="ansGrid"></div>
@@ -142,8 +146,14 @@
         const db = getDatabase(app);
         const storage = getStorage(app);
         const secret = "TW9uYUAyMDI2"; 
-
         const loading = document.getElementById('loadingOverlay');
+
+        const toBase64 = file => new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
 
         window.togglePassword = () => {
             const pi = document.getElementById('adminPass');
@@ -173,7 +183,7 @@
                     <div class="list-item">
                         <div><img src="${d.img || 'mona.jpg'}" class="prev" onerror="this.src='mona.jpg'">${d.name}</div>
                         <div>
-                            <button class="edit-btn" onclick="editCourseImg('${c.key}')">تعديل الصورة</button>
+                            <button class="edit-btn" style="background:#f1c40f;" onclick="editCourseName('${c.key}', '${d.name}')">تعديل</button>
                             <button class="delete-btn" onclick="del('folders/${c.key}')">حذف</button>
                         </div>
                     </div>`;
@@ -196,53 +206,48 @@
             });
         }
 
-        // تحسين دالة التعديل
-        window.editCourseImg = (id) => {
-            const input = document.createElement('input'); 
-            input.type = 'file'; 
-            input.accept = 'image/*';
-            input.onchange = async () => {
-                const file = input.files[0]; 
-                if(!file) return;
-                
-                loading.style.display = 'flex';
-                try {
-                    const fileRef = sRef(storage, `courses/${Date.now()}_${file.name}`);
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
-                    await update(ref(db, `folders/${id}`), { img: url });
-                    alert("✅ تم تحديث الصورة");
-                } catch (e) {
-                    alert("❌ فشل الرفع: تأكد من إعدادات Storage Rules");
-                    console.error(e);
-                } finally {
-                    loading.style.display = 'none';
-                }
-            };
-            input.click();
-        };
-
         window.createNewCourse = async () => {
-            const name = document.getElementById('courseName').value;
-            const file = document.getElementById('courseFile').files[0];
-            if(!name) return alert("يرجى كتابة اسم الكورس");
-
+            const name = document.getElementById('courseName').value.trim();
+            const imgFile = document.getElementById('courseImgFile').files[0];
+            
+            if(!name || !imgFile) return alert("يرجى كتابة اسم الكورس واختيار صورة");
+            
             loading.style.display = 'flex';
             try {
-                let url = "";
-                if(file) {
-                    const fileRef = sRef(storage, `courses/${Date.now()}_${file.name}`);
-                    await uploadBytes(fileRef, file);
-                    url = await getDownloadURL(fileRef);
-                }
-                await push(ref(db, 'folders'), { name: name, img: url });
-                alert("✅ تم إنشاء الكورس");
+                const imgBase64 = await toBase64(imgFile);
+                await push(ref(db, 'folders'), { name: name, img: imgBase64 });
+                alert("✅ تم إنشاء الكورس ورفع الصورة بنجاح");
                 document.getElementById('courseName').value = "";
-                document.getElementById('courseFile').value = "";
-            } catch (e) {
-                alert("❌ حدث خطأ أثناء الإنشاء");
-            } finally {
+                document.getElementById('courseImgFile').value = "";
+            } catch (e) { alert("خطأ في حفظ البيانات"); }
+            finally { loading.style.display = 'none'; }
+        };
+
+        window.editCourseName = async (id, oldName) => {
+            const newName = prompt("أدخل الاسم الجديد للكورس (اترك الفراغ كما هو إذا كنت تريد تغيير الصورة فقط):", oldName);
+            const changeImg = confirm("هل تريد تغيير صورة الكورس أيضاً؟");
+            
+            let updateData = {};
+            if(newName && newName.trim() !== "") updateData.name = newName.trim();
+
+            if(changeImg) {
+                const fileInput = document.createElement('input');
+                fileInput.type = 'file';
+                fileInput.accept = 'image/*';
+                fileInput.onchange = async () => {
+                    loading.style.display = 'flex';
+                    const newImg = await toBase64(fileInput.files[0]);
+                    updateData.img = newImg;
+                    await update(ref(db, `folders/${id}`), updateData);
+                    loading.style.display = 'none';
+                    alert("✅ تم التحديث بنجاح");
+                };
+                fileInput.click();
+            } else if (updateData.name) {
+                loading.style.display = 'flex';
+                await update(ref(db, `folders/${id}`), updateData);
                 loading.style.display = 'none';
+                alert("✅ تم تحديث الاسم بنجاح");
             }
         };
 
@@ -260,45 +265,26 @@
         };
 
         window.saveFullQuiz = async () => {
-            const fId = document.getElementById('quizFolderSelect').value;
-            const name = document.getElementById('quizName').value;
-            const pdfFile = document.getElementById('pdfFile').files[0];
-            
+            const fId = document.getElementById('quizFolderSelect').value, name = document.getElementById('quizName').value, pdfFile = document.getElementById('pdfFile').files[0];
             if(!fId || !name || !pdfFile) return alert("اكمل كافة البيانات");
-            
             loading.style.display = 'flex';
             try {
-                const fileRef = sRef(storage, `exams/${Date.now()}_${pdfFile.name}`);
-                await uploadBytes(fileRef, pdfFile);
-                const url = await getDownloadURL(fileRef);
-                const answers = Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value);
-                
-                await push(ref(db, `quizzes/${fId}`), { 
-                    name, 
-                    pdfUrl: url, 
-                    type: "pdf", 
-                    answers: answers 
-                });
-                alert("✅ تم نشر الامتحان");
-                location.reload();
-            } catch (e) {
-                alert("❌ فشل رفع الامتحان");
-            } finally {
-                loading.style.display = 'none';
-            }
+                const r = sRef(storage, `exams/${Date.now()}_${pdfFile.name}`);
+                await uploadBytes(r, pdfFile);
+                const url = await getDownloadURL(r);
+                await push(ref(db, `quizzes/${fId}`), { name, pdfUrl: url, type: "pdf", answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) });
+                alert("✅ تم نشر الامتحان بنجاح"); location.reload();
+            } catch (e) { alert("خطأ في رفع ملف الـ PDF"); }
+            finally { loading.style.display = 'none'; }
         };
 
         window.addVideoToCourse = () => {
-            const id = document.getElementById('targetCourseSelect').value;
-            const title = document.getElementById('videoTitle').value;
-            const link = document.getElementById('videoLink').value;
-            if(id && title && link) {
-                push(ref(db, `folders/${id}/videos`), { title, link }).then(() => {
-                    alert("✅ تمت إضافة الفيديو");
-                    document.getElementById('videoTitle').value = "";
-                    document.getElementById('videoLink').value = "";
-                });
-            } else { alert("اكمل بيانات الفيديو"); }
+            const id = document.getElementById('targetCourseSelect').value, title = document.getElementById('videoTitle').value, link = document.getElementById('videoLink').value;
+            if(id && title && link) push(ref(db, `folders/${id}/videos`), { title, link }).then(() => { 
+                alert("✅ تمت إضافة الفيديو"); 
+                document.getElementById('videoTitle').value = ""; 
+                document.getElementById('videoLink').value = ""; 
+            });
         };
 
         window.showTab = (id, btn) => {
@@ -307,14 +293,7 @@
             document.querySelectorAll('.tab-menu button').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
         };
-        
-        window.del = (path) => {
-            if(confirm("هل أنت متأكد من الحذف نهائياً؟")) {
-                remove(ref(db, path)).then(() => alert("تم الحذف"));
-            }
-        };
-        
-        window.logout = () => location.reload();
+        window.del = (p) => confirm("هل أنت متأكد من الحذف النهائي؟") && remove(ref(db, p));
     </script>
 </body>
 </html>
