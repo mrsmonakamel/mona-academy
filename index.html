@@ -189,12 +189,18 @@
         import { getDatabase, ref, get, child, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // الإعدادات المحدثة والصحيحة 100%
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            authDomain: "monaacademy-cd983.firebaseapp.com",
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
-            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
+            storageBucket: "monaacademy-cd983.firebasestorage.app",
+            messagingSenderId: "410646694761",
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8",
+            measurementId: "G-FT3ERGLYXX"
         };
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
@@ -205,7 +211,6 @@
         let currentQuizData = null;
         let studentAnswers = [];
 
-        // --- وظائف التصفح الرئيسية ---
         window.goHome = () => {
             document.getElementById('homePage').style.display = "block";
             document.getElementById('contentArea').style.display = "none";
@@ -214,8 +219,6 @@
         };
 
         window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; };
-
-        // --- وظائف الهوية (Auth) ---
         window.openLogin = () => document.getElementById('loginModal').style.display = 'flex';
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
 
@@ -229,41 +232,25 @@
             signInWithPopup(auth, provider).then(async (res) => {
                 await set(ref(db, 'students/' + res.user.uid), { name: res.user.displayName, email: res.user.email });
                 closeLogin();
-            }).catch(() => alert("فشل تسجيل الدخول"));
+            }).catch(() => alert("فشل تسجيل الدخول - تأكد من إعدادات Firebase"));
         };
 
         window.logout = () => signOut(auth);
 
-        // مراقبة حالة المستخدم
         onAuthStateChanged(auth, user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-
             if(user) {
-                // تحديث الهيدر
-                statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> 
-                                      <button class="logout-btn" onclick="logout()">خروج</button>`;
-                
-                // إظهار صندوق التعليقات
-                reviewContainer.innerHTML = `
-                    <div class="add-review-box">
-                        <h3>أضف رأيك هنا 👇</h3>
-                        <input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل">
-                        <textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
-                        <button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button>
-                    </div>`;
+                statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
+                reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل"><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
             } else {
                 statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
                 reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
             }
         });
 
-        // --- تحميل البيانات ---
-        window.onload = () => {
-            loadFolders();
-            loadReviews();
-        };
+        window.onload = () => { loadFolders(); loadReviews(); };
 
         function getYouTubeId(url) {
             const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
@@ -278,12 +265,7 @@
                     let html = "";
                     snapshot.forEach(c => {
                         const d = c.val();
-                        const imgSrc = d.img ? d.img : 'mona.jpg';
-                        html += `
-                        <div class="folder-card" onclick="openContent('${c.key}', '${d.name}')">
-                            <img src="${imgSrc}" onerror="this.src='mona.jpg'">
-                            <h3>${d.name}</h3>
-                        </div>`;
+                        html += `<div class="folder-card" onclick="openContent('${c.key}', '${d.name}')"><img src="${d.img || 'mona.jpg'}" onerror="this.src='mona.jpg'"><h3>${d.name}</h3></div>`;
                     });
                     grid.innerHTML = html;
                 }
@@ -297,73 +279,42 @@
                 if(snapshot.exists()) {
                     snapshot.forEach(c => {
                         const d = c.val();
-                        grid.innerHTML += `
-                        <div class="review-card">
-                            <p>"${d.text}"</p>
-                            <h4 style="color:var(--main); margin-top:10px;">- ${d.student}</h4>
-                        </div>`;
+                        grid.innerHTML += `<div class="review-card"><p>"${d.text}"</p><h4 style="color:var(--main); margin-top:10px;">- ${d.student}</h4></div>`;
                     });
                 } else { grid.innerHTML = "<p>لا توجد آراء بعد.</p>"; }
             });
         }
 
         window.sendStuReview = () => {
-            const name = document.getElementById('stuName').value;
-            const text = document.getElementById('stuText').value;
+            const name = document.getElementById('stuName').value, text = document.getElementById('stuText').value;
             if(name && text) {
                 push(ref(db, 'reviews'), { student: name, text: text, uid: currentUser.uid }).then(() => {
                     alert("شكراً لرأيك الجميل! ❤️");
-                    document.getElementById('stuText').value = "";
+                                        document.getElementById('stuText').value = "";
                 });
             } else { alert("من فضلك املأ البيانات"); }
         };
 
         window.openContent = async (folderId, folderName) => {
-            if(!currentUser) {
-                alert("يرجى تسجيل الدخول أولاً لمشاهدة المحتوى");
-                openLogin();
-                return;
-            }
-
+            if(!currentUser) { alert("يرجى تسجيل الدخول أولاً لمشاهدة المحتوى"); openLogin(); return; }
             const grid = document.getElementById('combinedGrid');
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
             grid.innerHTML = "<p style='text-align:center;'>جاري التحميل...</p>";
-
             try {
-                const [vSnap, qSnap] = await Promise.all([
-                    get(child(dbRef, `folders/${folderId}/videos`)),
-                    get(child(dbRef, `quizzes/${folderId}`))
-                ]);
-
+                const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
                 let html = "";
                 if(vSnap.exists()) {
                     vSnap.forEach(v => {
-                        const item = v.val();
-                        const vidId = getYouTubeId(item.link);
-                        const thumbUrl = vidId ? `https://img.youtube.com/vi/${vidId}/mqdefault.jpg` : 'mona.jpg';
-                        html += `
-                        <div class="item-card" onclick="openVideo('${item.link}')">
-                            <img src="${thumbUrl}" onerror="this.src='mona.jpg'">
-                            <div class="item-details">
-                                <span class="badge badge-video">فيديو شرح</span>
-                                <h4 style="font-weight:900;">${item.title}</h4>
-                            </div>
-                        </div>`;
+                        const item = v.val(), vidId = getYouTubeId(item.link), thumbUrl = vidId ? `https://img.youtube.com/vi/${vidId}/mqdefault.jpg` : 'mona.jpg';
+                        html += `<div class="item-card" onclick="openVideo('${item.link}')"><img src="${thumbUrl}" onerror="this.src='mona.jpg'"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4 style="font-weight:900;">${item.title}</h4></div></div>`;
                     });
                 }
                 if(qSnap.exists()) {
                     qSnap.forEach(q => {
                         const item = q.val();
-                        html += `
-                        <div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')">
-                            <div style="height:180px; display:flex; align-items:center; justify-content:center; background:#fff9e6;"><i class="fas fa-pen-alt fa-3x" style="color:#f1c40f"></i></div>
-                            <div class="item-details">
-                                <span class="badge badge-quiz">اختبار</span>
-                                <h4 style="font-weight:900;">${item.name}</h4>
-                            </div>
-                        </div>`;
+                        html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div style="height:180px; display:flex; align-items:center; justify-content:center; background:#fff9e6;"><i class="fas fa-pen-alt fa-3x" style="color:#f1c40f"></i></div><div class="item-details"><span class="badge badge-quiz">اختبار</span><h4 style="font-weight:900;">${item.name}</h4></div></div>`;
                     });
                 }
                 grid.innerHTML = html || "<p style='text-align:center;'>قريباً...</p>";
@@ -394,23 +345,9 @@
             studentAnswers = new Array(currentQuizData.answers.length).fill(null);
             let bubbles = "";
             currentQuizData.answers.forEach((_, i) => {
-                bubbles += `
-                <div class="bubble-row">
-                    <span>${i+1}</span>
-                    <div class="opt-btns">
-                        ${['A','B','C','D'].map(char => `<button class="opt-btn q${i}" onclick="setAns(${i},'${char}',this)">${char}</button>`).join('')}
-                    </div>
-                </div>`;
+                bubbles += `<div class="bubble-row"><span>${i+1}</span><div class="opt-btns">${['A','B','C','D'].map(char => `<button class="opt-btn q${i}" onclick="setAns(${i},'${char}',this)">${char}</button>`).join('')}</div></div>`;
             });
-            document.getElementById('quizContainer').innerHTML = `
-                <div class="pdf-layout">
-                    <iframe class="pdf-viewer" src="${currentQuizData.pdfUrl}"></iframe>
-                    <div class="bubble-sheet">
-                        <h3 style="margin-bottom:15px; text-align:center;">ورقة الإجابة</h3>
-                        ${bubbles}
-                        <button onclick="finishQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button>
-                    </div>
-                </div>`;
+            document.getElementById('quizContainer').innerHTML = `<div class="pdf-layout"><iframe class="pdf-viewer" src="${currentQuizData.pdfUrl}"></iframe><div class="bubble-sheet"><h3 style="margin-bottom:15px; text-align:center;">ورقة الإجابة</h3>${bubbles}<button onclick="finishQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button></div></div>`;
         }
 
         window.setAns = (qIdx, val, btn) => {
@@ -421,20 +358,10 @@
 
         window.finishQuiz = () => {
             if(studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة");
-            
             let score = 0;
-            currentQuizData.answers.forEach((correct, i) => {
-                if(correct === studentAnswers[i]) score++;
-            });
-
+            currentQuizData.answers.forEach((correct, i) => { if(correct === studentAnswers[i]) score++; });
             const percent = Math.round((score / currentQuizData.answers.length) * 100);
-            
-            push(ref(db, 'results'), {
-                student: currentUser.displayName || currentUser.email,
-                exam: currentQuizData.name,
-                score: percent,
-                date: new Date().toLocaleDateString('ar-EG')
-            }).then(() => {
+            push(ref(db, 'results'), { student: currentUser.displayName || currentUser.email, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') }).then(() => {
                 alert(`انتهى الامتحان! درجتك هي: ${percent}%`);
                 closeQuiz();
             });
