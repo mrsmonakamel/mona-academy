@@ -11,7 +11,6 @@
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: 'Cairo', sans-serif; background: var(--bg); padding: 20px; color: #333; }
         
-        /* إخفاء اللوحة افتراضياً حتى يتم التحقق من الإيميل */
         #adminDashboard { display: none; max-width: 900px; margin: 0 auto; }
         
         .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
@@ -24,18 +23,20 @@
         .tab-menu button { background: #fff; color: var(--main); border: 1px solid var(--main); min-width: 110px; margin: 0; }
         .tab-menu button.active { background: var(--main); color: white; }
         
-        .list-item { background: #f9f9f9; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border: 1px solid #eee; }
+        .list-item { background: #f9f9f9; padding: 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-top: 10px; border: 1px solid #eee; flex-wrap: wrap; }
+        .video-manage-box { width: 100%; background: #fff; margin-top: 10px; padding: 10px; border-radius: 8px; border: 1px dashed #ccc; display: none; }
+        .video-item { display: flex; justify-content: space-between; padding: 5px; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        
         .delete-btn { background: var(--danger); width: auto; padding: 5px 15px; font-size: 0.8rem; margin: 0; }
         .edit-btn { background: var(--success); width: auto; padding: 5px 15px; font-size: 0.8rem; margin: 0; margin-left: 5px; }
+        .show-videos-btn { background: #55acee; width: auto; padding: 5px 15px; font-size: 0.8rem; margin: 0; margin-left: 5px; }
+        
         img.prev { width: 45px; height: 45px; border-radius: 8px; object-fit: cover; margin-left: 10px; vertical-align: middle; }
-
         table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
         th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
         th { background: #f0eeff; color: var(--main); }
-
         #ansGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 10px; margin-top: 15px; }
         .ans-item { display: flex; flex-direction: column; align-items: center; background: #f8f9fa; padding: 5px; border-radius: 8px; }
-        
         #loadingOverlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
     </style>
 </head>
@@ -68,7 +69,7 @@
                 <button onclick="createNewCourse()">إنشاء الكورس</button>
             </div>
             <div class="card">
-                <h2>2. الكورسات الحالية</h2>
+                <h2>2. الكورسات الحالية وإدارة الفيديوهات</h2>
                 <div id="coursesListAdmin"></div>
             </div>
             <div class="card">
@@ -129,18 +130,14 @@
         const storage = getStorage(app);
         const auth = getAuth(app);
         const loading = document.getElementById('loadingOverlay');
-        const loadingText = document.getElementById('loadingText');
 
-        // --- حماية الصفحة (الطرد التلقائي) ---
         onAuthStateChanged(auth, (user) => {
             if (user && user.email === "mrsmonakamel6@gmail.com") {
-                // مسموح له بالدخول
                 loading.style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'block';
                 loadData();
             } else {
-                // غير مسموح - طرد
-                alert("⚠️ تنبيه: هذه الصفحة مخصصة للمسؤولة فقط. سيتم تحويلك للصفحة الرئيسية.");
+                alert("⚠️ غير مسموح بالدخول");
                 window.location.href = "index.html";
             }
         });
@@ -153,7 +150,6 @@
         });
 
         function loadData() {
-            // جلب الكورسات
             onValue(ref(db, 'folders'), (snap) => {
                 const sQ = document.getElementById('quizFolderSelect'), 
                       sT = document.getElementById('targetCourseSelect'), 
@@ -164,18 +160,31 @@
                     const d = c.val();
                     sQ.innerHTML += `<option value="${c.key}">${d.name}</option>`;
                     sT.innerHTML += `<option value="${c.key}">${d.name}</option>`;
+                    
+                    // تحضير قائمة الفيديوهات داخل الكورس
+                    let vHtml = "";
+                    if(d.videos){
+                        Object.keys(d.videos).forEach(vKey => {
+                            vHtml += `<div class="video-item">
+                                        <span>🎥 ${d.videos[vKey].title}</span>
+                                        <button class="delete-btn" onclick="del('folders/${c.key}/videos/${vKey}')">حذف الفيديو</button>
+                                      </div>`;
+                        });
+                    } else { vHtml = "<p>لا توجد فيديوهات في هذا الكورس بعد.</p>"; }
+
                     list.innerHTML += `
                     <div class="list-item">
-                        <div><img src="${d.img || 'mona.jpg'}" class="prev" onerror="this.src='mona.jpg'">${d.name}</div>
+                        <div style="flex:1;"><img src="${d.img || 'mona.jpg'}" class="prev">${d.name}</div>
                         <div>
+                            <button class="show-videos-btn" onclick="toggleVideos('${c.key}')">إدارة الفيديوهات</button>
                             <button class="edit-btn" style="background:#f1c40f;" onclick="editCourseName('${c.key}', '${d.name}')">تعديل</button>
-                            <button class="delete-btn" onclick="del('folders/${c.key}')">حذف</button>
+                            <button class="delete-btn" onclick="del('folders/${c.key}')">حذف الكورس</button>
                         </div>
+                        <div id="vBox_${c.key}" class="video-manage-box">${vHtml}</div>
                     </div>`;
                 });
             });
 
-            // جلب النتائج
             onValue(ref(db, 'results'), (snap) => {
                 const list = document.getElementById('resultsList'); list.innerHTML = "";
                 snap.forEach(c => {
@@ -184,7 +193,6 @@
                 });
             });
 
-            // جلب الآراء
             onValue(ref(db, 'reviews'), (snap) => {
                 const list = document.getElementById('reviewsListAdmin'); list.innerHTML = "";
                 snap.forEach(c => {
@@ -193,90 +201,60 @@
             });
         }
 
+        window.toggleVideos = (id) => {
+            const box = document.getElementById(`vBox_${id}`);
+            box.style.display = box.style.display === 'block' ? 'none' : 'block';
+        };
+
         window.createNewCourse = async () => {
             const name = document.getElementById('courseName').value.trim();
             const imgFile = document.getElementById('courseImgFile').files[0];
             if(!name || !imgFile) return alert("يرجى كتابة اسم الكورس واختيار صورة");
-            
             loading.style.display = 'flex';
-            loadingText.innerText = "جاري إنشاء الكورس...";
             try {
                 const imgBase64 = await toBase64(imgFile);
                 await push(ref(db, 'folders'), { name: name, img: imgBase64 });
-                alert("✅ تم إنشاء الكورس بنجاح");
+                alert("✅ تم بنجاح");
                 document.getElementById('courseName').value = "";
-                document.getElementById('courseImgFile').value = "";
-            } catch (e) { alert("خطأ في حفظ البيانات"); }
+            } catch (e) { alert("خطأ!"); }
             finally { loading.style.display = 'none'; }
         };
 
         window.editCourseName = async (id, oldName) => {
-            const newName = prompt("أدخل الاسم الجديد للكورس:", oldName);
-            const changeImg = confirm("هل تريد تغيير صورة الكورس أيضاً؟");
-            let updateData = {};
-            if(newName && newName.trim() !== "") updateData.name = newName.trim();
-
-            if(changeImg) {
-                const fileInput = document.createElement('input');
-                fileInput.type = 'file';
-                fileInput.accept = 'image/*';
-                fileInput.onchange = async () => {
-                    loading.style.display = 'flex';
-                    const newImg = await toBase64(fileInput.files[0]);
-                    updateData.img = newImg;
-                    await update(ref(db, `folders/${id}`), updateData);
-                    loading.style.display = 'none';
-                    alert("✅ تم التحديث بنجاح");
-                };
-                fileInput.click();
-            } else if (updateData.name) {
-                await update(ref(db, `folders/${id}`), updateData);
-                alert("✅ تم تحديث الاسم بنجاح");
+            const newName = prompt("أدخل الاسم الجديد:", oldName);
+            if(newName) {
+                await update(ref(db, `folders/${id}`), { name: newName });
+                alert("✅ تم التحديث");
             }
+        };
+
+        window.addVideoToCourse = () => {
+            const id = document.getElementById('targetCourseSelect').value, title = document.getElementById('videoTitle').value, link = document.getElementById('videoLink').value;
+            if(id && title && link) push(ref(db, `folders/${id}/videos`), { title, url: link }).then(() => { 
+                alert("✅ تمت إضافة الفيديو"); 
+                document.getElementById('videoTitle').value = ""; 
+                document.getElementById('videoLink').value = ""; 
+            });
         };
 
         window.generateAnsGrid = () => {
             const num = document.getElementById('qTotal').value;
             const grid = document.getElementById('ansGrid'); grid.innerHTML = "";
-            for(let i=1; i<=num; i++) grid.innerHTML += `
-                <div class="ans-item">
-                    <span>${i}</span>
-                    <select class="pdf-val">
-                        <option value="A">A</option><option value="B">B</option>
-                        <option value="C">C</option><option value="D">D</option>
-                    </select>
-                </div>`;
+            for(let i=1; i<=num; i++) grid.innerHTML += `<div class="ans-item"><span>${i}</span><select class="pdf-val"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select></div>`;
         };
 
         window.saveFullQuiz = async () => {
             const fId = document.getElementById('quizFolderSelect').value, name = document.getElementById('quizName').value, pdfFile = document.getElementById('pdfFile').files[0];
-            if(!fId || !name || !pdfFile) return alert("اكمل كافة البيانات");
+            if(!fId || !name || !pdfFile) return alert("اكمل البيانات");
             loading.style.display = 'flex';
-            loadingText.innerText = "جاري رفع ملف PDF...";
             try {
                 const r = sRef(storage, `exams/${Date.now()}_${pdfFile.name}`);
                 await uploadBytes(r, pdfFile);
                 const url = await getDownloadURL(r);
-                await push(ref(db, `quizzes/${fId}`), { 
-                    name, 
-                    pdfUrl: url, 
-                    type: "pdf", 
-                    questions: document.getElementById('qTotal').value,
-                    answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) 
-                });
-                alert("✅ تم نشر الامتحان بنجاح");
-                location.reload();
-            } catch (e) { alert("خطأ في الرفع"); }
+                await push(ref(db, `quizzes/${fId}`), { name, pdfUrl: url, questions: document.getElementById('qTotal').value, answers: Array.from(document.querySelectorAll('.pdf-val')).map(s => s.value) });
+                alert("✅ تم النشر"); location.reload();
+            } catch (e) { alert("خطأ!"); }
             finally { loading.style.display = 'none'; }
-        };
-
-        window.addVideoToCourse = () => {
-            const id = document.getElementById('targetCourseSelect').value, title = document.getElementById('videoTitle').value, link = document.getElementById('videoLink').value;
-            if(id && title && link) push(ref(db, `folders/${id}/videos`), { title, link }).then(() => { 
-                alert("✅ تمت إضافة الفيديو"); 
-                document.getElementById('videoTitle').value = ""; 
-                document.getElementById('videoLink').value = ""; 
-            });
         };
 
         window.showTab = (id, btn) => {
@@ -286,7 +264,7 @@
             btn.classList.add('active');
         };
         
-        window.del = (p) => confirm("هل أنت متأكد من الحذف النهائي؟") && remove(ref(db, p));
+        window.del = (p) => confirm("هل أنت متأكد من الحذف؟") && remove(ref(db, p));
     </script>
 </body>
 </html>
