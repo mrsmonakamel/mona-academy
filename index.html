@@ -190,16 +190,17 @@
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // الإعدادات المحدثة والصحيحة 100%
-        const firebaseConfig = {
+                const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
             authDomain: "monaacademy-cd983.firebaseapp.com",
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
-            storageBucket: "monaacademy-cd983.firebasestorage.app",
+            storageBucket: "monaacademy-cd983.appspot.com",
             messagingSenderId: "410646694761",
             appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8",
             measurementId: "G-FT3ERGLYXX"
         };
+
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
