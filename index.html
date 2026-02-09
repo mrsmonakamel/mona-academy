@@ -17,6 +17,15 @@
         .auth-btn { background: var(--main); color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; }
         .logout-btn { background: #ff7675; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
 
+        /* تنسيق نظام التسجيل المطور */
+        .step-container { display: none; text-align: right; animation: fadeIn 0.4s; }
+        .step-container.active { display: block; }
+        .reg-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; font-size: 0.9rem; }
+        .reg-label { font-weight: bold; font-size: 0.85rem; color: var(--dark); display: block; margin-top: 10px; }
+        .progress-bar { height: 6px; background: #eee; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--main); width: 33%; transition: 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         #homePage { display: block; }
         .hero { background: linear-gradient(135deg, var(--main), var(--dark)); color: white; padding: 80px 5%; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; border-radius: 0 0 50px 50px; }
         .hero-content { flex: 1; min-width: 300px; }
@@ -53,29 +62,27 @@
         .badge-video { background: #f0eeff; color: var(--main); }
         .badge-quiz { background: #fff9e6; color: #f1c40f; }
 
-        #quizOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:3000; overflow-y:auto; padding:20px; }
-        .quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:2px solid #eee; padding-bottom:10px; }
-        .pdf-layout { display: flex; flex-wrap: wrap; gap: 20px; height: 80vh; }
-        .pdf-viewer { flex: 2; min-width: 300px; border: 1px solid #ddd; border-radius: 15px; }
-        .bubble-sheet { flex: 1; min-width: 250px; background: #f8f9fa; padding: 20px; border-radius: 15px; overflow-y: auto; }
-        .bubble-row { display: flex; align-items: center; justify-content: space-between; background: white; padding: 10px; margin-bottom: 10px; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        .opt-btns { display: flex; gap: 5px; }
-        .opt-btn { width: 35px; height: 35px; border-radius: 50%; border: 1px solid var(--main); background: white; color: var(--main); cursor: pointer; font-weight: bold; transition: 0.2s; }
-        .opt-btn.selected { background: var(--main); color: white; }
+        #quizOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f4f9; z-index:3000; overflow-y:auto; padding:20px; }
+        .quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:white; padding:15px; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); }
+        .q-form-card { background:white; padding:25px; border-radius:15px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border-right:6px solid var(--main); text-align:right; }
+        .q-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; display: block; }
+        .opt-container { display: flex; flex-direction: column; gap: 10px; }
+        .opt-label { display: flex; align-items: center; gap: 12px; padding: 15px; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .opt-label:hover { background: #f9f9f9; }
+        .opt-label.selected { background: #f0eeff; border-color: var(--main); color: var(--main); }
+        .opt-label input { width: 20px; height: 20px; accent-color: var(--main); }
 
         .reviews { padding: 60px 5%; background: #fff; text-align: center; }
         .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .review-card { background: #f9f9f9; padding: 25px; border-radius: 15px; border-top: 4px solid var(--main); text-align: right; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
         
         .add-review-box { max-width: 600px; margin: 30px auto; background: #f0eeff; padding: 25px; border-radius: 25px; }
-        .add-review-box input, .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; }
+        .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; }
         .review-locked { background: #eee; color: #777; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; }
 
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 90%; max-width: 420px; position: relative; }
         .close-modal { position: absolute; left: 20px; top: 15px; font-size: 20px; cursor: pointer; }
-
-        .google-btn { background: white; color: #444; border: 1px solid #ddd; padding: 10px; border-radius: 10px; width: 100%; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; margin-top: 15px; font-family: 'Cairo'; }
 
         footer { padding: 40px 5%; text-align: center; background: #fff; border-top: 1px solid #eee; position: relative; }
         .social-btn { text-decoration: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; color: #fff; margin: 5px; display: inline-block; cursor: pointer; font-family: 'Cairo'; }
@@ -85,23 +92,71 @@
 <body>
     <header>
         <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
-        <div id="authStatus">
-            <button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>
-        </div>
+        <div id="authStatus"><button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button></div>
     </header>
 
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeLogin()">&times;</span>
-            <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب 🎓</h2>
-            <input type="email" id="stEmail" placeholder="البريد الإلكتروني" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:10px;">
-            <input type="password" id="stPass" placeholder="كلمة المرور" style="width:100%; padding:12px; margin:8px 0; border:1px solid #ddd; border-radius:10px;">
-            <button class="auth-btn" onclick="loginEmail()" style="width:100%; margin-top:10px;">دخول</button>
-            <div style="margin:15px 0; color:#888;">أو</div>
-            <button class="google-btn" onclick="loginGoogle()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20">
-                الدخول بواسطة جوجل
-            </button>
+            
+            <div id="authChoice">
+                <h2 style="color:var(--main); margin-bottom:20px;">مرحباً بك 🎓</h2>
+                <button class="auth-btn" onclick="showAuthForm('login')" style="width:100%; margin-bottom:10px;">تسجيل الدخول</button>
+                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%;">إنشاء حساب جديد</button>
+                <div style="margin:15px 0; color:#888;">أو</div>
+                <button class="auth-btn" onclick="loginGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> الدخول بواسطة جوجل
+                </button>
+            </div>
+
+            <div id="loginForm" style="display:none;">
+                <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب</h2>
+                <input type="email" id="stEmail" class="reg-input" placeholder="البريد الإلكتروني">
+                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
+                <button class="auth-btn" onclick="loginEmail()" style="width:100%;">دخول</button>
+                <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
+            </div>
+
+            <div id="registerForm" style="display:none;">
+                <div class="progress-bar"><div id="regProgress" class="progress-fill"></div></div>
+                
+                <div id="step1" class="step-container active">
+                    <h3 style="margin-bottom:15px;">البيانات الشخصية</h3>
+                    <label class="reg-label">الاسم الرباعي:</label>
+                    <input type="text" id="regFullName" class="reg-input" placeholder="عربي أو إنجليزي">
+                    <label class="reg-label">رقم الواتساب:</label>
+                    <input type="tel" id="regWhatsapp" class="reg-input" placeholder="مثال: +201012345678">
+                    <button class="auth-btn" onclick="nextStep(2)" style="width:100%; margin-top:10px;">التالي</button>
+                </div>
+
+                <div id="step2" class="step-container">
+                    <h3 style="margin-bottom:15px;">المرحلة الدراسية</h3>
+                    <label class="reg-label">اختر المرحلة:</label>
+                    <select id="regLevel" class="reg-input" onchange="updateGrades()">
+                        <option value="">-- اختر المرحلة --</option>
+                        <option value="primary">المرحلة الابتدائية</option>
+                        <option value="middle">المرحلة الإعدادية</option>
+                    </select>
+                    <label class="reg-label">اختر الصف الدراسي:</label>
+                    <select id="regGrade" class="reg-input"><option value="">يرجى اختيار المرحلة أولاً</option></select>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="auth-btn" onclick="nextStep(1)" style="background:#ccc; width:40%;">السابق</button>
+                        <button class="auth-btn" onclick="nextStep(3)" style="width:60%;">التالي</button>
+                    </div>
+                </div>
+
+                <div id="step3" class="step-container">
+                    <h3 style="margin-bottom:15px;">بيانات الحساب</h3>
+                    <div id="emailPassFields">
+                        <input type="email" id="regEmail" class="reg-input" placeholder="البريد الإلكتروني">
+                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور">
+                    </div>
+                    <div style="display:flex; gap:10px; margin-top:10px;">
+                        <button class="auth-btn" id="finalPrevBtn" onclick="nextStep(2)" style="background:#ccc; width:40%;">السابق</button>
+                        <button class="auth-btn" id="finalSubmitBtn" onclick="handleRegister()" style="width:60%; background:var(--whatsapp);">إنشاء الحساب</button>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -140,12 +195,7 @@
         <section class="reviews">
             <h2 style="margin-bottom: 40px; font-weight: 900;">قالوا عن Ms. Mona Kamal ✨</h2>
             <div class="reviews-grid" id="testiGrid"></div>
-            
-            <div id="reviewSectionContainer">
-                <div class="review-locked">
-                    <i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.
-                </div>
-            </div>
+            <div id="reviewSectionContainer"></div>
         </section>
     </div>
 
@@ -160,7 +210,7 @@
             <h2 id="quizTitle" style="font-weight: 900; color: var(--main);">الامتحان</h2>
             <button onclick="closeQuiz()" style="background:#ff7675; color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
         </div>
-        <div id="quizContainer"></div>
+        <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
     </div>
 
     <footer>
@@ -168,10 +218,6 @@
         <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; align-items: center;">
             <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">فيسبوك</a>
             <div class="social-btn wa" onclick="document.getElementById('waModal').style.display='flex'">واتساب</div>
-        </div>
-        
-        <div onclick="window.location.href='mx_2026_ctrl_p8.html'" 
-             style="position: absolute; right: 0; bottom: 0; width: 50px; height: 50px; cursor: default; opacity: 0; background: transparent; z-index: 9999;">
         </div>
     </footer>
 
@@ -187,7 +233,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, child, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
@@ -195,9 +241,7 @@
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
             storageBucket: "monaacademy-cd983.appspot.com",
-            messagingSenderId: "410646694761",
-            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8",
-            measurementId: "G-FT3ERGLYXX"
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -209,6 +253,136 @@
         let currentUser = null;
         let currentQuizData = null;
         let studentAnswers = [];
+        const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+
+        onAuthStateChanged(auth, async user => {
+            currentUser = user;
+            const statusDiv = document.getElementById('authStatus');
+            const reviewContainer = document.getElementById('reviewSectionContainer');
+            const coursesSection = document.getElementById('courses');
+            
+            if(user) {
+                if(user.email === ADMIN_EMAIL) {
+                    statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">أهلاً أدمن منى 💎</span> 
+                                          <button class="auth-btn" onclick="window.location.href='admin.html'" style="margin:0 10px; background:var(--dark);">لوحة الإدارة</button>
+                                          <button class="logout-btn" onclick="logout()">خروج</button>`;
+                    if(coursesSection) coursesSection.style.display = 'none';
+                } else {
+                    statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || user.email}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
+                    if(coursesSection) coursesSection.style.display = 'block';
+                }
+                  reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
+            } else {
+                statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
+                reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+                if(coursesSection) coursesSection.style.display = 'block';
+            }
+        });
+
+        window.showAuthForm = (type) => {
+            document.getElementById('authChoice').style.display = type === 'choice' ? 'block' : 'none';
+            document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
+        };
+
+        window.nextStep = (step) => {
+            // التحقق من الحقول قبل الانتقال للخطوة التالية
+            if (step === 2) {
+                const name = document.getElementById('regFullName').value.trim();
+                const wa = document.getElementById('regWhatsapp').value.trim();
+                if (!name || !wa) {
+                    alert("يرجى كتابة الاسم ورقم الواتساب أولاً");
+                    return;
+                }
+            }
+            if (step === 3) {
+                const level = document.getElementById('regLevel').value;
+                const grade = document.getElementById('regGrade').value;
+                if (!level || !grade) {
+                    alert("يرجى اختيار المرحلة والصف الدراسي");
+                    return;
+                }
+            }
+
+            document.querySelectorAll('.step-container').forEach(s => s.classList.remove('active'));
+            document.getElementById('step' + step).classList.add('active');
+            document.getElementById('regProgress').style.width = (step === 1 ? '33%' : step === 2 ? '66%' : '100%');
+        };
+
+        window.updateGrades = () => {
+            const level = document.getElementById('regLevel').value;
+            const gradeSelect = document.getElementById('regGrade');
+            gradeSelect.innerHTML = "";
+            const grades = {
+                primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"],
+                middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"]
+            };
+            if (level) grades[level].forEach(g => gradeSelect.innerHTML += `<option value="${g}">${g}</option>`);
+        };
+
+        window.loginEmail = () => {
+            const e = document.getElementById('stEmail').value.trim(), p = document.getElementById('stPass').value;
+            if(!e || !p) return alert("يرجى ملء بيانات الدخول");
+            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("البريد أو كلمة المرور غير صحيحة"));
+        };
+
+        window.loginGoogle = () => {
+            signInWithPopup(auth, provider).then(async (result) => {
+                const user = result.user;
+                if (user.email !== ADMIN_EMAIL) {
+                    const snap = await get(child(dbRef, `students/${user.uid}`));
+                    if (!snap.exists()) prepareGoogleCompletion(user);
+                    else closeLogin();
+                } else { closeLogin(); }
+            }).catch(() => alert("فشل الدخول بجوجل"));
+        };
+
+        function prepareGoogleCompletion(user) {
+            showAuthForm('register');
+            nextStep(2);
+            document.getElementById('regFullName').value = user.displayName;
+            document.getElementById('emailPassFields').innerHTML = `<p style="text-align:center; color:#666;">سيتم ربط حساب جوجل ببياناتك الدراسية لإتمام التسجيل.</p>`;
+            document.getElementById('finalSubmitBtn').onclick = () => finishGoogleReg(user.uid);
+        }
+
+        window.finishGoogleReg = (uid) => {
+            const wa = document.getElementById('regWhatsapp').value.trim();
+            const grade = document.getElementById('regGrade').value;
+            if(!wa || !grade) return alert("يرجى إكمال بيانات الواتساب والصف الدراسي");
+            set(ref(db, 'students/' + uid), { 
+                name: auth.currentUser.displayName, 
+                whatsapp: wa, 
+                grade, 
+                email: auth.currentUser.email, 
+                method: 'google',
+                joinDate: new Date().toLocaleString('ar-EG')
+            })
+            .then(() => { alert("تم استكمال التسجيل!"); location.reload(); });
+        };
+
+        window.handleRegister = () => {
+            const name = document.getElementById('regFullName').value.trim(), 
+                  wa = document.getElementById('regWhatsapp').value.trim(),
+                  grade = document.getElementById('regGrade').value, 
+                  email = document.getElementById('regEmail').value.trim(), 
+                  pass = document.getElementById('regPass').value;
+            
+            if(!email || !pass) return alert("يرجى كتابة البريد وكلمة المرور");
+            if(pass.length < 6) return alert("كلمة المرور يجب أن تكون 6 رموز على الأقل");
+
+            createUserWithEmailAndPassword(auth, email, pass).then((res) => {
+                updateProfile(res.user, { displayName: name });
+                // إرسال البيانات للأدمن
+                set(ref(db, 'students/' + res.user.uid), { 
+                    name, 
+                    whatsapp: wa, 
+                    grade, 
+                    email,
+                    joinDate: new Date().toLocaleString('ar-EG')
+                });
+                alert("تم إنشاء الحساب بنجاح!"); closeLogin();
+            }).catch(err => alert("خطأ: " + err.message));
+        };
 
         window.goHome = () => {
             document.getElementById('homePage').style.display = "block";
@@ -216,177 +390,96 @@
             document.getElementById('quizOverlay').style.display = "none";
             window.scrollTo(0,0);
         };
-
-        window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; };
-        window.openLogin = () => document.getElementById('loginModal').style.display = 'flex';
+        window.openLogin = () => { showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
-
-        window.loginEmail = () => {
-            const e = document.getElementById('stEmail').value, p = document.getElementById('stPass').value;
-            if(!e || !p) return alert("يرجى ملء البيانات");
-            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("البريد أو كلمة المرور غير صحيحة"));
-        };
-
-        window.loginGoogle = () => {
-            signInWithPopup(auth, provider).then(async (res) => {
-                await set(ref(db, 'students/' + res.user.uid), { name: res.user.displayName, email: res.user.email });
-                closeLogin();
-            }).catch(() => alert("فشل تسجيل الدخول - تأكد من إعدادات Firebase"));
-        };
-
         window.logout = () => signOut(auth);
-
-        onAuthStateChanged(auth, user => {
-            currentUser = user;
-            const statusDiv = document.getElementById('authStatus');
-            const reviewContainer = document.getElementById('reviewSectionContainer');
-            
-            if(user) {
-                let adminBtn = "";
-                if(user.email === "mrsmonakamel6@gmail.com") {
-                    adminBtn = `<button onclick="window.location.href='mx_2026_ctrl_p8.html'" 
-                                 style="background:#f1c40f; color:#000; border:none; padding:8px 15px; border-radius:10px; font-weight:bold; cursor:pointer; margin-left:10px; font-family:'Cairo';">
-                                 <i class="fas fa-user-shield"></i> لوحة الإدارة
-                                 </button>`;
-                }
-
-                statusDiv.innerHTML = `
-                    ${adminBtn} 
-                    <span style="font-weight:bold; margin-left:10px;">${user.displayName || "طالب"}</span> 
-                    <button class="logout-btn" onclick="logout()">خروج</button>
-                `;
-
-                reviewContainer.innerHTML = `
-                    <div class="add-review-box">
-                        <h3>أضف رأيك هنا 👇</h3>
-                        <input type="text" id="stuName" value="${user.displayName || ''}" placeholder="الاسم بالكامل">
-                        <textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea>
-                        <button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button>
-                    </div>`;
-            } else {
-                statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
-                reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
-            }
-        });
 
         window.onload = () => { loadFolders(); loadReviews(); };
 
-        function getYouTubeId(url) {
-            const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
-            const match = url.match(regExp);
-            return (match && match[2].length === 11) ? match[2] : null;
-        }
-
-        async function loadFolders() {
-            const grid = document.getElementById('foldersGrid');
-            onValue(ref(db, 'folders'), (snapshot) => {
-                if(snapshot.exists()) {
-                    let html = "";
-                    snapshot.forEach(c => {
-                        const d = c.val();
-                        html += `<div class="folder-card" onclick="openContent('${c.key}', '${d.name}')"><img src="${d.img || 'mona.jpg'}" onerror="this.src='mona.jpg'"><h3>${d.name}</h3></div>`;
-                    });
-                    grid.innerHTML = html;
-                }
+        function loadFolders() {
+            onValue(ref(db, 'folders'), snapshot => {
+                let html = "";
+                snapshot.forEach(c => { html += `<div class="folder-card" onclick="openContent('${c.key}', '${c.val().name}')"><img src="${c.val().img || 'mona.jpg'}" onerror="this.src='mona.jpg'"><h3>${c.val().name}</h3></div>`; });
+                document.getElementById('foldersGrid').innerHTML = html;
             });
         }
 
         function loadReviews() {
-            const grid = document.getElementById('testiGrid');
-            onValue(ref(db, 'reviews'), (snapshot) => {
-                grid.innerHTML = "";
-                if(snapshot.exists()) {
-                    snapshot.forEach(c => {
-                        const d = c.val();
-                        grid.innerHTML += `<div class="review-card"><p>"${d.text}"</p><h4 style="color:var(--main); margin-top:10px;">- ${d.student}</h4></div>`;
-                    });
-                } else { grid.innerHTML = "<p>لا توجد آراء بعد.</p>"; }
+            onValue(ref(db, 'reviews'), snapshot => {
+                let html = "";
+                snapshot.forEach(c => { html += `<div class="review-card"><p>"${c.val().text}"</p><h4 style="color:var(--main); margin-top:10px;">- ${c.val().student}</h4></div>`; });
+                document.getElementById('testiGrid').innerHTML = html || "<p>لا توجد آراء بعد.</p>";
             });
         }
 
         window.sendStuReview = () => {
-            const name = document.getElementById('stuName').value, text = document.getElementById('stuText').value;
-            if(name && text) {
-                push(ref(db, 'reviews'), { student: name, text: text, uid: currentUser.uid }).then(() => {
-                    alert("شكراً لرأيك الجميل! ❤️");
-                    document.getElementById('stuText').value = "";
-                });
-            } else { alert("من فضلك املأ البيانات"); }
+            const text = document.getElementById('stuText').value.trim();
+            if(text) push(ref(db, 'reviews'), { student: currentUser.displayName || currentUser.email, text: text }).then(() => { alert("شكراً لرأيك!"); document.getElementById('stuText').value = ""; });
         };
 
         window.openContent = async (folderId, folderName) => {
-            if(!currentUser) { alert("يرجى تسجيل الدخول أولاً لمشاهدة المحتوى"); openLogin(); return; }
-            const grid = document.getElementById('combinedGrid');
+            if(!currentUser) { openLogin(); return; }
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
-            grid.innerHTML = "<p style='text-align:center;'>جاري التحميل...</p>";
-            try {
-                const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
-                let html = "";
-                if(vSnap.exists()) {
-                    vSnap.forEach(v => {
-                        const item = v.val();
-                        const vidId = getYouTubeId(item.url); 
-                        const thumbUrl = vidId ? `https://img.youtube.com/vi/${vidId}/mqdefault.jpg` : 'mona.jpg';
-                        html += `<div class="item-card" onclick="openVideo('${item.url}')"><img src="${thumbUrl}" onerror="this.src='mona.jpg'"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4 style="font-weight:900;">${item.title}</h4></div></div>`;
-                    });
-                }
-                if(qSnap.exists()) {
-                    qSnap.forEach(q => {
-                        const item = q.val();
-                        html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div style="height:180px; display:flex; align-items:center; justify-content:center; background:#fff9e6;"><i class="fas fa-pen-alt fa-3x" style="color:#f1c40f"></i></div><div class="item-details"><span class="badge badge-quiz">اختبار</span><h4 style="font-weight:900;">${item.name}</h4></div></div>`;
-                    });
-                }
-                grid.innerHTML = html || "<p style='text-align:center;'>قريباً...</p>";
-            } catch(e) { grid.innerHTML = "حدث خطأ في التحميل"; }
-            window.scrollTo(0,0);
-        };
-
-        window.openVideo = (url) => {
-            const vidId = getYouTubeId(url);
-            if(!vidId) return alert("رابط الفيديو غير صالح");
-            document.getElementById('quizTitle').innerText = "مشاهدة الفيديو";
-            document.getElementById('quizOverlay').style.display = 'block';
-            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="500px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:20px;"></iframe>`;
+            const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
+            let html = "";
+            if(vSnap.exists()) vSnap.forEach(v => {
+                html += `<div class="item-card" onclick="openVideo('${v.val().url}')"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4>${v.val().title}</h4></div></div>`;
+            });
+            if(qSnap.exists()) qSnap.forEach(q => {
+                html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div class="item-details"><span class="badge badge-quiz">اختبار</span><h4>${q.val().name}</h4></div></div>`;
+            });
+            document.getElementById('combinedGrid').innerHTML = html || "<p>قريباً...</p>";
         };
 
         window.startQuiz = (fId, qId) => {
             get(child(dbRef, `quizzes/${fId}/${qId}`)).then(snap => {
-                if(snap.exists()) {
+                if (snap.exists()) {
                     currentQuizData = snap.val();
                     document.getElementById('quizTitle').innerText = currentQuizData.name;
                     document.getElementById('quizOverlay').style.display = 'block';
-                    renderPdf();
+                    renderWrittenQuiz(); 
                 }
             });
         };
 
-        function renderPdf() {
-            studentAnswers = new Array(currentQuizData.answers.length).fill(null);
-            let bubbles = "";
-            currentQuizData.answers.forEach((_, i) => {
-                bubbles += `<div class="bubble-row"><span>${i+1}</span><div class="opt-btns">${['A','B','C','D'].map(char => `<button class="opt-btn q${i}" onclick="setAns(${i},'${char}',this)">${char}</button>`).join('')}</div></div>`;
+        function renderWrittenQuiz() {
+            const container = document.getElementById('quizContainer');
+            if (!currentQuizData.questions) return container.innerHTML = "<p>لا توجد أسئلة.</p>";
+            studentAnswers = new Array(currentQuizData.questions.length).fill(null);
+            let html = "";
+            currentQuizData.questions.forEach((q, i) => {
+                html += `<div class="q-form-card"><span class="q-text">سؤال ${i + 1}: ${q.text}</span><div class="opt-container">
+                    ${['A', 'B', 'C', 'D'].map(char => `<label class="opt-label" onclick="selectAnswer(${i}, '${char}', this)"><input type="radio" name="q${i}"><span>${char}) ${q.options[char]}</span></label>`).join('')}
+                </div></div>`;
             });
-            document.getElementById('quizContainer').innerHTML = `<div class="pdf-layout"><iframe class="pdf-viewer" src="${currentQuizData.pdfUrl}"></iframe><div class="bubble-sheet"><h3 style="margin-bottom:15px; text-align:center;">ورقة الإجابة</h3>${bubbles}<button onclick="finishQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; margin-top:20px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button></div></div>`;
+            html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button>`;
+            container.innerHTML = html;
         }
 
-        window.setAns = (qIdx, val, btn) => {
-            studentAnswers[qIdx] = val;
-            document.querySelectorAll(`.q${qIdx}`).forEach(b => b.classList.remove('selected'));
-            btn.classList.add('selected');
+        window.selectAnswer = (i, char, el) => {
+            studentAnswers[i] = char;
+            el.parentElement.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
+            el.classList.add('selected');
         };
 
-        window.finishQuiz = () => {
-            if(studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة");
+        window.submitWrittenQuiz = () => {
+            if (studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة");
             let score = 0;
-            currentQuizData.answers.forEach((correct, i) => { if(correct === studentAnswers[i]) score++; });
-            const percent = Math.round((score / currentQuizData.answers.length) * 100);
-            push(ref(db, 'results'), { student: currentUser.displayName || currentUser.email, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') }).then(() => {
-                alert(`انتهى الامتحان! درجتك هي: ${percent}%`);
-                closeQuiz();
-            });
+            currentQuizData.questions.forEach((q, i) => { if (q.correct === studentAnswers[i]) score++; });
+            const percent = Math.round((score / currentQuizData.questions.length) * 100);
+            push(ref(db, 'results'), { student: currentUser.displayName || currentUser.email, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') })
+            .then(() => { alert(`درجتك: ${percent}%`); closeQuiz(); });
         };
+
+        window.openVideo = (url) => {
+            const vidId = url.split('v=')[1] || url.split('/').pop();
+            document.getElementById('quizTitle').innerText = "مشاهدة الفيديو";
+            document.getElementById('quizOverlay').style.display = 'block';
+            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px;"></iframe>`;
+        };
+        window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; };
     </script>
 </body>
 </html>
