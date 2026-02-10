@@ -12,153 +12,129 @@
         body { font-family: 'Cairo', sans-serif; background: var(--bg); padding: 20px; color: #333; }
         
         #adminDashboard { display: none; max-width: 1100px; margin: 0 auto; }
-        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
-        h2 { color: var(--dark); font-size: 1.3rem; margin-bottom: 15px; border-right: 5px solid var(--main); padding-right: 10px; text-align: right; }
+        .card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-right: 5px solid var(--main); }
         
-        input, select, textarea { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; }
-        button { background: var(--main); color: white; border: none; padding: 12px; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; transition: 0.3s; }
-        button:hover { background: var(--dark); }
-        
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; }
-        .tab-menu button { background: #fff; color: var(--main); border: 1px solid var(--main); min-width: 120px; }
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-menu button { padding: 12px 25px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; background: #fff; transition: 0.3s; }
         .tab-menu button.active { background: var(--main); color: white; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; background: white; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 15px; text-align: right; border-bottom: 1px solid #eee; }
+        th { background: var(--main); color: white; }
+
+        .form-group { margin-bottom: 15px; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-top: 5px; font-family: 'Cairo'; }
         
-        .table-container { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; background: white; }
-        th, td { padding: 12px; text-align: center; border-bottom: 1px solid #eee; }
-        th { background: #f8f9fa; color: var(--main); }
+        .status-btn { padding: 5px 10px; border-radius: 5px; border: none; color: white; cursor: pointer; font-size: 0.8rem; font-family: 'Cairo'; }
         
-        .course-manage-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; background: #fff; }
-        .video-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9fb; padding: 8px 15px; margin: 5px 0; border-radius: 8px; font-size: 0.9rem; }
-        
-        .delete-btn { background: var(--danger); width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 2px; }
-        .edit-btn { background: #f1c40f; width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 2px; }
-        
-        .question-builder { background: #f0f0ff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--main); position: relative; }
-        .remove-q-btn { position: absolute; top: 10px; left: 10px; background: #ff7675; color: white; border: none; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-        .opt-input { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-body { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 500px; }
+
         .wa-link { color: var(--whatsapp); text-decoration: none; font-weight: bold; }
-        
-        #loadingOverlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
+        .wa-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
-    <div id="loadingOverlay">
-        <i class="fas fa-user-shield fa-spin fa-3x" style="color:var(--main)"></i>
-        <p style="margin-top:15px; font-weight:bold;">جاري التحقق من صلاحيات الإدارة...</p>
+    <div id="loginArea" style="text-align: center; margin-top: 100px;">
+        <h2 style="color:var(--main)">دخول لوحة الإدارة 🔐</h2>
+        <div style="max-width: 350px; margin: 20px auto; background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+            <input type="email" id="adminEmail" placeholder="البريد الإلكتروني">
+            <input type="password" id="adminPass" placeholder="كلمة المرور">
+            <button onclick="adminLogin()" style="width: 100%; padding: 12px; background: var(--main); color: white; border: none; border-radius: 10px; margin-top: 15px; cursor: pointer; font-weight: bold; font-family: 'Cairo';">دخول</button>
+        </div>
     </div>
 
     <div id="adminDashboard">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-            <h1>لوحة الإدارة | Ms. Mona 💎</h1>
-            <button onclick="window.location.href='index.html'" style="width:auto; background:#636e72;">العودة للموقع</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <h1 style="color: var(--dark);">لوحة إدارة Ms. Mona 💎</h1>
+            <button onclick="adminLogout()" class="status-btn" style="background: var(--danger); padding: 10px 20px;">تسجيل خروج</button>
         </div>
 
         <div class="tab-menu">
-            <button onclick="showTab('coursesTab', this)" class="active"><i class="fas fa-book"></i> الكورسات</button>
-            <button onclick="showTab('examsTab', this)"><i class="fas fa-edit"></i> إنشاء اختبار</button>
-            <button onclick="showTab('studentsTab', this)"><i class="fas fa-users"></i> الطلاب</button>
-            <button onclick="showTab('resultsTab', this)"><i class="fas fa-poll"></i> النتائج</button>
-            <button onclick="showTab('reviewsTab', this)"><i class="fas fa-star"></i> الآراء</button>
+            <button class="active" onclick="showTab('studentsTab', this)">الطلاب المسجلين</button>
+            <button onclick="showTab('coursesTab', this)">إدارة الكورسات</button>
+            <button onclick="showTab('quizzesTab', this)">الامتحانات</button>
+            <button onclick="showTab('resultsTab', this)">النتائج</button>
         </div>
 
-        <div id="coursesTab" class="tab-content">
+        <div id="studentsTab" class="tab-content">
             <div class="card">
-                <h2 id="courseFormTitle">إنشاء / تعديل كورس</h2>
-                <input type="hidden" id="editCourseId">
-                <input type="text" id="courseName" placeholder="اسم الكورس">
-                <p style="font-size: 0.8rem; color: #666;">اختر صورة للكورس (اختياري عند التعديل)</p>
-                <input type="file" id="courseImgFile" accept="image/*">
-                <div style="display:flex; gap:10px;">
-                    <button id="saveCourseBtn" onclick="saveCourse()">حفظ الكورس</button>
-                    <button id="cancelEditBtn" onclick="resetCourseForm()" style="display:none; background:#ccc;">إلغاء</button>
-                </div>
+                <h3>قائمة الطلاب</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الاسم</th>
+                            <th>الصف</th>
+                            <th>واتساب الطالب</th>
+                            <th>رقم ولي الأمر</th>
+                            <th>الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="studentsTableBody"></tbody>
+                </table>
             </div>
+        </div>
 
+        <div id="coursesTab" class="tab-content" style="display:none;">
             <div class="card">
-                <h2>إضافة فيديو جديد</h2>
-                <select id="targetCourseSelect"><option value="">اختر الكورس...</option></select>
+                <h3>إضافة كورس (مجلد) جديد</h3>
+                <input type="text" id="courseName" placeholder="اسم الكورس (مثلاً: الصف السادس الابتدائي)">
+                <input type="text" id="courseImg" placeholder="رابط صورة الكورس">
+                <button onclick="addNewCourse()" style="margin-top:10px; background:var(--success); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إنشاء المجلد</button>
+            </div>
+            
+            <div class="card">
+                <h3>إضافة فيديو داخل كورس</h3>
+                <select id="targetCourseSelect"></select>
                 <input type="text" id="videoTitle" placeholder="عنوان الفيديو">
-                <input type="text" id="videoLink" placeholder="رابط اليوتيوب">
-                <button onclick="addVideoToCourse()" style="background:var(--success);">إضافة الفيديو</button>
+                <input type="text" id="videoLink" placeholder="رابط فيديو اليوتيوب">
+                <button onclick="addVideoToCourse()" style="margin-top:10px; background:var(--main); color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إضافة الفيديو</button>
             </div>
-
-            <div id="coursesListAdmin"></div>
         </div>
 
-        <div id="examsTab" class="tab-content" style="display:none;">
+        <div id="quizzesTab" class="tab-content" style="display:none;">
             <div class="card">
-                <h2>إنشاء اختبار جديد</h2>
-                <label>الكورس التابع له:</label>
-                <select id="quizFolderSelect" onchange="loadVideosForQuiz(this.value)"><option value="">اختر الكورس...</option></select>
-                
-                <label>ربط الامتحان بـ (اختياري):</label>
-                <select id="quizVideoSelect"><option value="all">كل الكورس (امتحان شامل)</option></select>
-                
-                <input type="text" id="quizName" placeholder="اسم الامتحان (مثال: اختبار شهر أكتوبر)">
-                <hr style="margin:20px 0;">
+                <h3>إنشاء امتحان جديد</h3>
+                <select id="examCourseSelect" onchange="loadVideosForExam()"></select>
+                <select id="videoRelSelect">
+                    <option value="all">امتحان شامل (للمجلد بالكامل)</option>
+                </select>
+                <input type="text" id="quizName" placeholder="اسم الامتحان">
+                <hr style="margin:20px 0; opacity:0.2;">
                 <div id="questionsArea"></div>
-                
-                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:15px;">
-                    <button onclick="addNewQuestionUI('mcq')" style="background:#55efc4;">+ سؤال اختياري</button>
-                    <button onclick="addNewQuestionUI('tf')" style="background:#81ecec;">+ سؤال صح/خطأ</button>
-                </div>
-                
-                <button onclick="saveWrittenQuiz()" style="background:var(--dark); font-size:1.1rem;">🚀 نشر الاختبار للطلاب</button>
-            </div>
-        </div>
-
-        <div id="studentsTab" class="tab-content" style="display:none;">
-            <div class="card">
-                <h2>الطلاب المسجلين</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>الاسم</th>
-                                <th>الصف</th>
-                                <th>واتساب الطالب</th>
-                                <th>واتساب ولي الأمر</th>
-                                <th>حذف</th>
-                            </tr>
-                        </thead>
-                        <tbody id="studentsListBody"></tbody>
-                    </table>
-                </div>
+                <button onclick="addQuestionField()" style="background:#eee; border:1px dashed #999; width:100%; padding:10px; cursor:pointer; font-family:'Cairo';">+ إضافة سؤال</button>
+                <button onclick="saveQuiz()" style="margin-top:20px; background:var(--success); color:white; width:100%; padding:15px; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-family:'Cairo';">نشر الامتحان</button>
             </div>
         </div>
 
         <div id="resultsTab" class="tab-content" style="display:none;">
-            <div class="card"><h2>نتائج الاختبارات</h2><div class="table-container"><table><thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>حذف</th></tr></thead><tbody id="resultsList"></tbody></table></div></div>
-        </div>
-
-        <div id="reviewsTab" class="tab-content" style="display:none;">
             <div class="card">
-                <h2>آراء الطلاب المنشورة</h2>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>اسم الطالب</th>
-                                <th>الرأي</th>
-                                <th>حذف</th>
-                            </tr>
-                        </thead>
-                        <tbody id="reviewsListBody"></tbody>
-                    </table>
-                </div>
+                <h3>نتائج الطلاب</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>الطالب</th>
+                            <th>الامتحان</th>
+                            <th>الدرجة</th>
+                            <th>التاريخ</th>
+                            <th>حذف</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsTableBody"></tbody>
+                </table>
             </div>
         </div>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, onValue, remove, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+        import { getDatabase, ref, get, set, push, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            authDomain: "monaacademy-cd983.firebaseapp.com",
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
             storageBucket: "monaacademy-cd983.appspot.com",
@@ -168,219 +144,165 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        let qCount = 0;
 
-        onAuthStateChanged(auth, (user) => {
-            if (user && user.email === "mrsmonakamel6@gmail.com") {
-                document.getElementById('loadingOverlay').style.display = 'none';
+        const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+
+        onAuthStateChanged(auth, user => {
+            if(user && user.email === ADMIN_EMAIL) {
+                document.getElementById('loginArea').style.display = 'none';
                 document.getElementById('adminDashboard').style.display = 'block';
-                loadData();
-            } else { window.location.href = "index.html"; }
+                loadStudents();
+                loadFoldersForSelects();
+                loadResults();
+            } else {
+                document.getElementById('loginArea').style.display = 'block';
+                document.getElementById('adminDashboard').style.display = 'none';
+            }
         });
 
-        function loadData() {
-            onValue(ref(db, 'folders'), (snap) => {
-                const s1 = document.getElementById('targetCourseSelect'), 
-                      s2 = document.getElementById('quizFolderSelect'),
-                      list = document.getElementById('coursesListAdmin');
-                
-                s1.innerHTML = s2.innerHTML = '<option value="">اختر الكورس...</option>';
-                list.innerHTML = "";
-                
-                snap.forEach(c => {
-                    const d = c.val();
-                    s1.innerHTML += `<option value="${c.key}">${d.name}</option>`;
-                    s2.innerHTML += `<option value="${c.key}">${d.name}</option>`;
-                    
-                    let vHtml = "";
-                    if(d.videos){
-                        Object.keys(d.videos).forEach(vk => {
-                            vHtml += `<div class="video-item">
-                                <span><i class="fab fa-youtube"></i> ${d.videos[vk].title}</span>
-                                <button class="delete-btn" onclick="window.del('folders/${c.key}/videos/${vk}')">حذف الفيديو</button>
-                            </div>`;
-                        });
-                    }
+        window.adminLogin = () => {
+            const e = document.getElementById('adminEmail').value;
+            const p = document.getElementById('adminPass').value;
+            signInWithEmailAndPassword(auth, e, p).catch(err => alert("خطأ: " + err.message));
+        };
 
-                    list.innerHTML += `
-                        <div class="course-manage-card">
-                            <div style="display:flex; justify-content:space-between; align-items:center;">
-                                <h3>${d.name}</h3>
-                                <div>
-                                    <button class="edit-btn" onclick="window.startEditCourse('${c.key}', '${d.name}')">تعديل</button>
-                                    <button class="delete-btn" onclick="window.del('folders/${c.key}')">حذف الكورس</button>
-                                </div>
-                            </div>
-                            <div style="margin-top:10px; border-top:1px solid #eee; padding-top:10px;">
-                                ${vHtml || '<p style="font-size:0.8rem; color:#999;">لا توجد فيديوهات</p>'}
-                            </div>
-                        </div>`;
+        window.adminLogout = () => signOut(auth);
+
+        function loadStudents() {
+            onValue(ref(db, 'students'), snapshot => {
+                let html = "";
+                snapshot.forEach(s => {
+                    const data = s.val();
+                    html += `<tr>
+                        <td>${data.name}</td>
+                        <td>${data.grade}</td>
+                        <td>
+                            <a href="https://wa.me/${data.whatsapp}" target="_blank" class="wa-link">
+                                <i class="fab fa-whatsapp"></i> ${data.whatsapp}
+                            </a>
+                        </td>
+                        <td>
+                            <a href="https://wa.me/${data.parentPhone}" target="_blank" class="wa-link" style="color:var(--dark)">
+                                <i class="fas fa-phone"></i> ${data.parentPhone || '---'}
+                            </a>
+                        </td>
+                        <td><button onclick="del('students/${s.key}')" class="status-btn" style="background:var(--danger)">حذف الطالب</button></td>
+                    </tr>`;
                 });
-            });
-
-            onValue(ref(db, 'students'), (snap) => {
-                const b = document.getElementById('studentsListBody'); b.innerHTML = "";
-                snap.forEach(s => { 
-                    const d = s.val(); 
-                    b.innerHTML += `
-                        <tr>
-                            <td>${d.name || 'مجهول'}</td>
-                            <td>${d.grade || '-'}</td>
-                            <td><a href="https://wa.me/${d.whatsapp}" target="_blank" class="wa-link"><i class="fab fa-whatsapp"></i> ${d.whatsapp || '-'}</a></td>
-                            <td><a href="https://wa.me/${d.parentPhone}" target="_blank" class="wa-link" style="color:#e67e22;"><i class="fab fa-whatsapp"></i> ${d.parentPhone || 'غير مسجل'}</a></td>
-                            <td><button class="delete-btn" onclick="window.del('students/${s.key}')">حذف</button></td>
-                        </tr>`; 
-                });
-            });
-
-            onValue(ref(db, 'results'), (snap) => {
-                const l = document.getElementById('resultsList'); l.innerHTML = "";
-                snap.forEach(c => { const r = c.val(); l.innerHTML += `<tr><td>${r.student}</td><td>${r.exam}</td><td>${r.score}%</td><td><button class="delete-btn" onclick="window.del('results/${c.key}')">حذف</button></td></tr>`; });
-            });
-
-            onValue(ref(db, 'reviews'), (snap) => {
-                const b = document.getElementById('reviewsListBody'); b.innerHTML = "";
-                snap.forEach(s => {
-                    const d = s.val();
-                    b.innerHTML += `<tr><td>${d.student || d.name}</td><td>${d.text}</td><td><button class="delete-btn" onclick="window.del('reviews/${s.key}')">حذف</button></td></tr>`;
-                });
+                document.getElementById('studentsTableBody').innerHTML = html;
             });
         }
 
-        window.loadVideosForQuiz = (fId) => {
-            const vSelect = document.getElementById('quizVideoSelect');
-            vSelect.innerHTML = '<option value="all">كل الكورس (امتحان شامل)</option>';
+        function loadFoldersForSelects() {
+            onValue(ref(db, 'folders'), snapshot => {
+                let options = '<option value="">-- اختر المجلد --</option>';
+                snapshot.forEach(f => { options += `<option value="${f.key}">${f.val().name}</option>`; });
+                document.getElementById('targetCourseSelect').innerHTML = options;
+                document.getElementById('examCourseSelect').innerHTML = options;
+            });
+        }
+
+        window.loadVideosForExam = async () => {
+            const fId = document.getElementById('examCourseSelect').value;
+            const vSelect = document.getElementById('videoRelSelect');
+            vSelect.innerHTML = '<option value="all">امتحان شامل (للمجلد بالكامل)</option>';
             if(!fId) return;
-            onValue(ref(db, `folders/${fId}/videos`), (snap) => {
-                vSelect.innerHTML = '<option value="all">كل الكورس (امتحان شامل)</option>';
-                snap.forEach(v => { vSelect.innerHTML += `<option value="${v.key}">${v.val().title}</option>`; });
-            }, { onlyOnce: true });
-        }
-
-        window.addNewQuestionUI = (type) => {
-            qCount++;
-            const div = document.createElement('div');
-            div.className = 'question-builder';
-            const removeId = 'q_block_' + Date.now() + Math.random().toString(36).substr(2, 5);
-            div.id = removeId;
-            const deleteBtn = `<button class="remove-q-btn" onclick="document.getElementById('${removeId}').remove()">X</button>`;
-            
-            if(type === 'mcq') {
-                div.innerHTML = deleteBtn + `<input type="hidden" class="q-type" value="mcq">
-                    <strong>سؤال اختياري</strong>
-                    <input type="text" class="q-text" placeholder="نص السؤال">
-                    <div class="opt-input">
-                        <input type="text" class="opt-a" placeholder="خيار A"> <input type="text" class="opt-b" placeholder="خيار B">
-                        <input type="text" class="opt-c" placeholder="خيار C"> <input type="text" class="opt-d" placeholder="خيار D">
-                    </div>
-                    <label>الإجابة الصحيحة:</label>
-                    <select class="q-correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>`;
-            } else {
-                div.innerHTML = deleteBtn + `<input type="hidden" class="q-type" value="tf">
-                    <strong>سؤال صح/خطأ</strong>
-                    <input type="text" class="q-text" placeholder="نص السؤال">
-                    <select class="q-correct"><option value="A">صح (True)</option><option value="B">خطأ (False)</option></select>
-                    <input type="hidden" class="opt-a" value="صح (True)"> <input type="hidden" class="opt-b" value="خطأ (False)">
-                    <input type="hidden" class="opt-c" value="-"> <input type="hidden" class="opt-d" value="-">`;
-            }
-            document.getElementById('questionsArea').appendChild(div);
+            const snap = await get(ref(db, `folders/${fId}/videos`));
+            snap.forEach(v => { vSelect.innerHTML += `<option value="${v.key}">${v.val().title}</option>`; });
         };
 
-        window.saveCourse = async () => {
-            const nameInput = document.getElementById('courseName');
-            const fileInput = document.getElementById('courseImgFile');
-            const editId = document.getElementById('editCourseId').value;
-            const name = nameInput.value.trim();
-            const file = fileInput.files[0];
-            
-            if(!name) return alert("الاسم مطلوب");
-            
-            let imgData = null;
-            if(file) { 
-                imgData = await new Promise(r => { 
-                    const rd = new FileReader(); 
-                    rd.readAsDataURL(file); 
-                    rd.onload = () => r(rd.result); 
-                }); 
-            }
-
-            try {
-                if(editId) {
-                    const updateData = { name: name };
-                    if(imgData) updateData.img = imgData;
-                    await update(ref(db, 'folders/' + editId), updateData);
-                    alert("تم تعديل الكورس بنجاح");
-                } else {
-                    if(!imgData) return alert("يرجى اختيار صورة للكورس الجديد");
-                    await push(ref(db, 'folders'), { name, img: imgData });
-                    alert("تم إنشاء الكورس بنجاح");
-                }
-                window.resetCourseForm();
-            } catch(e) { alert("حدث خطأ: " + e.message); }
-        };
-
-        window.startEditCourse = (id, name) => {
-            document.getElementById('editCourseId').value = id;
-            document.getElementById('courseName').value = name;
-            document.getElementById('courseFormTitle').innerText = "تعديل كورس: " + name;
-            document.getElementById('cancelEditBtn').style.display = "block";
-            document.getElementById('saveCourseBtn').innerText = "تحديث البيانات";
-            window.scrollTo({top: 0, behavior: 'smooth'});
-        };
-
-        window.resetCourseForm = () => {
-            document.getElementById('editCourseId').value = "";
-            document.getElementById('courseName').value = "";
-            document.getElementById('courseImgFile').value = "";
-            document.getElementById('courseFormTitle').innerText = "إنشاء / تعديل كورس";
-            document.getElementById('cancelEditBtn').style.display = "none";
-            document.getElementById('saveCourseBtn').innerText = "حفظ الكورس";
-        };
-
-        window.saveWrittenQuiz = async () => {
-            const fId = document.getElementById('quizFolderSelect').value;
-            const vId = document.getElementById('quizVideoSelect').value;
-            const name = document.getElementById('quizName').value.trim();
-            const qBlocks = document.querySelectorAll('.question-builder');
-            
-            if(!fId || !name || qBlocks.length === 0) return alert("يرجى ملء جميع البيانات وإضافة سؤال واحد على الأقل");
-            
-            let qs = [];
-            qBlocks.forEach(b => {
-                qs.push({
-                    text: b.querySelector('.q-text').value.trim(),
-                    options: { 
-                        A: b.querySelector('.opt-a').value, 
-                        B: b.querySelector('.opt-b').value, 
-                        C: b.querySelector('.opt-c').value, 
-                        D: b.querySelector('.opt-d').value 
-                    },
-                    correct: b.querySelector('.q-correct').value
-                });
+        window.addNewCourse = () => {
+            const name = document.getElementById('courseName').value.trim();
+            const img = document.getElementById('courseImg').value.trim();
+            if(!name) return alert("يرجى إدخال الاسم");
+            push(ref(db, 'folders'), { name, img }).then(() => {
+                alert("تم إنشاء المجلد");
+                document.getElementById('courseName').value = "";
+                document.getElementById('courseImg').value = "";
             });
-
-            try {
-                await push(ref(db, `quizzes/${fId}`), { name, videoRel: vId, questions: qs });
-                alert("تم نشر الاختبار بنجاح");
-                document.getElementById('questionsArea').innerHTML = "";
-                document.getElementById('quizName').value = "";
-            } catch(e) { alert("خطأ في النشر: " + e.message); }
         };
 
         window.addVideoToCourse = () => {
-            const id = document.getElementById('targetCourseSelect').value;
-            const t = document.getElementById('videoTitle').value.trim();
-            const u = document.getElementById('videoLink').value.trim();
-            
-            if(!id || !t || !u) return alert("يرجى ملء جميع بيانات الفيديو");
-            
-            push(ref(db, `folders/${id}/videos`), { title: t, url: u })
-                .then(() => {
-                    alert("تمت إضافة الفيديو بنجاح");
-                    document.getElementById('videoTitle').value = "";
-                    document.getElementById('videoLink').value = "";
-                });
+            const fId = document.getElementById('targetCourseSelect').value;
+            const title = document.getElementById('videoTitle').value.trim();
+            const url = document.getElementById('videoLink').value.trim();
+            if(!fId || !title || !url) return alert("أكمل البيانات");
+            push(ref(db, `folders/${fId}/videos`), { title, url }).then(() => {
+                alert("تمت إضافة الفيديو");
+                document.getElementById('videoTitle').value = "";
+                document.getElementById('videoLink').value = "";
+            });
         };
+
+        let qCount = 0;
+        window.addQuestionField = () => {
+            const area = document.getElementById('questionsArea');
+            const div = document.createElement('div');
+            div.className = "card";
+            div.style = "background:#f9f9f9; border-right-color:#ccc;";
+            div.innerHTML = `
+                <input type="text" class="q-text" placeholder="نص السؤال">
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                    <input type="text" class="optA" placeholder="اختيار A">
+                    <input type="text" class="optB" placeholder="اختيار B">
+                    <input type="text" class="optC" placeholder="اختيار C (اختياري)">
+                    <input type="text" class="optD" placeholder="اختيار D (اختياري)">
+                </div>
+                <select class="correct-opt" style="margin-top:10px; background:#fff;">
+                    <option value="A">الاجابة الصحيحة: A</option>
+                    <option value="B">الاجابة الصحيحة: B</option>
+                    <option value="C">الاجابة الصحيحة: C</option>
+                    <option value="D">الاجابة الصحيحة: D</option>
+                </select>
+            `;
+            area.appendChild(div);
+        };
+
+        window.saveQuiz = () => {
+            const fId = document.getElementById('examCourseSelect').value;
+            const videoRel = document.getElementById('videoRelSelect').value;
+            const quizName = document.getElementById('quizName').value.trim();
+            const qDivs = document.querySelectorAll('#questionsArea .card');
+            
+            if(!fId || !quizName || qDivs.length === 0) return alert("أكمل بيانات الامتحان");
+
+            let questions = [];
+            qDivs.forEach(div => {
+                questions.push({
+                    text: div.querySelector('.q-text').value,
+                    options: {
+                        A: div.querySelector('.optA').value,
+                        B: div.querySelector('.optB').value,
+                        C: div.querySelector('.optC').value || "-",
+                        D: div.querySelector('.optD').value || "-"
+                    },
+                    correct: div.querySelector('.correct-opt').value
+                });
+            });
+
+            push(ref(db, `quizzes/${fId}`), { name: quizName, videoRel, questions }).then(() => {
+                alert("تم نشر الامتحان بنجاح");
+                document.getElementById('questionsArea').innerHTML = "";
+                document.getElementById('quizName').value = "";
+            });
+        };
+
+        function loadResults() {
+            onValue(ref(db, 'results'), snapshot => {
+                let html = "";
+                snapshot.forEach(r => {
+                    const d = r.val();
+                    html += `<tr>
+                        <td>${d.student}</td>
+                        <td>${d.exam}</td>
+                        <td style="font-weight:bold; color:var(--main)">${d.score}%</td>
+                        <td>${d.date}</td>
+                        <td><button onclick="del('results/${r.key}')" class="status-btn" style="background:var(--danger)">حذف</button></td>
+                    </tr>`;
+                });
+                document.getElementById('resultsTableBody').innerHTML = html;
+            });
+        }
 
         window.showTab = (id, btn) => {
             document.querySelectorAll('.tab-content').forEach(t => t.style.display='none');
@@ -389,11 +311,12 @@
             btn.classList.add('active');
         };
 
-        window.del = (p) => {
-            if(confirm("هل أنت متأكد من الحذف؟")) {
-                remove(ref(db, p)).catch(e => alert("فشل الحذف: " + e.message));
+        window.del = (path) => {
+            if(confirm("هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, path)).catch(err => alert("خطأ: " + err.message));
             }
         };
+
     </script>
 </body>
 </html>
