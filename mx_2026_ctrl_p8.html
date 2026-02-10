@@ -3,131 +3,169 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mona Academy | Control Center</title>
+    <title>Mona Academy | Pro Admin Panel</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --accent: #6c5ce7;
-            --accent-light: #a29bfe;
-            --dark: #1e272e;
-            --success: #00b894;
-            --danger: #ff7675;
-            --bg: #f1f2f6;
-            --white: #ffffff;
+            --accent: #6c5ce7; --dark-bg: #111417; --card-bg: #ffffff;
+            --text-main: #2d3436; --danger: #ff7675; --success: #00b894;
         }
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Cairo', sans-serif; background: var(--bg); color: var(--dark); }
+        body { font-family: 'Cairo', sans-serif; background: #f0f2f5; color: var(--text-main); }
 
-        /* Sidebar & Layout */
+        /* Sidebar */
         .wrapper { display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background: var(--dark); color: white; padding: 25px; position: sticky; top: 0; height: 100vh; }
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        
-        .logo-box { text-align: center; margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .sidebar { width: 280px; background: var(--dark-bg); color: white; padding: 25px; position: fixed; height: 100vh; right: 0; }
+        .main-content { margin-right: 280px; flex: 1; padding: 30px; }
+
+        .logo { font-size: 22px; font-weight: 900; text-align: center; margin-bottom: 40px; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 20px; }
         .nav-link { 
-            display: flex; align-items: center; gap: 12px; padding: 12px 15px; 
-            border-radius: 10px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; color: #ced6e0;
+            display: flex; align-items: center; gap: 12px; padding: 15px; 
+            border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; color: #a4b0be;
         }
         .nav-link:hover, .nav-link.active { background: var(--accent); color: white; }
 
-        /* Cards & UI */
-        .card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        
-        .section-title { font-weight: 900; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; color: var(--accent); }
+        /* Cards & Forms */
+        .card { background: var(--white); background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-top: 8px; font-family: 'Cairo'; outline: none; }
+        input:focus { border-color: var(--accent); }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
+        .btn-main { background: var(--accent); color: white; width: 100%; }
+        .btn-danger { background: #fff0f0; color: var(--danger); }
 
-        /* Table Styles */
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 10px; overflow: hidden; }
-        th { background: #f8f9fa; padding: 15px; text-align: right; font-size: 0.85rem; color: #747d8c; }
-        td { padding: 15px; border-top: 1px solid #f1f2f6; }
-        
-        .btn { padding: 8px 15px; border-radius: 8px; border: none; cursor: pointer; font-family: 'Cairo'; font-weight: 600; transition: 0.2s; }
-        .btn-del { background: #fff0f0; color: var(--danger); }
-        .btn-del:hover { background: var(--danger); color: white; }
-        .btn-add { background: var(--accent); color: white; }
+        /* Custom Tabs */
+        .tabs-header { display: flex; gap: 10px; margin-bottom: 20px; background: #eee; padding: 5px; border-radius: 15px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; cursor: pointer; font-family: 'Cairo'; font-weight: bold; }
+        .tab-btn.active { background: white; color: var(--accent); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
-        /* Detail View Area */
-        .detail-box { background: #f9f9ff; border: 1px dashed var(--accent-light); padding: 15px; border-radius: 10px; margin-top: 10px; }
-        .item-row { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: white; margin-bottom: 5px; border-radius: 5px; border-right: 4px solid var(--accent); }
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { text-align: right; padding: 15px; background: #f8f9fa; font-size: 0.9rem; color: #666; }
+        td { padding: 15px; border-bottom: 1px solid #eee; }
 
-        #loader { position: fixed; inset: 0; background: var(--dark); z-index: 2000; display: flex; align-items: center; justify-content: center; color: white; flex-direction: column; }
+        /* Modal Edit */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 20px; }
+        .modal-content { background: white; width: 100%; max-width: 850px; border-radius: 25px; padding: 30px; max-height: 90vh; overflow-y: auto; position: relative; }
+
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; border-right: 5px solid var(--accent); }
+
+        #guard-loader { position: fixed; inset: 0; background: var(--dark-bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
     </style>
 </head>
 <body>
 
-    <div id="loader">
-        <i class="fas fa-circle-notch fa-spin fa-3x"></i>
-        <p style="margin-top: 15px;">يتم الآن تأمين الاتصال بقواعد البيانات...</p>
+    <div id="guard-loader">
+        <i class="fas fa-user-shield fa-spin fa-3x" style="color: var(--accent);"></i>
+        <h3 style="margin-top: 20px;">جاري التحقق من هوية الأدمن...</h3>
     </div>
 
-    <div class="wrapper" id="dashBody" style="display: none;">
+    <div class="wrapper" id="adminApp" style="display: none;">
         <aside class="sidebar">
-            <div class="logo-box"><h2>MONA PRO</h2><small>لوحة الإدارة الذكية</small></div>
-            <div class="nav-link active" onclick="showSection('manageSection', this)"><i class="fas fa-layer-group"></i> إدارة المحتوى</div>
-            <div class="nav-link" onclick="showSection('examSection', this)"><i class="fas fa-file-signature"></i> مصنع الاختبارات</div>
-            <div class="nav-link" onclick="showSection('studentSection', this)"><i class="fas fa-users"></i> الطلاب والنتائج</div>
-            <div style="position: absolute; bottom: 20px; width: 80%;">
-                <button onclick="adminLogout()" class="btn btn-del" style="width: 100%;"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+            <div class="logo">Mona Academy PRO</div>
+            <div class="nav-link active" onclick="showSection('coursesSection', this)"><i class="fas fa-th-large"></i> إدارة الكورسات</div>
+            <div class="nav-link" onclick="showSection('examsSection', this)"><i class="fas fa-edit"></i> مصنع الاختبارات</div>
+            <div class="nav-link" onclick="showSection('studentsSection', this)"><i class="fas fa-user-graduate"></i> بيانات الطلاب</div>
+            <div class="nav-link" onclick="showSection('resultsSection', this)"><i class="fas fa-poll-h"></i> درجات الطلاب</div>
+            
+            <div style="margin-top: 50px; border-top: 1px solid #333; padding-top: 20px;">
+                <a href="index.html" class="nav-link" style="color: var(--success);"><i class="fas fa-external-link-alt"></i> العودة للموقع الرئيسي</a>
+                <div class="nav-link" onclick="logout()" style="color: var(--danger);"><i class="fas fa-power-off"></i> تسجيل الخروج</div>
             </div>
         </aside>
 
         <main class="main-content">
-            <section id="manageSection" class="admin-section">
-                <div class="grid-2">
-                    <div class="card">
-                        <h3 class="section-title"><i class="fas fa-folder-plus"></i> إضافة مجلد جديد</h3>
-                        <input type="text" id="fName" placeholder="اسم الكورس/المجلد" style="width:100%; padding:12px; margin-bottom:10px; border-radius:8px; border:1px solid #ddd;">
-                        <input type="file" id="fFile" accept="image/*" style="margin-bottom:15px;">
-                        <button class="btn btn-add" style="width:100%" onclick="saveFolder()">حفظ المجلد</button>
+            <section id="coursesSection" class="admin-section">
+                <div class="card">
+                    <h3>إنشاء كورس جديد</h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <input type="text" id="cName" placeholder="اسم الكورس الجديد">
+                        <input type="file" id="cImg" accept="image/*">
                     </div>
-
-                    <div class="card">
-                        <h3 class="section-title"><i class="fas fa-video"></i> إضافة فيديو سريع</h3>
-                        <select id="vFolderSelect" style="width:100%; padding:10px; margin-bottom:10px;"></select>
-                        <input type="text" id="vTitle" placeholder="عنوان الفيديو" style="width:100%; padding:10px; margin-bottom:10px;">
-                        <input type="text" id="vUrl" placeholder="رابط فيديو اليوتيوب" style="width:100%; padding:10px; margin-bottom:10px;">
-                        <button class="btn btn-add" style="width:100%" onclick="addVideo()">نشر الفيديو</button>
-                    </div>
+                    <button class="btn btn-main" style="margin-top: 15px;" onclick="addCourse()">حفظ الكورس</button>
                 </div>
 
+                <div id="coursesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px;">
+                    </div>
+            </section>
+
+            <section id="examsSection" class="admin-section" style="display: none;">
                 <div class="card">
-                    <h3 class="section-title"><i class="fas fa-edit"></i> التحكم في محتويات المجلدات (حذف فيديو أو اختبار)</h3>
-                    <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">اختر المجلد لعرض ما بداخله وحذفه بشكل منفصل:</p>
-                    <div id="folderExplorer"></div>
+                    <h3>بناء اختبار إلكتروني احترافي</h3>
+                    <select id="exFolderSelect" style="margin-bottom: 15px;"></select>
+                    <input type="text" id="exTitle" placeholder="عنوان الاختبار">
+                    
+                    <div id="questionsArea" style="margin-top: 20px;"></div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn" style="background:#e1e2ff; color:var(--accent);" onclick="addNewQuestion('mcq')">+ خيارات متعددة</button>
+                        <button class="btn" style="background:#e1ffe2; color:var(--success);" onclick="addNewQuestion('tf')">+ صح أو خطأ</button>
+                    </div>
+                    <button class="btn btn-main" style="margin-top: 30px; height: 50px;" onclick="saveFinalExam()">نشر الاختبار الآن</button>
                 </div>
             </section>
 
-            <section id="examSection" class="admin-section" style="display: none;">
+            <section id="studentsSection" class="admin-section" style="display: none;">
                 <div class="card">
-                    <h3 class="section-title"><i class="fas fa-plus-circle"></i> إنشاء اختبار جديد</h3>
-                    <div class="grid-2" style="margin-bottom: 15px;">
-                        <select id="eFolderSelect" style="padding:10px;"></select>
-                        <input type="text" id="eTitle" placeholder="اسم الامتحان (مثلاً: اختبار الوحدة الأولى)" style="padding:10px;">
-                    </div>
-                    <div id="qArea"></div>
-                    <button class="btn btn-add" onclick="addQ()">+ إضافة سؤال</button>
-                    <button class="btn btn-add" style="background:var(--success); float:left;" onclick="publishEx()">نشر الاختبار</button>
+                    <h3>الطلاب المسجلين بالمنصة</h3>
+                    <table>
+                        <thead><tr><th>اسم الطالب</th><th>المرحلة الدراسية</th><th>واتساب</th><th>حذف</th></tr></thead>
+                        <tbody id="studentList"></tbody>
+                    </table>
                 </div>
             </section>
 
-            <section id="studentSection" class="admin-section" style="display: none;">
+            <section id="resultsSection" class="admin-section" style="display: none;">
                 <div class="card">
-                    <h3 class="section-title">قائمة الطلاب</h3>
-                    <table id="studentTable"><thead><tr><th>الاسم</th><th>الصف</th><th>واتساب</th><th>إجراء</th></tr></thead><tbody id="sList"></tbody></table>
-                </div>
-                <div class="card">
-                    <h3 class="section-title">نتائج الاختبارات</h3>
-                    <table><thead><tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>إجراء</th></tr></thead><tbody id="rList"></tbody></table>
+                    <h3>نتائج اختبارات الطلاب</h3>
+                    <table>
+                        <thead><tr><th>الطالب</th><th>اسم الاختبار</th><th>الدرجة</th><th>الوقت والتاريخ</th><th>حذف</th></tr></thead>
+                        <tbody id="resultsList"></tbody>
+                    </table>
                 </div>
             </section>
         </main>
     </div>
 
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span style="float: left; cursor: pointer; color: var(--danger);" onclick="closeModal()">إغلاق &times;</span>
+            <h2 id="editModalTitle">إدارة الكورس</h2>
+            
+            <div class="tabs-header" style="margin-top: 20px;">
+                <button class="tab-btn active" onclick="switchModalTab('tabMain', this)">البيانات الأساسية</button>
+                <button class="tab-btn" onclick="switchModalTab('tabVideos', this)">الفيديوهات</button>
+                <button class="tab-btn" onclick="switchModalTab('tabContent', this)">الاختبارات والأوراق</button>
+            </div>
+
+            <div id="tabMain" class="modal-tab">
+                <label>اسم الكورس:</label><input type="text" id="editNameField">
+                <label>تغيير الصورة:</label><input type="file" id="editImgField">
+                <button class="btn btn-main" style="margin-top: 15px;" onclick="updateCourseBasic()">تحديث البيانات</button>
+            </div>
+
+            <div id="tabVideos" class="modal-tab" style="display:none;">
+                <div style="background: #f0f2f5; padding: 15px; border-radius: 15px; margin-bottom: 15px;">
+                    <h4>إضافة فيديو جديد:</h4>
+                    <input type="text" id="vTitle" placeholder="عنوان الفيديو">
+                    <input type="text" id="vUrl" placeholder="رابط اليوتيوب">
+                    <input type="number" id="vOrder" placeholder="رقم الترتيب (مثلاً: 1، 2..)">
+                    <button class="btn btn-main" style="margin-top: 10px;" onclick="addVideoToCourse()">إضافة الفيديو</button>
+                </div>
+                <div id="vListContainer"></div>
+            </div>
+
+            <div id="tabContent" class="modal-tab" style="display:none;">
+                <h4>الاختبارات الحالية في هذا الكورس:</h4>
+                <div id="qListContainer"></div>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, push, remove, onValue, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -142,158 +180,170 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
+        let activeCID = "";
 
-        // التحقق من الهوية
+        // نظام الأمان (Security Guard)
         onAuthStateChanged(auth, user => {
-            if(user && user.email === "mrsmonakamel6@gmail.com") {
-                document.getElementById('loader').style.display = 'none';
-                document.getElementById('dashBody').style.display = 'flex';
+            if (user && user.email === "mrsmonakamel6@gmail.com") {
+                document.getElementById('guard-loader').style.display = 'none';
+                document.getElementById('adminApp').style.display = 'flex';
                 syncData();
-            } else { window.location.href = "index.html"; }
+            } else {
+                window.location.href = "login.html"; // طرد الفوري
+            }
         });
 
         function syncData() {
-            // مزامنة المجلدات والمحتويات
-            onValue(ref(db, 'folders'), snap => {
-                let html = "", opts = "<option value=''>اختر المجلد</option>";
-                snap.forEach(child => {
-                    const f = child.val();
-                    const fId = child.key;
-                    opts += `<option value="${fId}">${f.name}</option>`;
-                    
-                    // بناء عارض المحتويات التفصيلي
-                    html += `
-                        <div class="card" style="border:1px solid #eee;">
-                            <div style="display:flex; justify-content:space-between;">
-                                <strong><i class="fas fa-folder"></i> ${f.name}</strong>
-                                <button class="btn btn-del" onclick="delItem('folders/${fId}')">حذف المجلد بالكامل</button>
-                            </div>
-                            <div class="detail-box">
-                                <h6>الفيديوهات داخل المجلد:</h6>
-                                <div id="v-list-${fId}">${renderVideos(f.videos, fId)}</div>
-                                <h6 style="margin-top:10px;">الاختبارات داخل المجلد:</h6>
-                                <div id="q-list-${fId}">${renderQuizzes(fId)}</div>
-                            </div>
-                        </div>
-                    `;
+            onValue(ref(db, '/'), snap => {
+                const data = snap.val() || {};
+                renderCourses(data.folders);
+                renderStudents(data.students);
+                renderResults(data.results);
+                fillExDropdown(data.folders);
+            });
+        }
+
+        function renderCourses(folders) {
+            let h = "";
+            if(folders) {
+                Object.keys(folders).forEach(id => {
+                    const f = folders[id];
+                    h += `<div class="card" style="text-align:center;">
+                        <img src="${f.img || ''}" style="width:70px; height:70px; border-radius:15px; object-fit:cover;">
+                        <h4 style="margin:10px 0;">${f.name}</h4>
+                        <button class="btn btn-main" onclick="openEditModal('${id}', '${f.name}')">تعديل المحتوى</button>
+                        <button class="btn btn-danger" style="margin-top:5px; width:100%" onclick="delData('folders/${id}')">حذف الكورس نهائياً</button>
+                    </div>`;
                 });
-                document.getElementById('folderExplorer').innerHTML = html;
-                document.getElementById('vFolderSelect').innerHTML = opts;
-                document.getElementById('eFolderSelect').innerHTML = opts;
-            });
-
-            // مزامنة الطلاب
-            onValue(ref(db, 'students'), snap => {
-                let h = "";
-                snap.forEach(s => { h += `<tr><td>${s.val().name}</td><td>${s.val().grade}</td><td>${s.val().whatsapp}</td><td><button class="btn btn-del" onclick="delItem('students/${s.key}')">حذف</button></td></tr>`; });
-                document.getElementById('sList').innerHTML = h;
-            });
-
-            // مزامنة النتائج
-            onValue(ref(db, 'results'), snap => {
-                let h = "";
-                snap.forEach(r => { h += `<tr><td>${r.val().student}</td><td>${r.val().exam}</td><td>${r.val().score}%</td><td><button class="btn btn-del" onclick="delItem('results/${r.key}')">حذف</button></td></tr>`; });
-                document.getElementById('rList').innerHTML = h;
-            });
+            }
+            document.getElementById('coursesGrid').innerHTML = h;
         }
 
-        function renderVideos(videos, fId) {
-            if(!videos) return "<p style='font-size:0.8rem; color:gray;'>لا يوجد فيديوهات</p>";
-            let h = "";
-            Object.keys(videos).forEach(vId => {
-                h += `<div class="item-row"><span>${videos[vId].title}</span> <button class="btn btn-del" style="padding:2px 8px;" onclick="delItem('folders/${fId}/videos/${vId}')">حذف الفيديو</button></div>`;
-            });
-            return h;
-        }
+        window.addCourse = () => {
+            const name = document.getElementById('cName').value;
+            const file = document.getElementById('cImg').files[0];
+            if(!name) return;
+            if(file) {
+                const reader = new FileReader();
+                reader.onload = () => push(ref(db, 'folders'), { name, img: reader.result });
+                reader.readAsDataURL(file);
+            } else push(ref(db, 'folders'), { name });
+            alert("تم الحفظ");
+        };
 
-        function renderQuizzes(fId) {
-            // سيتم جلب الاختبارات المرتبطة بهذا المجلد
-            let h = "";
-            onValue(ref(db, `quizzes/${fId}`), snap => {
-                if(!snap.exists()) h = "<p style='font-size:0.8rem; color:gray;'>لا يوجد اختبارات</p>";
-                else {
-                    snap.forEach(q => {
-                        h += `<div class="item-row"><span>${q.val().name}</span> <button class="btn btn-del" style="padding:2px 8px;" onclick="delItem('quizzes/${fId}/${q.key}')">حذف الاختبار</button></div>`;
+        window.openEditModal = (id, name) => {
+            activeCID = id;
+            document.getElementById('editNameField').value = name;
+            document.getElementById('editModalTitle').innerText = "تعديل: " + name;
+            
+            // جلب الفيديوهات والاختبارات
+            onValue(ref(db, `folders/${id}`), snap => {
+                const f = snap.val();
+                let vH = "";
+                if(f.videos) {
+                    // ترتيب الفيديوهات حسب رقم الترتيب
+                    const sortedV = Object.entries(f.videos).sort((a,b) => a[1].order - b[1].order);
+                    sortedV.forEach(([vId, v]) => {
+                        vH += `<div class="list-item"><span><b>${v.order}.</b> ${v.title}</span> <button class="btn btn-danger" onclick="delData('folders/${id}/videos/${vId}')">حذف</button></div>`;
                     });
                 }
+                document.getElementById('vListContainer').innerHTML = vH || "لا يوجد فيديوهات";
             });
-            return h;
-        }
 
-        window.saveFolder = () => {
-            const name = document.getElementById('fName').value;
-            const file = document.getElementById('fFile').files[0];
-            if(name && file) {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    push(ref(db, 'folders'), { name: name, img: reader.result });
-                    alert("تم حفظ المجلد");
-                };
-                reader.readAsDataURL(file);
-            }
+            onValue(ref(db, `quizzes/${id}`), snap => {
+                let qH = "";
+                snap.forEach(q => {
+                    qH += `<div class="list-item"><span>${q.val().name}</span> <button class="btn btn-danger" onclick="delData('quizzes/${id}/${q.key}')">حذف الاختبار</button></div>`;
+                });
+                document.getElementById('qListContainer').innerHTML = qH || "لا يوجد اختبارات";
+            });
+
+            document.getElementById('editModal').style.display = 'flex';
         };
 
-        window.addVideo = () => {
-            const fId = document.getElementById('vFolderSelect').value;
+        window.addVideoToCourse = () => {
             const title = document.getElementById('vTitle').value;
             const url = document.getElementById('vUrl').value;
-            if(fId && title && url) {
-                push(ref(db, `folders/${fId}/videos`), { title, url });
-                alert("تم إضافة الفيديو للمجلد");
+            const order = document.getElementById('vOrder').value || 0;
+            if(activeCID && title && url) {
+                push(ref(db, `folders/${activeCID}/videos`), { title, url, order: parseInt(order) });
+                alert("تمت الإضافة");
             }
         };
 
-        window.addQ = () => {
-            const d = document.createElement('div');
-            d.className = "card"; d.style = "background:#fcfcfc";
-            d.innerHTML = `
-                <input type="text" class="q-txt" placeholder="السؤال" style="width:100%; padding:8px; margin-bottom:10px;">
-                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                    <input type="text" class="oA" placeholder="خيار A">
-                    <input type="text" class="oB" placeholder="خيار B">
-                    <input type="text" class="oC" placeholder="خيار C">
-                    <input type="text" class="oD" placeholder="خيار D">
-                </div>
-                <select class="q-cor" style="margin-top:10px; padding:5px;">
-                    <option value="A">الاجابة الصحيحة A</option><option value="B">الاجابة الصحيحة B</option>
-                    <option value="C">الاجابة الصحيحة C</option><option value="D">الاجابة الصحيحة D</option>
-                </select>
-            `;
-            document.getElementById('qArea').appendChild(d);
+        window.addNewQuestion = (type) => {
+            const qDiv = document.createElement('div');
+            qDiv.className = "card"; qDiv.style = "background:#f9f9f9; position:relative;";
+            qDiv.innerHTML = `<i class="fas fa-times-circle" style="position:absolute; left:15px; top:15px; color:red; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+                <input type="text" class="q-text" placeholder="السؤال هنا...">
+                ${type==='mcq' ? `
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:10px;">
+                    <input type="text" class="oA" placeholder="خيار A"> <input type="text" class="oB" placeholder="خيار B">
+                    <input type="text" class="oC" placeholder="خيار C"> <input type="text" class="oD" placeholder="خيار D">
+                </div>` : ''}
+                <select class="q-correct" style="margin-top:10px;"><option value="A">الصح هو A / صح</option><option value="B">الصح هو B / خطأ</option></select>`;
+            document.getElementById('questionsArea').appendChild(qDiv);
         };
 
-        window.publishEx = () => {
-            const fId = document.getElementById('eFolderSelect').value;
-            const name = document.getElementById('eTitle').value;
+        window.saveFinalExam = () => {
+            const fId = document.getElementById('exFolderSelect').value;
+            const title = document.getElementById('exTitle').value;
             let qs = [];
-            document.querySelectorAll('#qArea .card').forEach(c => {
+            document.querySelectorAll('#questionsArea .card').forEach(c => {
                 qs.push({
-                    text: c.querySelector('.q-txt').value,
-                    options: { A: c.querySelector('.oA').value, B: c.querySelector('.oB').value, C: c.querySelector('.oC').value, D: c.querySelector('.oD').value },
-                    correct: c.querySelector('.q-cor').value
+                    text: c.querySelector('.q-text').value,
+                    options: { A: c.querySelector('.oA')?.value || "صح", B: c.querySelector('.oB')?.value || "خطأ", C: c.querySelector('.oC')?.value || "-", D: c.querySelector('.oD')?.value || "-" },
+                    correct: c.querySelector('.q-correct').value
                 });
             });
-            if(fId && name && qs.length) {
-                push(ref(db, `quizzes/${fId}`), { name, questions: qs });
-                alert("تم نشر الاختبار بنجاح");
-                document.getElementById('qArea').innerHTML = "";
+            if(fId && title && qs.length) {
+                push(ref(db, `quizzes/${fId}`), { name: title, questions: qs });
+                alert("تم نشر الامتحان!");
+                document.getElementById('questionsArea').innerHTML = "";
             }
         };
 
-        window.delItem = (path) => {
-            if(confirm("هل أنتِ متأكدة من حذف هذا العنصر؟ لا يمكن التراجع.")) {
-                remove(ref(db, path));
-            }
-        };
+        function renderStudents(students) {
+            let h = "";
+            if(students) Object.keys(students).forEach(id => {
+                const s = students[id];
+                h += `<tr><td>${s.name}</td><td>${s.grade}</td><td>${s.whatsapp}</td><td><button class="btn btn-danger" onclick="delData('students/${id}')">حذف</button></td></tr>`;
+            });
+            document.getElementById('studentList').innerHTML = h;
+        }
+
+        function renderResults(results) {
+            let h = "";
+            if(results) Object.keys(results).forEach(id => {
+                const r = results[id];
+                h += `<tr><td>${r.student}</td><td>${r.exam}</td><td>${r.score}%</td><td>${r.date || '-'}</td><td><button class="btn btn-danger" onclick="delData('results/${id}')">حذف</button></td></tr>`;
+            });
+            document.getElementById('resultsList').innerHTML = h;
+        }
 
         window.showSection = (id, btn) => {
-            document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
+            document.querySelectorAll('.admin-section').forEach(s => s.style.display='none');
             document.getElementById(id).style.display = 'block';
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             btn.classList.add('active');
         };
 
-        window.adminLogout = () => signOut(auth).then(() => window.location.href="index.html");
+        window.delData = (path) => { if(confirm("حذف نهائي؟")) remove(ref(db, path)); };
+        window.closeModal = () => document.getElementById('editModal').style.display = 'none';
+        window.logout = () => signOut(auth);
+
+        function fillExDropdown(folders) {
+            let opts = "<option value=''>اختر الكورس</option>";
+            if(folders) Object.keys(folders).forEach(id => opts += `<option value="${id}">${folders[id].name}</option>`);
+            document.getElementById('exFolderSelect').innerHTML = opts;
+        }
+
+        window.switchModalTab = (id, btn) => {
+            document.querySelectorAll('.modal-tab').forEach(t => t.style.display='none');
+            document.getElementById(id).style.display='block';
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+        };
     </script>
 </body>
 </html>
