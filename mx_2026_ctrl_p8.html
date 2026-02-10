@@ -180,18 +180,24 @@
             } else { window.location.href = "index.html"; }
         });
 
+        // تصحيح 1: فصل تحميل البيانات لضمان عدم حدوث Loop لانهائي
         function loadData() {
             onValue(ref(db, 'folders'), (snap) => {
                 const s1 = document.getElementById('targetCourseSelect'), 
                       s2 = document.getElementById('quizFolderSelect'),
                       list = document.getElementById('coursesListAdmin');
+                
+                // حفظ القيم المختارة مسبقاً قبل المسح لعدم مضايقة المستخدم
+                const currentS1 = s1.value;
+                const currentS2 = s2.value;
+
                 s1.innerHTML = s2.innerHTML = '<option value="">اختر الكورس...</option>';
                 list.innerHTML = "";
                 
                 snap.forEach(c => {
                     const d = c.val();
-                    s1.innerHTML += `<option value="${c.key}">${d.name}</option>`;
-                    s2.innerHTML += `<option value="${c.key}">${d.name}</option>`;
+                    s1.innerHTML += `<option value="${c.key}" ${currentS1 === c.key ? 'selected' : ''}>${d.name}</option>`;
+                    s2.innerHTML += `<option value="${c.key}" ${currentS2 === c.key ? 'selected' : ''}>${d.name}</option>`;
                     
                     let vHtml = "";
                     if(d.videos){
@@ -219,17 +225,16 @@
                 });
             });
 
-            // تعديل عرض بيانات الطلاب لتشمل رقم ولي الأمر
             onValue(ref(db, 'students'), (snap) => {
                 const b = document.getElementById('studentsListBody'); b.innerHTML = "";
                 snap.forEach(s => { 
                     const d = s.val(); 
                     b.innerHTML += `
                         <tr>
-                            <td>${d.name}</td>
-                            <td>${d.grade}</td>
-                            <td><a href="https://wa.me/${d.whatsapp}" class="wa-link"><i class="fab fa-whatsapp"></i> ${d.whatsapp}</a></td>
-                            <td><a href="https://wa.me/${d.parentPhone}" class="wa-link" style="color:#e67e22;"><i class="fab fa-whatsapp"></i> ${d.parentPhone || 'غير مسجل'}</a></td>
+                            <td>${d.name || 'مجهول'}</td>
+                            <td>${d.grade || '-'}</td>
+                            <td><a href="https://wa.me/${d.whatsapp}" target="_blank" class="wa-link"><i class="fab fa-whatsapp"></i> ${d.whatsapp || '-'}</a></td>
+                            <td><a href="https://wa.me/${d.parentPhone}" target="_blank" class="wa-link" style="color:#e67e22;"><i class="fab fa-whatsapp"></i> ${d.parentPhone || 'غير مسجل'}</a></td>
                             <td><button class="delete-btn" onclick="window.del('students/${s.key}')">حذف</button></td>
                         </tr>`; 
                 });
@@ -244,7 +249,7 @@
                 const b = document.getElementById('reviewsListBody'); b.innerHTML = "";
                 snap.forEach(s => {
                     const d = s.val();
-                    b.innerHTML += `<tr><td>${d.name}</td><td>${d.text}</td><td><button class="delete-btn" onclick="window.del('reviews/${s.key}')">حذف</button></td></tr>`;
+                    b.innerHTML += `<tr><td>${d.student || d.name}</td><td>${d.text}</td><td><button class="delete-btn" onclick="window.del('reviews/${s.key}')">حذف</button></td></tr>`;
                 });
             });
         }
@@ -254,6 +259,7 @@
             vSelect.innerHTML = '<option value="all">كل الكورس (امتحان شامل)</option>';
             if(!fId) return;
             onValue(ref(db, `folders/${fId}/videos`), (snap) => {
+                vSelect.innerHTML = '<option value="all">كل الكورس (امتحان شامل)</option>';
                 snap.forEach(v => { vSelect.innerHTML += `<option value="${v.key}">${v.val().title}</option>`; });
             }, { onlyOnce: true });
         }
@@ -262,7 +268,11 @@
             qCount++;
             const div = document.createElement('div');
             div.className = 'question-builder';
-            const deleteBtn = `<button class="remove-q-btn" onclick="this.parentElement.remove()">X</button>`;
+            // تصحيح: جعل زر الحذف يعمل بشكل سليم برمجياً
+            const removeId = 'q_block_' + Date.now();
+            div.id = removeId;
+            const deleteBtn = `<button class="remove-q-btn" onclick="document.getElementById('${removeId}').remove()">X</button>`;
+            
             if(type === 'mcq') {
                 div.innerHTML = deleteBtn + `<input type="hidden" class="q-type" value="mcq">
                     <strong>سؤال اختياري</strong>
@@ -271,11 +281,12 @@
                         <input type="text" class="opt-a" placeholder="خيار A"> <input type="text" class="opt-b" placeholder="خيار B">
                         <input type="text" class="opt-c" placeholder="خيار C"> <input type="text" class="opt-d" placeholder="خيار D">
                     </div>
+                    <label>الإجابة الصحيحة:</label>
                     <select class="q-correct"><option value="A">A</option><option value="B">B</option><option value="C">C</option><option value="D">D</option></select>`;
             } else {
                 div.innerHTML = deleteBtn + `<input type="hidden" class="q-type" value="tf">
                     <strong>سؤال صح/خطأ</strong>
-                    <input type="text" class="q-text" placeholder="نص السؤال (مثلاً: القمر كوكب)">
+                    <input type="text" class="q-text" placeholder="نص السؤال">
                     <select class="q-correct"><option value="A">صح (True)</option><option value="B">خطأ (False)</option></select>
                     <input type="hidden" class="opt-a" value="صح (True)"> <input type="hidden" class="opt-b" value="خطأ (False)">
                     <input type="hidden" class="opt-c" value="-"> <input type="hidden" class="opt-d" value="-">`;
@@ -284,23 +295,36 @@
         };
 
         window.saveCourse = async () => {
-            const name = document.getElementById('courseName').value;
-            const file = document.getElementById('courseImgFile').files[0];
+            const nameInput = document.getElementById('courseName');
+            const fileInput = document.getElementById('courseImgFile');
             const editId = document.getElementById('editCourseId').value;
+            const name = nameInput.value.trim();
+            const file = fileInput.files[0];
+            
             if(!name) return alert("الاسم مطلوب");
+            
             let imgData = null;
-            if(file) { imgData = await new Promise(r => { const rd = new FileReader(); rd.readAsDataURL(file); rd.onload = () => r(rd.result); }); }
-            if(editId) {
-                const updateData = { name: name };
-                if(imgData) updateData.img = imgData;
-                await update(ref(db, 'folders/' + editId), updateData);
-                alert("تم التعديل");
-            } else {
-                if(!imgData) return alert("يرجى اختيار صورة للكورس الجديد");
-                await push(ref(db, 'folders'), { name, img: imgData });
-                alert("تم الإنشاء");
+            if(file) { 
+                imgData = await new Promise(r => { 
+                    const rd = new FileReader(); 
+                    rd.readAsDataURL(file); 
+                    rd.onload = () => r(rd.result); 
+                }); 
             }
-            resetCourseForm();
+
+            try {
+                if(editId) {
+                    const updateData = { name: name };
+                    if(imgData) updateData.img = imgData;
+                    await update(ref(db, 'folders/' + editId), updateData);
+                    alert("تم تعديل الكورس بنجاح");
+                } else {
+                    if(!imgData) return alert("يرجى اختيار صورة للكورس الجديد");
+                    await push(ref(db, 'folders'), { name, img: imgData });
+                    alert("تم إنشاء الكورس بنجاح");
+                }
+                resetCourseForm();
+            } catch(e) { alert("حدث خطأ: " + e.message); }
         };
 
         window.startEditCourse = (id, name) => {
@@ -308,40 +332,68 @@
             document.getElementById('courseName').value = name;
             document.getElementById('courseFormTitle').innerText = "تعديل كورس: " + name;
             document.getElementById('cancelEditBtn').style.display = "block";
-            window.scrollTo(0,0);
+            document.getElementById('saveCourseBtn').innerText = "تحديث البيانات";
+            window.scrollTo({top: 0, behavior: 'smooth'});
         };
 
         window.resetCourseForm = () => {
             document.getElementById('editCourseId').value = "";
             document.getElementById('courseName').value = "";
             document.getElementById('courseImgFile').value = "";
-            document.getElementById('courseFormTitle').innerText = "إنشاء كورس جديد";
+            document.getElementById('courseFormTitle').innerText = "إنشاء / تعديل كورس";
             document.getElementById('cancelEditBtn').style.display = "none";
+            document.getElementById('saveCourseBtn').innerText = "حفظ الكورس";
         };
 
         window.saveWrittenQuiz = async () => {
             const fId = document.getElementById('quizFolderSelect').value;
             const vId = document.getElementById('quizVideoSelect').value;
-            const name = document.getElementById('quizName').value;
+            const name = document.getElementById('quizName').value.trim();
             const qBlocks = document.querySelectorAll('.question-builder');
-            if(!fId || !name || qBlocks.length === 0) return alert("أكمل البيانات");
+            
+            if(!fId || !name || qBlocks.length === 0) return alert("يرجى ملء جميع البيانات وإضافة سؤال واحد على الأقل");
+            
             let qs = [];
+            let isValid = true;
+            
             qBlocks.forEach(b => {
+                const text = b.querySelector('.q-text').value.trim();
+                if(!text) isValid = false;
                 qs.push({
-                    text: b.querySelector('.q-text').value,
-                    options: { A: b.querySelector('.opt-a').value, B: b.querySelector('.opt-b').value, C: b.querySelector('.opt-c').value, D: b.querySelector('.opt-d').value },
+                    text: text,
+                    options: { 
+                        A: b.querySelector('.opt-a').value || 'خيار A', 
+                        B: b.querySelector('.opt-b').value || 'خيار B', 
+                        C: b.querySelector('.opt-c').value || '-', 
+                        D: b.querySelector('.opt-d').value || '-' 
+                    },
                     correct: b.querySelector('.q-correct').value
                 });
             });
-            await push(ref(db, `quizzes/${fId}`), { name, videoRel: vId, questions: qs });
-            alert("تم النشر"); location.reload();
+
+            if(!isValid) return alert("يرجى كتابة نص جميع الأسئلة");
+
+            try {
+                await push(ref(db, `quizzes/${fId}`), { name, videoRel: vId, questions: qs });
+                alert("تم نشر الاختبار بنجاح");
+                document.getElementById('questionsArea').innerHTML = "";
+                document.getElementById('quizName').value = "";
+            } catch(e) { alert("خطأ في النشر: " + e.message); }
         };
 
         window.addVideoToCourse = () => {
             const id = document.getElementById('targetCourseSelect').value;
-            const t = document.getElementById('videoTitle').value;
-            const u = document.getElementById('videoLink').value;
-            if(id && t && u) push(ref(db, `folders/${id}/videos`), { title: t, url: u }).then(()=>alert("تمت الإضافة"));
+            const t = document.getElementById('videoTitle').value.trim();
+            const u = document.getElementById('videoLink').value.trim();
+            
+            if(!id || !t || !u) return alert("يرجى ملء جميع بيانات الفيديو");
+            
+            push(ref(db, `folders/${id}/videos`), { title: t, url: u })
+                .then(() => {
+                    alert("تمت إضافة الفيديو بنجاح");
+                    document.getElementById('videoTitle').value = "";
+                    document.getElementById('videoLink').value = "";
+                });
         };
 
         window.showTab = (id, btn) => {
@@ -351,7 +403,11 @@
             btn.classList.add('active');
         };
 
-        window.del = (p) => confirm("هل أنت متأكد؟ سيتم حذف هذا العنصر نهائياً") && remove(ref(db, p));
+        window.del = (p) => {
+            if(confirm("هل أنت متأكد؟ سيتم حذف هذا العنصر نهائياً ولن تتمكن من استعادته.")) {
+                remove(ref(db, p)).catch(e => alert("فشل الحذف: " + e.message));
+            }
+        };
     </script>
 </body>
 </html>

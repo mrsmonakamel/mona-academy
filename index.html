@@ -15,7 +15,7 @@
         .logo-text { font-weight: 900; color: var(--main); font-size: 1.6rem; cursor: pointer; }
         
         .auth-btn { background: var(--main); color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; }
-        .logout-btn { background: #ff7675; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
+        .logout-btn { background: #ff7675; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-right: 10px; font-family: 'Cairo'; }
 
         .step-container { display: none; text-align: right; animation: fadeIn 0.4s; }
         .step-container.active { display: block; }
@@ -72,16 +72,15 @@
         .q-text { font-size: 1.2rem; font-weight: bold; margin-bottom: 15px; display: block; }
         .opt-container { display: flex; flex-direction: column; gap: 10px; }
         .opt-label { display: flex; align-items: center; gap: 12px; padding: 15px; border: 1px solid #eee; border-radius: 12px; cursor: pointer; transition: 0.3s; font-weight: bold; }
-        .opt-label:hover { background: #f9f9f9; }
         .opt-label.selected { background: #f0eeff; border-color: var(--main); color: var(--main); }
-        .opt-label input { width: 20px; height: 20px; accent-color: var(--main); }
+        .opt-label input { width: 20px; height: 20px; accent-color: var(--main); pointer-events: none; }
 
         .reviews { padding: 60px 5%; background: #fff; text-align: center; }
         .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .review-card { background: #f9f9f9; padding: 25px; border-radius: 15px; border-top: 4px solid var(--main); text-align: right; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
         
         .add-review-box { max-width: 600px; margin: 30px auto; background: #f0eeff; padding: 25px; border-radius: 25px; }
-        .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; }
+        .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; resize: vertical; }
         .review-locked { background: #eee; color: #777; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; }
 
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
@@ -98,8 +97,7 @@
         <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
         <div id="authStatus"><button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button></div>
     </header>
-
-    <div id="loginModal" class="modal">
+        <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeLogin()">&times;</span>
             <div id="authChoice">
@@ -115,7 +113,7 @@
                 <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب</h2>
                 <input type="email" id="stEmail" class="reg-input" placeholder="البريد الإلكتروني">
                 <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" onclick="loginEmail()" style="width:100%;">دخول</button>
+                <button class="auth-btn" id="loginBtn" onclick="loginEmail()" style="width:100%;">دخول</button>
                 <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
             </div>
             <div id="registerForm" style="display:none;">
@@ -131,9 +129,7 @@
                     </div>
                     <label class="reg-label">رقم واتساب الطالب:</label>
                     <div class="phone-row">
-                        <select id="countryCode" class="country-select">
-                            <option value="+20">🇪🇬 +20</option>
-                        </select>
+                        <select id="countryCode" class="country-select"><option value="+20">🇪🇬 +20</option></select>
                         <input type="tel" id="regWhatsapp" class="reg-input" placeholder="رقم الهاتف">
                     </div>
                     <label class="reg-label">رقم ولي الأمر:</label>
@@ -157,13 +153,11 @@
                 </div>
                 <div id="step3" class="step-container">
                     <h3 style="margin-bottom:15px;">بيانات الحساب</h3>
-                    <div id="emailPassFields">
-                        <input type="email" id="regEmail" class="reg-input" placeholder="البريد الإلكتروني">
-                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور">
-                    </div>
+                    <input type="email" id="regEmail" class="reg-input" placeholder="البريد الإلكتروني">
+                    <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور">
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="auth-btn" id="finalPrevBtn" onclick="nextStep(2)" style="background:#ccc; width:40%;">السابق</button>
-                        <button class="auth-btn" id="finalSubmitBtn" onclick="handleRegister()" style="width:60%; background:var(--whatsapp);">إنشاء الحساب</button>
+                        <button class="auth-btn" onclick="nextStep(2)" style="background:#ccc; width:40%;">السابق</button>
+                        <button class="auth-btn" id="regBtn" onclick="handleRegister()" style="width:60%; background:var(--whatsapp);">إنشاء الحساب</button>
                     </div>
                 </div>
             </div>
@@ -226,7 +220,7 @@
 
     <footer>
         <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamal</strong></p>
-        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; align-items: center;">
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
             <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">فيسبوك</a>
             <div class="social-btn wa" onclick="document.getElementById('waModal').style.display='flex'">واتساب</div>
         </div>
@@ -234,14 +228,13 @@
 
     <div id="waModal" class="modal">
         <div class="modal-content">
-            <h3 style="margin-bottom: 20px; color: var(--dark);">تواصل مع Ms. Mona</h3>
+            <h3 style="margin-bottom: 20px;">تواصل مع Ms. Mona</h3>
             <a href="https://wa.me/201018591244" class="social-btn wa" style="display:block; margin-bottom:10px;" target="_blank">01018591244</a>
             <a href="https://wa.me/201128874885" class="social-btn wa" style="display:block;" target="_blank">01128874885</a>
             <button onclick="document.getElementById('waModal').style.display='none'" style="margin-top: 15px; border: none; background: none; color: #ff7675; cursor: pointer; font-family:'Cairo';">إغلاق</button>
         </div>
     </div>
-
-    <script type="module">
+        <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, child, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -265,7 +258,8 @@
         let studentAnswers = [];
         const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
-        onAuthStateChanged(auth, async user => {
+        // التصحيح 1: إضافة حالة التحميل لزر الدخول
+        onAuthStateChanged(auth, user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
@@ -286,87 +280,100 @@
             document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
         };
-        window.nextStep = (step) => {
-            document.querySelectorAll('.step-container').forEach(s => s.classList.remove('active'));
-            document.getElementById('step' + step).classList.add('active');
-            document.getElementById('regProgress').style.width = (step === 1 ? '33%' : step === 2 ? '66%' : '100%');
+        
+        window.nextStep = (s) => {
+            document.querySelectorAll('.step-container').forEach(sc => sc.classList.remove('active'));
+            document.getElementById('step' + s).classList.add('active');
+            document.getElementById('regProgress').style.width = (s === 1 ? '33%' : s === 2 ? '66%' : '100%');
         };
+
         window.updateGrades = () => {
             const level = document.getElementById('regLevel').value;
             const gradeSelect = document.getElementById('regGrade');
             gradeSelect.innerHTML = "";
             const grades = { primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"], middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"] };
             if (level) grades[level].forEach(g => gradeSelect.innerHTML += `<option value="${g}">${g}</option>`);
+            else gradeSelect.innerHTML = `<option value="">يرجى اختيار المرحلة أولاً</option>`;
         };
+
         window.loginEmail = () => {
             const e = document.getElementById('stEmail').value.trim(), p = document.getElementById('stPass').value;
-            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("خطأ في البيانات"));
+            if(!e || !p) return alert("يرجى إدخال البيانات");
+            const btn = document.getElementById('loginBtn');
+            btn.disabled = true; btn.innerText = "جاري الدخول...";
+            signInWithEmailAndPassword(auth, e, p)
+                .then(() => closeLogin())
+                .catch((err) => { alert("خطأ في الدخول: " + err.message); })
+                .finally(() => { btn.disabled = false; btn.innerText = "دخول"; });
         };
 
         window.handleRegister = () => {
-            const n1 = document.getElementById('n1').value;
-            const n2 = document.getElementById('n2').value;
-            const n3 = document.getElementById('n3').value;
-            const n4 = document.getElementById('n4').value;
+            const n1 = document.getElementById('n1').value.trim();
+            const n2 = document.getElementById('n2').value.trim();
+            const n3 = document.getElementById('n3').value.trim();
+            const n4 = document.getElementById('n4').value.trim();
             const fullName = `${n1} ${n2} ${n3} ${n4}`.trim();
-            
             const whatsapp = document.getElementById('regWhatsapp').value;
-            const parentPhone = document.getElementById('regParentPhone').value;
             const grade = document.getElementById('regGrade').value;
-            const email = document.getElementById('regEmail').value;
+            const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPass').value;
 
-            if(!fullName || !whatsapp || !parentPhone || !grade || !email || !pass) {
-                return alert("يرجى إكمال كافة البيانات المطلوبة");
-            }
+            if(!n1 || !n4 || !email || !pass || !grade) return alert("يرجى إكمال جميع البيانات");
 
-            createUserWithEmailAndPassword(auth, email, pass).then((res) => {
-                updateProfile(res.user, { displayName: fullName });
-                set(ref(db, 'students/' + res.user.uid), { 
-                    name: fullName, 
-                    grade: grade, 
-                    email: email,
-                    whatsapp: whatsapp,
-                    parentPhone: parentPhone 
-                });
-                alert("تم إنشاء الحساب بنجاح!");
-                closeLogin();
-            }).catch(err => alert("خطأ: " + err.message));
+            const btn = document.getElementById('regBtn');
+            btn.disabled = true; btn.innerText = "جاري الإنشاء...";
+
+            createUserWithEmailAndPassword(auth, email, pass).then(async (res) => {
+                await updateProfile(res.user, { displayName: fullName });
+                await set(ref(db, 'students/' + res.user.uid), { name: fullName, grade: grade, whatsapp: whatsapp });
+                alert("تم التسجيل بنجاح!"); closeLogin();
+            }).catch(err => alert("خطأ: " + err.message))
+              .finally(() => { btn.disabled = false; btn.innerText = "إنشاء الحساب"; });
         };
 
-        window.loginGoogle = () => { signInWithPopup(auth, provider).then(() => closeLogin()); };
+        window.loginGoogle = () => signInWithPopup(auth, provider).then(() => closeLogin()).catch(e => alert(e.message));
         window.logout = () => signOut(auth);
         window.openLogin = () => { showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
 
-        window.onload = () => { loadFolders(); loadReviews(); };
+        window.addEventListener('DOMContentLoaded', () => { loadFolders(); loadReviews(); });
 
         function loadFolders() {
             onValue(ref(db, 'folders'), snapshot => {
                 let html = "";
-                snapshot.forEach(c => { html += `<div class="folder-card" onclick="openContent('${c.key}', '${c.val().name}')"><img src="${c.val().img || 'mona.jpg'}" onerror="this.src='mona.jpg'"><h3>${c.val().name}</h3></div>`; });
-                document.getElementById('foldersGrid').innerHTML = html;
+                snapshot.forEach(c => { 
+                    html += `<div class="folder-card" onclick="openContent('${c.key}', '${c.val().name}')">
+                        <img src="${c.val().img || 'mona.jpg'}" onerror="this.src='mona.jpg'">
+                        <h3>${c.val().name}</h3>
+                    </div>`; 
+                });
+                document.getElementById('foldersGrid').innerHTML = html || "<p>لا توجد كورسات متاحة حالياً</p>";
             });
         }
 
         function loadReviews() {
             onValue(ref(db, 'reviews'), snapshot => {
                 let html = "";
-                snapshot.forEach(c => { html += `<div class="review-card"><p>"${c.val().text}"</p><h4 style="color:var(--main); margin-top:10px;">- ${c.val().student}</h4></div>`; });
+                snapshot.forEach(c => { html += `<div class="review-card"><p>"${c.val().text}"</p><h4 style="color:var(--main);">- ${c.val().student}</h4></div>`; });
                 document.getElementById('testiGrid').innerHTML = html;
             });
         }
 
         window.sendStuReview = () => {
             const text = document.getElementById('stuText').value.trim();
-            if(text) push(ref(db, 'reviews'), { student: currentUser.displayName, text: text }).then(() => { document.getElementById('stuText').value = ""; });
+            if(text && currentUser) {
+                push(ref(db, 'reviews'), { student: currentUser.displayName || currentUser.email, text: text })
+                .then(() => { document.getElementById('stuText').value = ""; alert("شكراً لرأيك!"); });
+            }
         };
 
-        window.goHome = () => { document.getElementById('homePage').style.display = "block"; document.getElementById('contentArea').style.display = "none"; window.scrollTo(0,0); };
+        window.goHome = () => { 
+            document.getElementById('homePage').style.display = "block"; 
+            document.getElementById('contentArea').style.display = "none"; 
+        };
 
-        // --- تعديل جلب المحتوى لعرض صور الفيديوهات ---
         window.openContent = async (folderId, folderName) => {
-            if(!currentUser) { openLogin(); return; }
+            if(!currentUser) return openLogin();
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
@@ -377,93 +384,74 @@
             if(vSnap.exists()) {
                 vSnap.forEach(v => {
                     const videoData = v.val();
-                    let videoId = "";
-                    try {
-                        videoId = videoData.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)[1];
-                    } catch(e) { videoId = "error"; }
-                    const thumbUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
-
-                    html += `
-                        <div class="item-card" onclick="openVideo('${videoData.url}', '${videoData.title}', '${v.key}', '${folderId}')">
-                            <img src="${thumbUrl}" class="v-thumb" onerror="this.src='mona.jpg'">
-                            <div class="item-details">
-                                <span class="badge badge-video">فيديو شرح</span>
-                                <h4>${videoData.title}</h4>
-                            </div>
-                        </div>`;
+                    let vidId = "error";
+                    const match = videoData.url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+                    if (match && match[2].length == 11) vidId = match[2];
+                    html += `<div class="item-card" onclick="openVideo('${videoData.url}', '${videoData.title}', '${v.key}', '${folderId}')">
+                        <img src="https://img.youtube.com/vi/${vidId}/mqdefault.jpg" class="v-thumb" onerror="this.src='mona.jpg'">
+                        <div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4>${videoData.title}</h4></div>
+                    </div>`;
                 });
             }
-            
             if(qSnap.exists()) {
                 qSnap.forEach(q => {
                     if(q.val().videoRel === "all" || !q.val().videoRel) {
-                        html += `
-                            <div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')">
-                                <div style="height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center; border-bottom:1px solid #eee;">
-                                     <i class="fas fa-file-signature fa-3x" style="color:var(--main)"></i>
-                                </div>
-                                <div class="item-details">
-                                    <span class="badge badge-quiz">امتحان شامل</span>
-                                    <h4>${q.val().name}</h4>
-                                </div>
-                            </div>`;
-                    }
-                });
-            }
-            document.getElementById('combinedGrid').innerHTML = html || "<p style='text-align:center;'>قريباً سيتم رفع المحتوى...</p>";
-        };
-
-        window.openVideo = async (url, title, videoId, folderId) => {
-            let vidId = "";
-            try {
-                vidId = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)[1];
-            } catch(e) { alert("رابط الفيديو غير صحيح"); return; }
-            
-            document.getElementById('quizTitle').innerText = title;
-            document.getElementById('quizOverlay').style.display = 'block';
-            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="450px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.1);"></iframe>`;
-            
-            const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
-            let examHtml = "";
-            if(qSnap.exists()) {
-                qSnap.forEach(q => {
-                    if(q.val().videoRel === videoId) {
-                        examHtml += `<div class="item-card" style="background:#fff; border-right:8px solid #f1c40f; margin-top:15px;" onclick="startQuiz('${folderId}', '${q.key}')">
-                            <div class="item-details" style="display:flex; justify-content:space-between; align-items:center;">
-                                <span style="font-weight:bold;"><i class="fas fa-pen-alt"></i> ابدأ اختبار الدرس: ${q.val().name}</span>
-                                <span class="badge badge-quiz" style="margin:0;">دخول الآن</span>
-                            </div>
+                        html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')">
+                            <div style="height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;"><i class="fas fa-file-signature fa-3x" style="color:var(--main)"></i></div>
+                            <div class="item-details"><span class="badge badge-quiz">امتحان شامل</span><h4>${q.val().name}</h4></div>
                         </div>`;
                     }
                 });
             }
-            document.getElementById('relatedExamArea').innerHTML = examHtml;
+            document.getElementById('combinedGrid').innerHTML = html || "<p style='text-align:center; grid-column:1/-1;'>قريباً...</p>";
+        };
+
+        window.openVideo = async (url, title, videoId, folderId) => {
+            const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+            if (!match) return alert("رابط غير صحيح");
+            document.getElementById('quizTitle').innerText = title;
+            document.getElementById('quizOverlay').style.display = 'block';
+            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allowfullscreen style="border-radius:15px; background:#000;"></iframe>`;
+            
+            const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
+            let exHtml = "";
+            if(qSnap.exists()) {
+                qSnap.forEach(q => {
+                    if(q.val().videoRel === videoId) {
+                        exHtml += `<div class="item-card" style="margin-top:15px; border-right:5px solid #f1c40f;" onclick="startQuiz('${folderId}', '${q.key}')">
+                            <div class="item-details"><b>📝 ابدأ اختبار الدرس: ${q.val().name}</b></div>
+                        </div>`;
+                    }
+                });
+            }
+            document.getElementById('relatedExamArea').innerHTML = exHtml;
         };
 
         window.startQuiz = (fId, qId) => {
             get(child(dbRef, `quizzes/${fId}/${qId}`)).then(snap => {
                 if (snap.exists()) {
                     currentQuizData = snap.val();
-                    document.getElementById('quizTitle').innerText = currentQuizData.name;
-                    document.getElementById('quizOverlay').style.display = 'block';
-                    document.getElementById('relatedExamArea').innerHTML = ""; 
+                    if (!currentQuizData.questions) return alert("هذا الاختبار لا يحتوي على أسئلة بعد");
                     
-                    const container = document.getElementById('quizContainer');
+                    document.getElementById('quizOverlay').style.display = 'block';
                     studentAnswers = new Array(currentQuizData.questions.length).fill(null);
                     let html = "";
                     currentQuizData.questions.forEach((q, i) => {
-                        const isTF = (q.options.C === "-" || q.options.C === ""); 
-                        html += `<div class="q-form-card"><span class="q-text">${i+1}. ${q.text}</span><div class="opt-container">
-                            ${['A', 'B', 'C', 'D'].map(char => {
-                                if(isTF && (char === 'C' || char === 'D')) return '';
-                                if(!q.options[char] || q.options[char] === "-") return '';
-                                return `<label class="opt-label" onclick="selectAnswer(${i}, '${char}', this)"><input type="radio" name="q${i}"><span>${q.options[char]}</span></label>`;
-                            }).join('')}
-                        </div></div>`;
+                        const isTF = (!q.options.C || q.options.C === "-");
+                        html += `<div class="q-form-card">
+                            <span class="q-text">${i+1}. ${q.text}</span>
+                            <div class="opt-container">
+                                ${['A', 'B', 'C', 'D'].map(c => {
+                                    if(isTF && (c==='C' || c==='D')) return '';
+                                    if(!q.options[c] || q.options[c] === "-") return '';
+                                    return `<label class="opt-label" onclick="selectAnswer(${i},'${c}',this)"><input type="radio" name="q${i}"><span>${q.options[c]}</span></label>`;
+                                }).join('')}
+                            </div>
+                        </div>`;
                     });
-                    html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-size:1.1rem; box-shadow:0 4px 15px rgba(108, 92, 231, 0.3);">🚀 إرسال الإجابات النهائية</button>`;
-                    container.innerHTML = html;
-                    container.scrollTo(0,0);
+                    html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">إرسال الإجابات</button>`;
+                    document.getElementById('quizContainer').innerHTML = html;
+                    document.getElementById('quizOverlay').scrollTo(0,0);
                 }
             });
         };
@@ -472,6 +460,8 @@
             studentAnswers[i] = char;
             el.parentElement.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
             el.classList.add('selected');
+            const radio = el.querySelector('input');
+            if(radio) radio.checked = true;
         };
 
         window.submitWrittenQuiz = () => {
@@ -481,20 +471,20 @@
             const percent = Math.round((score / currentQuizData.questions.length) * 100);
             
             push(ref(db, 'results'), { 
-                student: currentUser.displayName, 
+                student: currentUser.displayName || currentUser.email, 
                 exam: currentQuizData.name, 
                 score: percent, 
-                date: new Date().toLocaleString('ar-EG') 
+                date: new Date().toLocaleString('ar-EG'),
+                studentUid: currentUser.uid
             }).then(() => { 
-                alert(`أحسنت يا ${currentUser.displayName}! درجتك هي: ${percent}%`); 
+                alert(`أحسنت! درجتك هي: ${percent}%`); 
                 closeQuiz(); 
             });
         };
 
         window.closeQuiz = () => { 
-            document.getElementById('quizOverlay').style.display = 'none'; 
-            document.getElementById('quizContainer').innerHTML = ""; 
-            window.scrollTo(0,0);
+            document.getElementById('quizOverlay').style.display = 'none';
+            document.getElementById('quizContainer').innerHTML = ""; // تفريغ الذاكرة
         };
     </script>
 </body>
