@@ -97,7 +97,8 @@
         <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
         <div id="authStatus"><button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button></div>
     </header>
-        <div id="loginModal" class="modal">
+    
+    <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeLogin()">&times;</span>
             <div id="authChoice">
@@ -181,8 +182,7 @@
                 <p>Ms. Mona Kamal is a professional English language instructor dedicated to making English learning an enjoyable and rewarding experience.</p>
             </div>
         </section>
-
-        <section class="features">
+                <section class="features">
             <h2>لماذا تشترك معنا؟ ✨</h2>
             <div class="features-grid">
                 <div class="feat-card"><div class="num-circle">1</div><h3>شرح مبسط</h3><p>بنحلل كل قاعدة وكل كلمة في المنهج بأسلوب ممتع.</p></div>
@@ -234,7 +234,8 @@
             <button onclick="document.getElementById('waModal').style.display='none'" style="margin-top: 15px; border: none; background: none; color: #ff7675; cursor: pointer; font-family:'Cairo';">إغلاق</button>
         </div>
     </div>
-        <script type="module">
+
+    <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, child, push, onValue, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -258,7 +259,6 @@
         let studentAnswers = [];
         const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
-        // التصحيح 1: إضافة حالة التحميل لزر الدخول
         onAuthStateChanged(auth, user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
@@ -333,7 +333,7 @@
 
         window.loginGoogle = () => signInWithPopup(auth, provider).then(() => closeLogin()).catch(e => alert(e.message));
         window.logout = () => signOut(auth);
-        window.openLogin = () => { showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
+        window.openLogin = () => { window.showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
 
         window.addEventListener('DOMContentLoaded', () => { loadFolders(); loadReviews(); });
@@ -373,7 +373,7 @@
         };
 
         window.openContent = async (folderId, folderName) => {
-            if(!currentUser) return openLogin();
+            if(!currentUser) return window.openLogin();
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
@@ -448,6 +448,7 @@
                                 }).join('')}
                             </div>
                         </div>`;
+                        
                     });
                     html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">إرسال الإجابات</button>`;
                     document.getElementById('quizContainer').innerHTML = html;
@@ -478,13 +479,14 @@
                 studentUid: currentUser.uid
             }).then(() => { 
                 alert(`أحسنت! درجتك هي: ${percent}%`); 
-                closeQuiz(); 
+                window.closeQuiz(); 
             });
         };
 
         window.closeQuiz = () => { 
             document.getElementById('quizOverlay').style.display = 'none';
-            document.getElementById('quizContainer').innerHTML = ""; // تفريغ الذاكرة
+            document.getElementById('quizContainer').innerHTML = "";
+            document.getElementById('relatedExamArea').innerHTML = "";
         };
     </script>
 </body>

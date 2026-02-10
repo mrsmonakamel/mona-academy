@@ -180,14 +180,12 @@
             } else { window.location.href = "index.html"; }
         });
 
-        // تصحيح 1: فصل تحميل البيانات لضمان عدم حدوث Loop لانهائي
         function loadData() {
             onValue(ref(db, 'folders'), (snap) => {
                 const s1 = document.getElementById('targetCourseSelect'), 
                       s2 = document.getElementById('quizFolderSelect'),
                       list = document.getElementById('coursesListAdmin');
                 
-                // حفظ القيم المختارة مسبقاً قبل المسح لعدم مضايقة المستخدم
                 const currentS1 = s1.value;
                 const currentS2 = s2.value;
 
@@ -268,8 +266,7 @@
             qCount++;
             const div = document.createElement('div');
             div.className = 'question-builder';
-            // تصحيح: جعل زر الحذف يعمل بشكل سليم برمجياً
-            const removeId = 'q_block_' + Date.now();
+            const removeId = 'q_block_' + Date.now() + Math.random().toString(36).substr(2, 5);
             div.id = removeId;
             const deleteBtn = `<button class="remove-q-btn" onclick="document.getElementById('${removeId}').remove()">X</button>`;
             
@@ -323,7 +320,7 @@
                     await push(ref(db, 'folders'), { name, img: imgData });
                     alert("تم إنشاء الكورس بنجاح");
                 }
-                resetCourseForm();
+                window.resetCourseForm();
             } catch(e) { alert("حدث خطأ: " + e.message); }
         };
 
