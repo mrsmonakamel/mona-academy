@@ -17,15 +17,11 @@
         .auth-btn { background: var(--main); color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: bold; cursor: pointer; font-family: 'Cairo'; }
         .logout-btn { background: #ff7675; color: white; border: none; padding: 5px 15px; border-radius: 8px; cursor: pointer; margin-right: 10px; }
 
-        /* تنسيق نظام التسجيل المطور */
         .step-container { display: none; text-align: right; animation: fadeIn 0.4s; }
         .step-container.active { display: block; }
         .reg-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; font-size: 0.9rem; }
         
-        /* تعديل الاسم الرباعي */
         .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
-        /* تعديل مفتاح الدولة */
         .phone-row { display: flex; gap: 5px; direction: ltr; }
         .country-select { width: 90px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; background: #f9f9f9; }
 
@@ -106,7 +102,6 @@
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeLogin()">&times;</span>
-            
             <div id="authChoice">
                 <h2 style="color:var(--main); margin-bottom:20px;">مرحباً بك 🎓</h2>
                 <button class="auth-btn" onclick="showAuthForm('login')" style="width:100%; margin-bottom:10px;">تسجيل الدخول</button>
@@ -116,7 +111,6 @@
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> الدخول بواسطة جوجل
                 </button>
             </div>
-
             <div id="loginForm" style="display:none;">
                 <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب</h2>
                 <input type="email" id="stEmail" class="reg-input" placeholder="البريد الإلكتروني">
@@ -124,10 +118,8 @@
                 <button class="auth-btn" onclick="loginEmail()" style="width:100%;">دخول</button>
                 <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
             </div>
-
             <div id="registerForm" style="display:none;">
                 <div class="progress-bar"><div id="regProgress" class="progress-fill"></div></div>
-                
                 <div id="step1" class="step-container active">
                     <h3 style="margin-bottom:15px;">البيانات الشخصية</h3>
                     <label class="reg-label">الاسم الرباعي:</label>
@@ -137,7 +129,6 @@
                         <input type="text" id="n3" class="reg-input" placeholder="الجد">
                         <input type="text" id="n4" class="reg-input" placeholder="اللقب">
                     </div>
-
                     <label class="reg-label">رقم واتساب الطالب:</label>
                     <div class="phone-row">
                         <select id="countryCode" class="country-select">
@@ -148,13 +139,10 @@
                         </select>
                         <input type="tel" id="regWhatsapp" class="reg-input" placeholder="رقم الهاتف">
                     </div>
-
                     <label class="reg-label">رقم ولي الأمر:</label>
                     <input type="tel" id="regParentPhone" class="reg-input" placeholder="رقم ولي الأمر للطوارئ">
-                    
                     <button class="auth-btn" onclick="nextStep(2)" style="width:100%; margin-top:10px;">التالي</button>
                 </div>
-
                 <div id="step2" class="step-container">
                     <h3 style="margin-bottom:15px;">المرحلة الدراسية</h3>
                     <label class="reg-label">اختر المرحلة:</label>
@@ -170,7 +158,6 @@
                         <button class="auth-btn" onclick="nextStep(3)" style="width:60%;">التالي</button>
                     </div>
                 </div>
-
                 <div id="step3" class="step-container">
                     <h3 style="margin-bottom:15px;">بيانات الحساب</h3>
                     <div id="emailPassFields">
@@ -281,27 +268,23 @@
         let studentAnswers = [];
         const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
-onAuthStateChanged(auth, async user => {
+        onAuthStateChanged(auth, async user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-            const coursesSection = document.getElementById('courses');
             
             if(user) {
                 if(user.email === ADMIN_EMAIL) {
                     statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">أهلاً أدمن منى 💎</span> 
-                                          <button class="auth-btn" onclick="window.location.href='admin.html'" style="margin:0 10px; background:var(--dark);">لوحة الإدارة</button>
+                                          <button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin:0 10px; background:var(--dark);">لوحة الإدارة</button>
                                           <button class="logout-btn" onclick="logout()">خروج</button>`;
-                    if(coursesSection) coursesSection.style.display = 'none';
                 } else {
                     statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || user.email}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
-                    if(coursesSection) coursesSection.style.display = 'block';
                 }
-                                    reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
+                reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
             } else {
                 statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
                 reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
-                if(coursesSection) coursesSection.style.display = 'block';
             }
         });
 
@@ -316,20 +299,13 @@ onAuthStateChanged(auth, async user => {
                 const name1 = document.getElementById('n1').value.trim();
                 const wa = document.getElementById('regWhatsapp').value.trim();
                 const parent = document.getElementById('regParentPhone').value.trim();
-                if (!name1 || !wa || !parent) {
-                    alert("يرجى إكمال بيانات الاسم والهاتف ورقم ولي الأمر");
-                    return;
-                }
+                if (!name1 || !wa || !parent) { alert("يرجى إكمال بيانات الاسم والهاتف ورقم ولي الأمر"); return; }
             }
             if (step === 3) {
                 const level = document.getElementById('regLevel').value;
                 const grade = document.getElementById('regGrade').value;
-                if (!level || !grade) {
-                    alert("يرجى اختيار المرحلة والصف الدراسي");
-                    return;
-                }
+                if (!level || !grade) { alert("يرجى اختيار المرحلة والصف الدراسي"); return; }
             }
-
             document.querySelectorAll('.step-container').forEach(s => s.classList.remove('active'));
             document.getElementById('step' + step).classList.add('active');
             document.getElementById('regProgress').style.width = (step === 1 ? '33%' : step === 2 ? '66%' : '100%');
@@ -395,17 +371,11 @@ onAuthStateChanged(auth, async user => {
             const grade = document.getElementById('regGrade').value;
             const email = document.getElementById('regEmail').value.trim();
             const pass = document.getElementById('regPass').value;
-            
             if(!email || !pass) return alert("يرجى كتابة البريد وكلمة المرور");
-
             createUserWithEmailAndPassword(auth, email, pass).then((res) => {
                 updateProfile(res.user, { displayName: fullName });
                 set(ref(db, 'students/' + res.user.uid), { 
-                    name: fullName, 
-                    whatsapp: wa, 
-                    parentPhone: parent,
-                    grade, 
-                    email,
+                    name: fullName, whatsapp: wa, parentPhone: parent, grade, email,
                     joinDate: new Date().toLocaleString('ar-EG')
                 });
                 alert("تم إنشاء الحساب بنجاح!"); closeLogin();
