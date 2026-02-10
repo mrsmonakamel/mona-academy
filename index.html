@@ -309,10 +309,8 @@
 
         window.handleRegister = () => {
             const n1 = document.getElementById('n1').value.trim();
-            const n2 = document.getElementById('n2').value.trim();
-            const n3 = document.getElementById('n3').value.trim();
             const n4 = document.getElementById('n4').value.trim();
-            const fullName = `${n1} ${n2} ${n3} ${n4}`.trim();
+            const fullName = `${n1} ${document.getElementById('n2').value} ${document.getElementById('n3').value} ${n4}`.trim();
             const whatsapp = document.getElementById('regWhatsapp').value;
             const grade = document.getElementById('regGrade').value;
             const email = document.getElementById('regEmail').value.trim();
@@ -325,7 +323,7 @@
 
             createUserWithEmailAndPassword(auth, email, pass).then(async (res) => {
                 await updateProfile(res.user, { displayName: fullName });
-                await set(ref(db, 'students/' + res.user.uid), { name: fullName, grade: grade, whatsapp: whatsapp });
+                await set(ref(db, 'students/' + res.user.uid), { name: fullName, grade: grade, whatsapp: whatsapp, parentPhone: document.getElementById('regParentPhone').value });
                 alert("تم التسجيل بنجاح!"); closeLogin();
             }).catch(err => alert("خطأ: " + err.message))
               .finally(() => { btn.disabled = false; btn.innerText = "إنشاء الحساب"; });
@@ -378,7 +376,6 @@
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
             
-            // إصلاح: قراءة البيانات من المسار الصحيح للـ videos
             const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
             let html = "";
             
@@ -449,7 +446,6 @@
                                 }).join('')}
                             </div>
                         </div>`;
-                        
                     });
                     html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:15px; background:var(--main); color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer;">إرسال الإجابات</button>`;
                     document.getElementById('quizContainer').innerHTML = html;
@@ -462,8 +458,6 @@
             studentAnswers[i] = char;
             el.parentElement.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
             el.classList.add('selected');
-            const radio = el.querySelector('input');
-            if(radio) radio.checked = true;
         };
 
         window.submitWrittenQuiz = () => {

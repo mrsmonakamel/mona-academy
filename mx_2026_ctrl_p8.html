@@ -31,14 +31,12 @@
         .course-manage-card { border: 1px solid #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px; background: #fff; }
         .video-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9fb; padding: 8px 15px; margin: 5px 0; border-radius: 8px; font-size: 0.9rem; }
         
-        .delete-btn { background: var(--danger); width: auto; padding: 5px 12px; font-size: 0.8rem; }
-        .edit-btn { background: #f1c40f; width: auto; padding: 5px 12px; font-size: 0.8rem; margin-left: 5px; }
+        .delete-btn { background: var(--danger); width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 2px; }
+        .edit-btn { background: #f1c40f; width: auto; padding: 5px 12px; font-size: 0.8rem; margin: 2px; }
         
         .question-builder { background: #f0f0ff; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid var(--main); position: relative; }
         .remove-q-btn { position: absolute; top: 10px; left: 10px; background: #ff7675; color: white; border: none; width: 25px; height: 25px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
-        
         .opt-input { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        
         .wa-link { color: var(--whatsapp); text-decoration: none; font-weight: bold; }
         
         #loadingOverlay { display:flex; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:9999; flex-direction:column; align-items:center; justify-content:center; }
@@ -186,16 +184,13 @@
                       s2 = document.getElementById('quizFolderSelect'),
                       list = document.getElementById('coursesListAdmin');
                 
-                const currentS1 = s1.value;
-                const currentS2 = s2.value;
-
                 s1.innerHTML = s2.innerHTML = '<option value="">اختر الكورس...</option>';
                 list.innerHTML = "";
                 
                 snap.forEach(c => {
                     const d = c.val();
-                    s1.innerHTML += `<option value="${c.key}" ${currentS1 === c.key ? 'selected' : ''}>${d.name}</option>`;
-                    s2.innerHTML += `<option value="${c.key}" ${currentS2 === c.key ? 'selected' : ''}>${d.name}</option>`;
+                    s1.innerHTML += `<option value="${c.key}">${d.name}</option>`;
+                    s2.innerHTML += `<option value="${c.key}">${d.name}</option>`;
                     
                     let vHtml = "";
                     if(d.videos){
@@ -351,24 +346,18 @@
             if(!fId || !name || qBlocks.length === 0) return alert("يرجى ملء جميع البيانات وإضافة سؤال واحد على الأقل");
             
             let qs = [];
-            let isValid = true;
-            
             qBlocks.forEach(b => {
-                const text = b.querySelector('.q-text').value.trim();
-                if(!text) isValid = false;
                 qs.push({
-                    text: text,
+                    text: b.querySelector('.q-text').value.trim(),
                     options: { 
-                        A: b.querySelector('.opt-a').value || 'خيار A', 
-                        B: b.querySelector('.opt-b').value || 'خيار B', 
-                        C: b.querySelector('.opt-c').value || '-', 
-                        D: b.querySelector('.opt-d').value || '-' 
+                        A: b.querySelector('.opt-a').value, 
+                        B: b.querySelector('.opt-b').value, 
+                        C: b.querySelector('.opt-c').value, 
+                        D: b.querySelector('.opt-d').value 
                     },
                     correct: b.querySelector('.q-correct').value
                 });
             });
-
-            if(!isValid) return alert("يرجى كتابة نص جميع الأسئلة");
 
             try {
                 await push(ref(db, `quizzes/${fId}`), { name, videoRel: vId, questions: qs });
@@ -401,7 +390,7 @@
         };
 
         window.del = (p) => {
-            if(confirm("هل أنت متأكد؟ سيتم حذف هذا العنصر نهائياً ولن تتمكن من استعادته.")) {
+            if(confirm("هل أنت متأكد من الحذف؟")) {
                 remove(ref(db, p)).catch(e => alert("فشل الحذف: " + e.message));
             }
         };
