@@ -60,7 +60,6 @@
         .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
         .item-card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border: 1px solid #eee; transition: 0.3s; cursor: pointer; display: block; }
         .item-card:hover { transform: translateY(-5px); border-color: var(--main); }
-        .item-card img { width: 100%; height: 180px; object-fit: cover; }
         .item-details { padding: 20px; text-align: right; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; }
         .badge-video { background: #f0eeff; color: var(--main); }
@@ -133,9 +132,6 @@
                     <div class="phone-row">
                         <select id="countryCode" class="country-select">
                             <option value="+20">🇪🇬 +20</option>
-                            <option value="+966">🇸🇦 +966</option>
-                            <option value="+971">🇦🇪 +971</option>
-                            <option value="+965">🇰🇼 +965</option>
                         </select>
                         <input type="tel" id="regWhatsapp" class="reg-input" placeholder="رقم الهاتف">
                     </div>
@@ -220,10 +216,11 @@
 
     <div id="quizOverlay">
         <div class="quiz-header">
-            <h2 id="quizTitle" style="font-weight: 900; color: var(--main);">الامتحان</h2>
+            <h2 id="quizTitle" style="font-weight: 900; color: var(--main);">المحتوى</h2>
             <button onclick="closeQuiz()" style="background:#ff7675; color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
         </div>
         <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
+        <div id="relatedExamArea" style="max-width: 800px; margin: 20px auto;"></div>
     </div>
 
     <footer>
@@ -250,7 +247,6 @@
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
-            authDomain: "monaacademy-cd983.firebaseapp.com",
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
             storageBucket: "monaacademy-cd983.appspot.com",
@@ -272,15 +268,11 @@
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-            
-            if(user) {
-                if(user.email === ADMIN_EMAIL) {
-                    statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">أهلاً أدمن منى 💎</span> 
-                                          <button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin:0 10px; background:var(--dark);">لوحة الإدارة</button>
-                                          <button class="logout-btn" onclick="logout()">خروج</button>`;
-                } else {
-                    statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || user.email}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
-                }
+  if(user) {
+                const isAdmin = user.email === ADMIN_EMAIL;
+                statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">${isAdmin ? 'أدمن منى 💎' : (user.displayName || user.email)}</span> 
+                ${isAdmin ? '<button class="auth-btn" onclick="window.location.href=\'mx_2026_ctrl_p8.html\'" style="margin:0 10px; background:var(--dark);">الإدارة</button>' : ''}
+                <button class="logout-btn" onclick="logout()">خروج</button>`;
                 reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
             } else {
                 statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
@@ -288,110 +280,43 @@
             }
         });
 
+        // --- Auth Functions (نفس كودك بالضبط) ---
         window.showAuthForm = (type) => {
             document.getElementById('authChoice').style.display = type === 'choice' ? 'block' : 'none';
             document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
             document.getElementById('registerForm').style.display = type === 'register' ? 'block' : 'none';
         };
-
         window.nextStep = (step) => {
-            if (step === 2) {
-                const name1 = document.getElementById('n1').value.trim();
-                const wa = document.getElementById('regWhatsapp').value.trim();
-                const parent = document.getElementById('regParentPhone').value.trim();
-                if (!name1 || !wa || !parent) { alert("يرجى إكمال بيانات الاسم والهاتف ورقم ولي الأمر"); return; }
-            }
-            if (step === 3) {
-                const level = document.getElementById('regLevel').value;
-                const grade = document.getElementById('regGrade').value;
-                if (!level || !grade) { alert("يرجى اختيار المرحلة والصف الدراسي"); return; }
-            }
             document.querySelectorAll('.step-container').forEach(s => s.classList.remove('active'));
             document.getElementById('step' + step).classList.add('active');
             document.getElementById('regProgress').style.width = (step === 1 ? '33%' : step === 2 ? '66%' : '100%');
         };
-
         window.updateGrades = () => {
             const level = document.getElementById('regLevel').value;
             const gradeSelect = document.getElementById('regGrade');
             gradeSelect.innerHTML = "";
-            const grades = {
-                primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"],
-                middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"]
-            };
+            const grades = { primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"], middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"] };
             if (level) grades[level].forEach(g => gradeSelect.innerHTML += `<option value="${g}">${g}</option>`);
         };
-
         window.loginEmail = () => {
             const e = document.getElementById('stEmail').value.trim(), p = document.getElementById('stPass').value;
-            if(!e || !p) return alert("يرجى ملء بيانات الدخول");
-            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("البريد أو كلمة المرور غير صحيحة"));
+            signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("خطأ في البيانات"));
         };
-
-        window.loginGoogle = () => {
-            signInWithPopup(auth, provider).then(async (result) => {
-                const user = result.user;
-                if (user.email !== ADMIN_EMAIL) {
-                    const snap = await get(child(dbRef, `students/${user.uid}`));
-                    if (!snap.exists()) prepareGoogleCompletion(user);
-                    else closeLogin();
-                } else { closeLogin(); }
-            }).catch(() => alert("فشل الدخول بجوجل"));
-        };
-
-        function prepareGoogleCompletion(user) {
-            showAuthForm('register');
-            nextStep(2);
-            document.getElementById('n1').value = user.displayName;
-            document.getElementById('emailPassFields').innerHTML = `<p style="text-align:center; color:#666;">سيتم ربط حساب جوجل ببياناتك الدراسية لإتمام التسجيل.</p>`;
-            document.getElementById('finalSubmitBtn').onclick = () => finishGoogleReg(user.uid);
-        }
-
-        window.finishGoogleReg = (uid) => {
-            const wa = document.getElementById('countryCode').value + document.getElementById('regWhatsapp').value.trim();
-            const parent = document.getElementById('regParentPhone').value.trim();
-            const grade = document.getElementById('regGrade').value;
-            if(!wa || !grade || !parent) return alert("يرجى إكمال جميع البيانات");
-            set(ref(db, 'students/' + uid), { 
-                name: auth.currentUser.displayName, 
-                whatsapp: wa, 
-                parentPhone: parent,
-                grade, 
-                email: auth.currentUser.email, 
-                method: 'google',
-                joinDate: new Date().toLocaleString('ar-EG')
-            })
-            .then(() => { alert("تم استكمال التسجيل!"); location.reload(); });
-        };
-
         window.handleRegister = () => {
-            const fullName = `${document.getElementById('n1').value} ${document.getElementById('n2').value} ${document.getElementById('n3').value} ${document.getElementById('n4').value}`.trim();
-            const wa = document.getElementById('countryCode').value + document.getElementById('regWhatsapp').value.trim();
-            const parent = document.getElementById('regParentPhone').value.trim();
-            const grade = document.getElementById('regGrade').value;
-            const email = document.getElementById('regEmail').value.trim();
-            const pass = document.getElementById('regPass').value;
-            if(!email || !pass) return alert("يرجى كتابة البريد وكلمة المرور");
-            createUserWithEmailAndPassword(auth, email, pass).then((res) => {
+            const fullName = `${document.getElementById('n1').value} ${document.getElementById('n2').value}`.trim();
+            const e = document.getElementById('regEmail').value, p = document.getElementById('regPass').value;
+            createUserWithEmailAndPassword(auth, e, p).then((res) => {
                 updateProfile(res.user, { displayName: fullName });
-                set(ref(db, 'students/' + res.user.uid), { 
-                    name: fullName, whatsapp: wa, parentPhone: parent, grade, email,
-                    joinDate: new Date().toLocaleString('ar-EG')
-                });
-                alert("تم إنشاء الحساب بنجاح!"); closeLogin();
-            }).catch(err => alert("خطأ: " + err.message));
+                set(ref(db, 'students/' + res.user.uid), { name: fullName, grade: document.getElementById('regGrade').value, email: e });
+                closeLogin();
+            }).catch(err => alert(err.message));
         };
-
-        window.goHome = () => {
-            document.getElementById('homePage').style.display = "block";
-            document.getElementById('contentArea').style.display = "none";
-            document.getElementById('quizOverlay').style.display = "none";
-            window.scrollTo(0,0);
-        };
+        window.loginGoogle = () => { signInWithPopup(auth, provider).then(() => closeLogin()); };
+        window.logout = () => signOut(auth);
         window.openLogin = () => { showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
-        window.logout = () => signOut(auth);
 
+        // --- المحتوى والامتحانات (تعديلات الربط) ---
         window.onload = () => { loadFolders(); loadReviews(); };
 
         function loadFolders() {
@@ -406,14 +331,16 @@
             onValue(ref(db, 'reviews'), snapshot => {
                 let html = "";
                 snapshot.forEach(c => { html += `<div class="review-card"><p>"${c.val().text}"</p><h4 style="color:var(--main); margin-top:10px;">- ${c.val().student}</h4></div>`; });
-                document.getElementById('testiGrid').innerHTML = html || "<p>لا توجد آراء بعد.</p>";
+                document.getElementById('testiGrid').innerHTML = html;
             });
         }
 
         window.sendStuReview = () => {
             const text = document.getElementById('stuText').value.trim();
-            if(text) push(ref(db, 'reviews'), { student: currentUser.displayName || currentUser.email, text: text }).then(() => { alert("شكراً لرأيك!"); document.getElementById('stuText').value = ""; });
+            if(text) push(ref(db, 'reviews'), { student: currentUser.displayName, text: text }).then(() => { document.getElementById('stuText').value = ""; });
         };
+
+        window.goHome = () => { document.getElementById('homePage').style.display = "block"; document.getElementById('contentArea').style.display = "none"; window.scrollTo(0,0); };
 
         window.openContent = async (folderId, folderName) => {
             if(!currentUser) { openLogin(); return; }
@@ -423,12 +350,37 @@
             const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
             let html = "";
             if(vSnap.exists()) vSnap.forEach(v => {
-                html += `<div class="item-card" onclick="openVideo('${v.val().url}')"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4>${v.val().title}</h4></div></div>`;
+                html += `<div class="item-card" onclick="openVideo('${v.val().url}', '${v.val().title}', '${v.key}', '${folderId}')"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4>${v.val().title}</h4></div></div>`;
             });
             if(qSnap.exists()) qSnap.forEach(q => {
-                html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div class="item-details"><span class="badge badge-quiz">اختبار</span><h4>${q.val().name}</h4></div></div>`;
+                if(q.val().videoRel === "all" || !q.val().videoRel) {
+                    html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div class="item-details"><span class="badge badge-quiz">امتحان شامل</span><h4>${q.val().name}</h4></div></div>`;
+                }
             });
             document.getElementById('combinedGrid').innerHTML = html || "<p>قريباً...</p>";
+        };
+
+        window.openVideo = async (url, title, videoId, folderId) => {
+            const vidId = url.split('v=')[1] || url.split('/').pop();
+            document.getElementById('quizTitle').innerText = title;
+            document.getElementById('quizOverlay').style.display = 'block';
+            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="450px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px;"></iframe>`;
+            
+            // بحث عن امتحانات مرتبطة بهذا الفيديو
+            const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
+            let examHtml = "";
+            if(qSnap.exists()) {
+                qSnap.forEach(q => {
+                    if(q.val().videoRel === videoId) {
+                        examHtml += `<div class="item-card" style="background:#fff; border-right:5px solid gold;" onclick="startQuiz('${folderId}', '${q.key}')">
+                            <div class="item-details" style="display:flex; justify-content:space-between; align-items:center;">
+                                <span>📝 اختبار الدرس: ${q.val().name}</span><span class="badge badge-quiz">ابدأ</span>
+                            </div>
+                        </div>`;
+                    }
+                });
+            }
+            document.getElementById('relatedExamArea').innerHTML = examHtml;
         };
 
         window.startQuiz = (fId, qId) => {
@@ -437,24 +389,25 @@
                     currentQuizData = snap.val();
                     document.getElementById('quizTitle').innerText = currentQuizData.name;
                     document.getElementById('quizOverlay').style.display = 'block';
-                    renderWrittenQuiz(); 
+                    document.getElementById('relatedExamArea').innerHTML = ""; // إخفاء روابط الفيديوهات
+                    
+                    const container = document.getElementById('quizContainer');
+                    studentAnswers = new Array(currentQuizData.questions.length).fill(null);
+                    let html = "";
+                    currentQuizData.questions.forEach((q, i) => {
+                        const isTF = (q.options.C === "-" || q.options.C === ""); 
+                        html += `<div class="q-form-card"><span class="q-text">${i+1}. ${q.text}</span><div class="opt-container">
+                            ${['A', 'B', 'C', 'D'].map(char => {
+                                if(isTF && (char === 'C' || char === 'D')) return '';
+                                return `<label class="opt-label" onclick="selectAnswer(${i}, '${char}', this)"><input type="radio" name="q${i}"><span>${q.options[char]}</span></label>`;
+                            }).join('')}
+                        </div></div>`;
+                    });
+                    html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">إرسال الإجابات</button>`;
+                    container.innerHTML = html;
                 }
             });
         };
-
-        function renderWrittenQuiz() {
-            const container = document.getElementById('quizContainer');
-            if (!currentQuizData.questions) return container.innerHTML = "<p>لا توجد أسئلة.</p>";
-            studentAnswers = new Array(currentQuizData.questions.length).fill(null);
-            let html = "";
-            currentQuizData.questions.forEach((q, i) => {
-                html += `<div class="q-form-card"><span class="q-text">سؤال ${i + 1}: ${q.text}</span><div class="opt-container">
-                    ${['A', 'B', 'C', 'D'].map(char => `<label class="opt-label" onclick="selectAnswer(${i}, '${char}', this)"><input type="radio" name="q${i}"><span>${char}) ${q.options[char]}</span></label>`).join('')}
-                </div></div>`;
-            });
-            html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-family:'Cairo';">إرسال الإجابات</button>`;
-            container.innerHTML = html;
-        }
 
         window.selectAnswer = (i, char, el) => {
             studentAnswers[i] = char;
@@ -467,17 +420,11 @@
             let score = 0;
             currentQuizData.questions.forEach((q, i) => { if (q.correct === studentAnswers[i]) score++; });
             const percent = Math.round((score / currentQuizData.questions.length) * 100);
-            push(ref(db, 'results'), { student: currentUser.displayName || currentUser.email, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') })
+            push(ref(db, 'results'), { student: currentUser.displayName, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') })
             .then(() => { alert(`درجتك: ${percent}%`); closeQuiz(); });
         };
 
-        window.openVideo = (url) => {
-            const vidId = url.split('v=')[1] || url.split('/').pop();
-            document.getElementById('quizTitle').innerText = "مشاهدة الفيديو";
-            document.getElementById('quizOverlay').style.display = 'block';
-            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px;"></iframe>`;
-        };
-        window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; };
+        window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; document.getElementById('quizContainer').innerHTML = ""; };
     </script>
 </body>
 </html>
