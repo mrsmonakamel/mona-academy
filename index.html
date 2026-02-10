@@ -263,7 +263,7 @@
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-            if(user) {
+             if(user) {
                 const isAdmin = user.email === ADMIN_EMAIL;
                 statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">${isAdmin ? 'أدمن منى 💎' : (user.displayName || user.email)}</span> 
                 ${isAdmin ? '<button class="auth-btn" onclick="window.location.href=\'mx_2026_ctrl_p8.html\'" style="margin:0 10px; background:var(--dark);">الإدارة</button>' : ''}
@@ -378,6 +378,7 @@
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
             
+            // إصلاح: قراءة البيانات من المسار الصحيح للـ videos
             const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
             let html = "";
             
@@ -411,7 +412,7 @@
             if (!match) return alert("رابط غير صحيح");
             document.getElementById('quizTitle').innerText = title;
             document.getElementById('quizOverlay').style.display = 'block';
-            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${match[2]}" frameborder="0" allowfullscreen style="border-radius:15px; background:#000;"></iframe>`;
+            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${match[2]}?autoplay=1" frameborder="0" allowfullscreen style="border-radius:15px; background:#000;"></iframe>`;
             
             const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
             let exHtml = "";
