@@ -59,8 +59,9 @@
         #contentArea { display: none; padding: 40px 5%; min-height: 80vh; background: #fff; }
         .content-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-top: 30px; }
         .item-card { background: #fff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.05); border: 1px solid #eee; transition: 0.3s; cursor: pointer; display: block; }
+        .item-card img.v-thumb { width: 100%; height: 160px; object-fit: cover; border-bottom: 1px solid #eee; }
         .item-card:hover { transform: translateY(-5px); border-color: var(--main); }
-        .item-details { padding: 20px; text-align: right; }
+        .item-details { padding: 15px; text-align: right; }
         .badge { display: inline-block; padding: 4px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; }
         .badge-video { background: #f0eeff; color: var(--main); }
         .badge-quiz { background: #fff9e6; color: #f1c40f; }
@@ -268,7 +269,7 @@
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-                      if(user) {
+            if(user) {
                 const isAdmin = user.email === ADMIN_EMAIL;
                 statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">${isAdmin ? 'أدمن منى 💎' : (user.displayName || user.email)}</span> 
                 ${isAdmin ? '<button class="auth-btn" onclick="window.location.href=\'mx_2026_ctrl_p8.html\'" style="margin:0 10px; background:var(--dark);">الإدارة</button>' : ''}
@@ -302,7 +303,6 @@
             signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("خطأ في البيانات"));
         };
 
-        // --- التعديل الجذري هنا لحفظ أرقام الهواتف ---
         window.handleRegister = () => {
             const n1 = document.getElementById('n1').value;
             const n2 = document.getElementById('n2').value;
@@ -322,8 +322,6 @@
 
             createUserWithEmailAndPassword(auth, email, pass).then((res) => {
                 updateProfile(res.user, { displayName: fullName });
-                
-                // حفظ البيانات في قاعدة البيانات لتظهر في لوحة التحكم
                 set(ref(db, 'students/' + res.user.uid), { 
                     name: fullName, 
                     grade: grade, 
@@ -331,7 +329,6 @@
                     whatsapp: whatsapp,
                     parentPhone: parentPhone 
                 });
-                
                 alert("تم إنشاء الحساب بنجاح!");
                 closeLogin();
             }).catch(err => alert("خطأ: " + err.message));
@@ -367,38 +364,74 @@
 
         window.goHome = () => { document.getElementById('homePage').style.display = "block"; document.getElementById('contentArea').style.display = "none"; window.scrollTo(0,0); };
 
+        // --- تعديل جلب المحتوى لعرض صور الفيديوهات ---
         window.openContent = async (folderId, folderName) => {
             if(!currentUser) { openLogin(); return; }
             document.getElementById('homePage').style.display = "none";
             document.getElementById('contentArea').style.display = "block";
             document.getElementById('folderTitleName').innerText = folderName;
+            
             const [vSnap, qSnap] = await Promise.all([get(child(dbRef, `folders/${folderId}/videos`)), get(child(dbRef, `quizzes/${folderId}`))]);
             let html = "";
-            if(vSnap.exists()) vSnap.forEach(v => {
-                html += `<div class="item-card" onclick="openVideo('${v.val().url}', '${v.val().title}', '${v.key}', '${folderId}')"><div class="item-details"><span class="badge badge-video">فيديو شرح</span><h4>${v.val().title}</h4></div></div>`;
-            });
-            if(qSnap.exists()) qSnap.forEach(q => {
-                if(q.val().videoRel === "all" || !q.val().videoRel) {
-                    html += `<div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')"><div class="item-details"><span class="badge badge-quiz">امتحان شامل</span><h4>${q.val().name}</h4></div></div>`;
-                }
-            });
-            document.getElementById('combinedGrid').innerHTML = html || "<p>قريباً...</p>";
+            
+            if(vSnap.exists()) {
+                vSnap.forEach(v => {
+                    const videoData = v.val();
+                    let videoId = "";
+                    try {
+                        videoId = videoData.url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)[1];
+                    } catch(e) { videoId = "error"; }
+                    const thumbUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+
+                    html += `
+                        <div class="item-card" onclick="openVideo('${videoData.url}', '${videoData.title}', '${v.key}', '${folderId}')">
+                            <img src="${thumbUrl}" class="v-thumb" onerror="this.src='mona.jpg'">
+                            <div class="item-details">
+                                <span class="badge badge-video">فيديو شرح</span>
+                                <h4>${videoData.title}</h4>
+                            </div>
+                        </div>`;
+                });
+            }
+            
+            if(qSnap.exists()) {
+                qSnap.forEach(q => {
+                    if(q.val().videoRel === "all" || !q.val().videoRel) {
+                        html += `
+                            <div class="item-card" onclick="startQuiz('${folderId}', '${q.key}')">
+                                <div style="height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center; border-bottom:1px solid #eee;">
+                                     <i class="fas fa-file-signature fa-3x" style="color:var(--main)"></i>
+                                </div>
+                                <div class="item-details">
+                                    <span class="badge badge-quiz">امتحان شامل</span>
+                                    <h4>${q.val().name}</h4>
+                                </div>
+                            </div>`;
+                    }
+                });
+            }
+            document.getElementById('combinedGrid').innerHTML = html || "<p style='text-align:center;'>قريباً سيتم رفع المحتوى...</p>";
         };
 
         window.openVideo = async (url, title, videoId, folderId) => {
-            const vidId = url.split('v=')[1] || url.split('/').pop();
+            let vidId = "";
+            try {
+                vidId = url.match(/(?:https?:\/{2})?(?:w{3}\.)?youtu(?:be)?\.(?:com|be)(?:\/watch\?v=|\/)([^\s&]+)/)[1];
+            } catch(e) { alert("رابط الفيديو غير صحيح"); return; }
+            
             document.getElementById('quizTitle').innerText = title;
             document.getElementById('quizOverlay').style.display = 'block';
-            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="450px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px;"></iframe>`;
+            document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="450px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px; box-shadow:0 5px 20px rgba(0,0,0,0.1);"></iframe>`;
             
             const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
             let examHtml = "";
             if(qSnap.exists()) {
                 qSnap.forEach(q => {
                     if(q.val().videoRel === videoId) {
-                        examHtml += `<div class="item-card" style="background:#fff; border-right:5px solid gold;" onclick="startQuiz('${folderId}', '${q.key}')">
+                        examHtml += `<div class="item-card" style="background:#fff; border-right:8px solid #f1c40f; margin-top:15px;" onclick="startQuiz('${folderId}', '${q.key}')">
                             <div class="item-details" style="display:flex; justify-content:space-between; align-items:center;">
-                                <span>📝 اختبار الدرس: ${q.val().name}</span><span class="badge badge-quiz">ابدأ</span>
+                                <span style="font-weight:bold;"><i class="fas fa-pen-alt"></i> ابدأ اختبار الدرس: ${q.val().name}</span>
+                                <span class="badge badge-quiz" style="margin:0;">دخول الآن</span>
                             </div>
                         </div>`;
                     }
@@ -423,12 +456,14 @@
                         html += `<div class="q-form-card"><span class="q-text">${i+1}. ${q.text}</span><div class="opt-container">
                             ${['A', 'B', 'C', 'D'].map(char => {
                                 if(isTF && (char === 'C' || char === 'D')) return '';
+                                if(!q.options[char] || q.options[char] === "-") return '';
                                 return `<label class="opt-label" onclick="selectAnswer(${i}, '${char}', this)"><input type="radio" name="q${i}"><span>${q.options[char]}</span></label>`;
                             }).join('')}
                         </div></div>`;
                     });
-                    html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer;">إرسال الإجابات</button>`;
+                    html += `<button onclick="submitWrittenQuiz()" style="width:100%; padding:20px; background:var(--main); color:white; border:none; border-radius:15px; font-weight:bold; cursor:pointer; font-size:1.1rem; box-shadow:0 4px 15px rgba(108, 92, 231, 0.3);">🚀 إرسال الإجابات النهائية</button>`;
                     container.innerHTML = html;
+                    container.scrollTo(0,0);
                 }
             });
         };
@@ -440,15 +475,27 @@
         };
 
         window.submitWrittenQuiz = () => {
-            if (studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة");
+            if (studentAnswers.includes(null)) return alert("يرجى الإجابة على جميع الأسئلة قبل الإرسال");
             let score = 0;
             currentQuizData.questions.forEach((q, i) => { if (q.correct === studentAnswers[i]) score++; });
             const percent = Math.round((score / currentQuizData.questions.length) * 100);
-            push(ref(db, 'results'), { student: currentUser.displayName, exam: currentQuizData.name, score: percent, date: new Date().toLocaleDateString('ar-EG') })
-            .then(() => { alert(`درجتك: ${percent}%`); closeQuiz(); });
+            
+            push(ref(db, 'results'), { 
+                student: currentUser.displayName, 
+                exam: currentQuizData.name, 
+                score: percent, 
+                date: new Date().toLocaleString('ar-EG') 
+            }).then(() => { 
+                alert(`أحسنت يا ${currentUser.displayName}! درجتك هي: ${percent}%`); 
+                closeQuiz(); 
+            });
         };
 
-        window.closeQuiz = () => { document.getElementById('quizOverlay').style.display = 'none'; document.getElementById('quizContainer').innerHTML = ""; };
+        window.closeQuiz = () => { 
+            document.getElementById('quizOverlay').style.display = 'none'; 
+            document.getElementById('quizContainer').innerHTML = ""; 
+            window.scrollTo(0,0);
+        };
     </script>
 </body>
 </html>
