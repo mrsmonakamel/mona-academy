@@ -21,6 +21,14 @@
         .step-container { display: none; text-align: right; animation: fadeIn 0.4s; }
         .step-container.active { display: block; }
         .reg-input { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; font-size: 0.9rem; }
+        
+        /* تعديل الاسم الرباعي */
+        .name-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        
+        /* تعديل مفتاح الدولة */
+        .phone-row { display: flex; gap: 5px; direction: ltr; }
+        .country-select { width: 90px; padding: 10px; border: 1px solid #ddd; border-radius: 10px; font-family: 'Cairo'; background: #f9f9f9; }
+
         .reg-label { font-weight: bold; font-size: 0.85rem; color: var(--dark); display: block; margin-top: 10px; }
         .progress-bar { height: 6px; background: #eee; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--main); width: 33%; transition: 0.3s; }
@@ -123,9 +131,27 @@
                 <div id="step1" class="step-container active">
                     <h3 style="margin-bottom:15px;">البيانات الشخصية</h3>
                     <label class="reg-label">الاسم الرباعي:</label>
-                    <input type="text" id="regFullName" class="reg-input" placeholder="عربي أو إنجليزي">
-                    <label class="reg-label">رقم الواتساب:</label>
-                    <input type="tel" id="regWhatsapp" class="reg-input" placeholder="مثال: +201012345678">
+                    <div class="name-grid">
+                        <input type="text" id="n1" class="reg-input" placeholder="الأول">
+                        <input type="text" id="n2" class="reg-input" placeholder="الأب">
+                        <input type="text" id="n3" class="reg-input" placeholder="الجد">
+                        <input type="text" id="n4" class="reg-input" placeholder="اللقب">
+                    </div>
+
+                    <label class="reg-label">رقم واتساب الطالب:</label>
+                    <div class="phone-row">
+                        <select id="countryCode" class="country-select">
+                            <option value="+20">🇪🇬 +20</option>
+                            <option value="+966">🇸🇦 +966</option>
+                            <option value="+971">🇦🇪 +971</option>
+                            <option value="+965">🇰🇼 +965</option>
+                        </select>
+                        <input type="tel" id="regWhatsapp" class="reg-input" placeholder="رقم الهاتف">
+                    </div>
+
+                    <label class="reg-label">رقم ولي الأمر:</label>
+                    <input type="tel" id="regParentPhone" class="reg-input" placeholder="رقم ولي الأمر للطوارئ">
+                    
                     <button class="auth-btn" onclick="nextStep(2)" style="width:100%; margin-top:10px;">التالي</button>
                 </div>
 
@@ -255,7 +281,7 @@
         let studentAnswers = [];
         const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
-        onAuthStateChanged(auth, async user => {
+onAuthStateChanged(auth, async user => {
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
@@ -271,7 +297,7 @@
                     statusDiv.innerHTML = `<span style="font-weight:bold; margin-left:10px;">${user.displayName || user.email}</span> <button class="logout-btn" onclick="logout()">خروج</button>`;
                     if(coursesSection) coursesSection.style.display = 'block';
                 }
-                  reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
+                                    reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
             } else {
                 statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
                 reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
@@ -286,12 +312,12 @@
         };
 
         window.nextStep = (step) => {
-            // التحقق من الحقول قبل الانتقال للخطوة التالية
             if (step === 2) {
-                const name = document.getElementById('regFullName').value.trim();
+                const name1 = document.getElementById('n1').value.trim();
                 const wa = document.getElementById('regWhatsapp').value.trim();
-                if (!name || !wa) {
-                    alert("يرجى كتابة الاسم ورقم الواتساب أولاً");
+                const parent = document.getElementById('regParentPhone').value.trim();
+                if (!name1 || !wa || !parent) {
+                    alert("يرجى إكمال بيانات الاسم والهاتف ورقم ولي الأمر");
                     return;
                 }
             }
@@ -340,18 +366,20 @@
         function prepareGoogleCompletion(user) {
             showAuthForm('register');
             nextStep(2);
-            document.getElementById('regFullName').value = user.displayName;
+            document.getElementById('n1').value = user.displayName;
             document.getElementById('emailPassFields').innerHTML = `<p style="text-align:center; color:#666;">سيتم ربط حساب جوجل ببياناتك الدراسية لإتمام التسجيل.</p>`;
             document.getElementById('finalSubmitBtn').onclick = () => finishGoogleReg(user.uid);
         }
 
         window.finishGoogleReg = (uid) => {
-            const wa = document.getElementById('regWhatsapp').value.trim();
+            const wa = document.getElementById('countryCode').value + document.getElementById('regWhatsapp').value.trim();
+            const parent = document.getElementById('regParentPhone').value.trim();
             const grade = document.getElementById('regGrade').value;
-            if(!wa || !grade) return alert("يرجى إكمال بيانات الواتساب والصف الدراسي");
+            if(!wa || !grade || !parent) return alert("يرجى إكمال جميع البيانات");
             set(ref(db, 'students/' + uid), { 
                 name: auth.currentUser.displayName, 
                 whatsapp: wa, 
+                parentPhone: parent,
                 grade, 
                 email: auth.currentUser.email, 
                 method: 'google',
@@ -361,21 +389,21 @@
         };
 
         window.handleRegister = () => {
-            const name = document.getElementById('regFullName').value.trim(), 
-                  wa = document.getElementById('regWhatsapp').value.trim(),
-                  grade = document.getElementById('regGrade').value, 
-                  email = document.getElementById('regEmail').value.trim(), 
-                  pass = document.getElementById('regPass').value;
+            const fullName = `${document.getElementById('n1').value} ${document.getElementById('n2').value} ${document.getElementById('n3').value} ${document.getElementById('n4').value}`.trim();
+            const wa = document.getElementById('countryCode').value + document.getElementById('regWhatsapp').value.trim();
+            const parent = document.getElementById('regParentPhone').value.trim();
+            const grade = document.getElementById('regGrade').value;
+            const email = document.getElementById('regEmail').value.trim();
+            const pass = document.getElementById('regPass').value;
             
             if(!email || !pass) return alert("يرجى كتابة البريد وكلمة المرور");
-            if(pass.length < 6) return alert("كلمة المرور يجب أن تكون 6 رموز على الأقل");
 
             createUserWithEmailAndPassword(auth, email, pass).then((res) => {
-                updateProfile(res.user, { displayName: name });
-                // إرسال البيانات للأدمن
+                updateProfile(res.user, { displayName: fullName });
                 set(ref(db, 'students/' + res.user.uid), { 
-                    name, 
+                    name: fullName, 
                     whatsapp: wa, 
+                    parentPhone: parent,
                     grade, 
                     email,
                     joinDate: new Date().toLocaleString('ar-EG')
