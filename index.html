@@ -268,7 +268,7 @@
             currentUser = user;
             const statusDiv = document.getElementById('authStatus');
             const reviewContainer = document.getElementById('reviewSectionContainer');
-  if(user) {
+                      if(user) {
                 const isAdmin = user.email === ADMIN_EMAIL;
                 statusDiv.innerHTML = `<span style="font-weight:bold; color:var(--main);">${isAdmin ? 'أدمن منى 💎' : (user.displayName || user.email)}</span> 
                 ${isAdmin ? '<button class="auth-btn" onclick="window.location.href=\'mx_2026_ctrl_p8.html\'" style="margin:0 10px; background:var(--dark);">الإدارة</button>' : ''}
@@ -280,7 +280,6 @@
             }
         });
 
-        // --- Auth Functions (نفس كودك بالضبط) ---
         window.showAuthForm = (type) => {
             document.getElementById('authChoice').style.display = type === 'choice' ? 'block' : 'none';
             document.getElementById('loginForm').style.display = type === 'login' ? 'block' : 'none';
@@ -302,21 +301,47 @@
             const e = document.getElementById('stEmail').value.trim(), p = document.getElementById('stPass').value;
             signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert("خطأ في البيانات"));
         };
+
+        // --- التعديل الجذري هنا لحفظ أرقام الهواتف ---
         window.handleRegister = () => {
-            const fullName = `${document.getElementById('n1').value} ${document.getElementById('n2').value}`.trim();
-            const e = document.getElementById('regEmail').value, p = document.getElementById('regPass').value;
-            createUserWithEmailAndPassword(auth, e, p).then((res) => {
+            const n1 = document.getElementById('n1').value;
+            const n2 = document.getElementById('n2').value;
+            const n3 = document.getElementById('n3').value;
+            const n4 = document.getElementById('n4').value;
+            const fullName = `${n1} ${n2} ${n3} ${n4}`.trim();
+            
+            const whatsapp = document.getElementById('regWhatsapp').value;
+            const parentPhone = document.getElementById('regParentPhone').value;
+            const grade = document.getElementById('regGrade').value;
+            const email = document.getElementById('regEmail').value;
+            const pass = document.getElementById('regPass').value;
+
+            if(!fullName || !whatsapp || !parentPhone || !grade || !email || !pass) {
+                return alert("يرجى إكمال كافة البيانات المطلوبة");
+            }
+
+            createUserWithEmailAndPassword(auth, email, pass).then((res) => {
                 updateProfile(res.user, { displayName: fullName });
-                set(ref(db, 'students/' + res.user.uid), { name: fullName, grade: document.getElementById('regGrade').value, email: e });
+                
+                // حفظ البيانات في قاعدة البيانات لتظهر في لوحة التحكم
+                set(ref(db, 'students/' + res.user.uid), { 
+                    name: fullName, 
+                    grade: grade, 
+                    email: email,
+                    whatsapp: whatsapp,
+                    parentPhone: parentPhone 
+                });
+                
+                alert("تم إنشاء الحساب بنجاح!");
                 closeLogin();
-            }).catch(err => alert(err.message));
+            }).catch(err => alert("خطأ: " + err.message));
         };
+
         window.loginGoogle = () => { signInWithPopup(auth, provider).then(() => closeLogin()); };
         window.logout = () => signOut(auth);
         window.openLogin = () => { showAuthForm('choice'); document.getElementById('loginModal').style.display = 'flex'; };
         window.closeLogin = () => document.getElementById('loginModal').style.display = 'none';
 
-        // --- المحتوى والامتحانات (تعديلات الربط) ---
         window.onload = () => { loadFolders(); loadReviews(); };
 
         function loadFolders() {
@@ -366,7 +391,6 @@
             document.getElementById('quizOverlay').style.display = 'block';
             document.getElementById('quizContainer').innerHTML = `<iframe width="100%" height="450px" src="https://www.youtube.com/embed/${vidId}" frameborder="0" allowfullscreen style="border-radius:15px;"></iframe>`;
             
-            // بحث عن امتحانات مرتبطة بهذا الفيديو
             const qSnap = await get(child(dbRef, `quizzes/${folderId}`));
             let examHtml = "";
             if(qSnap.exists()) {
@@ -389,7 +413,7 @@
                     currentQuizData = snap.val();
                     document.getElementById('quizTitle').innerText = currentQuizData.name;
                     document.getElementById('quizOverlay').style.display = 'block';
-                    document.getElementById('relatedExamArea').innerHTML = ""; // إخفاء روابط الفيديوهات
+                    document.getElementById('relatedExamArea').innerHTML = ""; 
                     
                     const container = document.getElementById('quizContainer');
                     studentAnswers = new Array(currentQuizData.questions.length).fill(null);
