@@ -1,5 +1,4 @@
-// translations.js
-const translations = {
+window.translations = {
   ar: {
     // ========== عام ==========
     language: "English",
