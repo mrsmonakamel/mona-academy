@@ -1,0 +1,827 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mona Academy | Pro Admin Panel</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --accent: #6c5ce7; --dark-bg: #111417; --card-bg: #ffffff;
+            --text-main: #2d3436; --danger: #ff7675; --success: #00b894;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Cairo', sans-serif; background: #f0f2f5; color: var(--text-main); overflow-x: hidden; }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none; background: var(--dark-bg); color: white;
+            padding: 15px; position: sticky; top: 0; z-index: 1001;
+            justify-content: space-between; align-items: center;
+        }
+
+        /* Sidebar */
+        .wrapper { display: flex; min-height: 100vh; }
+        .sidebar { 
+            width: 280px; background: var(--dark-bg); color: white; padding: 25px; 
+            position: fixed; height: 100vh; right: 0; transition: 0.4s; z-index: 1000;
+            overflow-y: auto;
+        }
+        .main-content { margin-right: 280px; flex: 1; padding: 20px; transition: 0.4s; width: 100%; }
+
+        .logo { font-size: 22px; font-weight: 900; text-align: center; margin-bottom: 40px; color: var(--accent); border-bottom: 1px solid #333; padding-bottom: 20px; }
+        .nav-link { 
+            display: flex; align-items: center; gap: 12px; padding: 15px; 
+            border-radius: 12px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; color: #a4b0be;
+        }
+        .nav-link:hover, .nav-link.active { background: var(--accent); color: white; }
+
+        @media (max-width: 992px) {
+            .mobile-header { display: flex; }
+            .sidebar { right: -280px; }
+            .sidebar.open { right: 0; }
+            .main-content { margin-right: 0; }
+            .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999; }
+            .overlay.active { display: block; }
+        }
+
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .grid-system { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
+        input, select, textarea { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #ddd; margin-top: 8px; font-family: 'Cairo'; outline: none; }
+        .btn { padding: 12px 20px; border-radius: 12px; border: none; cursor: pointer; font-weight: bold; font-family: 'Cairo'; transition: 0.3s; }
+        .btn-main { background: var(--accent); color: white; width: 100%; }
+        .btn-danger { background: #fff0f0; color: var(--danger); border: 1px solid #ff7675; }
+
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 600px; }
+        th { text-align: right; padding: 12px; background: #f8f9fa; font-size: 0.85rem; }
+        td { padding: 12px; border-bottom: 1px solid #eee; }
+
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 10px; }
+        .modal-content { background: white; width: 100%; max-width: 800px; border-radius: 25px; padding: 25px; max-height: 90vh; overflow-y: auto; position: relative; }
+
+        #guard-loader { position: fixed; inset: 0; background: var(--dark-bg); z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
+        
+        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: #f9f9f9; border-radius: 10px; margin-bottom: 8px; border-right: 5px solid var(--accent); }
+        
+        .stat-badge { display: inline-block; padding: 5px 12px; border-radius: 50px; font-size: 0.8rem; font-weight: bold; margin-left: 5px; }
+        .badge-email { background: #e3f2fd; color: #1976d2; }
+        .badge-username { background: #f3e5f5; color: #7b1fa2; }
+        .badge-google { background: #fff3e0; color: #f57c00; }
+        
+        .student-id-display { background: #f0eeff; color: var(--accent); padding: 3px 8px; border-radius: 5px; font-size: 0.75rem; border: 1px solid var(--accent); font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="mobile-header">
+        <span style="font-weight: 900;">لوحة إدارة مـنى</span>
+        <i class="fas fa-bars fa-lg" onclick="toggleSidebar()"></i>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <div id="guard-loader">
+        <i class="fas fa-user-shield fa-spin fa-3x" style="color: var(--accent);"></i>
+        <h3 style="margin-top: 20px;">التحقق من الهوية...</h3>
+    </div>
+
+    <div class="wrapper" id="adminApp" style="display: none;">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Mona Academy</div>
+            <div class="nav-link active" onclick="showSection('coursesSection', this)"><i class="fas fa-th-large"></i> إدارة الكورسات</div>
+            <div class="nav-link" onclick="showSection('examsSection', this)"><i class="fas fa-edit"></i> مصنع الاختبارات</div>
+            <div class="nav-link" onclick="showSection('studentSearchSection', this)"><i class="fas fa-search"></i> بحث متقدم عن الطلاب</div>
+            <div class="nav-link" onclick="showSection('studentsSection', this)"><i class="fas fa-user-graduate"></i> الطلاب المسجلين</div>
+            <div class="nav-link" onclick="showSection('resultsSection', this)"><i class="fas fa-poll-h"></i> درجات الطلاب</div>
+            <div class="nav-link" onclick="showSection('accessLogsSection', this)"><i class="fas fa-history"></i> سجل الدخول للكورسات</div>
+            <div class="nav-link" onclick="showSection('notificationsSection', this)"><i class="fas fa-bell"></i> إشعارات الكورسات</div>
+            <div class="nav-link" onclick="showSection('reviewsSection', this)"><i class="fas fa-comments"></i> آراء الطلاب</div>
+            
+            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                <a href="index.html" class="nav-link" style="color: var(--success);"><i class="fas fa-home"></i> العودة للموقع</a>
+                <div class="nav-link" onclick="logout()" style="color: var(--danger);"><i class="fas fa-power-off"></i> خروج</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <section id="coursesSection" class="admin-section">
+                <div class="card">
+                    <h3>إضافة كورس جديد</h3>
+                    <div class="grid-system">
+                        <input type="text" id="cName" placeholder="اسم الكورس">
+                        <input type="file" id="cImg" accept="image/*">
+                    </div>
+                    <button class="btn btn-main" style="margin-top:15px;" onclick="addCourse()">حفظ الكورس</button>
+                </div>
+                <div id="coursesGrid" class="grid-system"></div>
+            </section>
+
+            <section id="examsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>بناء اختبار جديد</h3>
+                    <select id="exFolderSelect"></select>
+                    <input type="text" id="exTitle" placeholder="عنوان الاختبار">
+                    <label style="margin-top: 10px; display: block;">ربط الامتحان بـ:</label>
+                    <select id="exVideoRel">
+                        <option value="all">امتحان شامل (يظهر مع كل الفيديوهات)</option>
+                    </select>
+                    <div id="questionsArea" style="margin-top: 15px;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn" style="background:#eee;" onclick="addNewQuestion('mcq')">+ اختيارات</button>
+                        <button class="btn" style="background:#eee;" onclick="addNewQuestion('tf')">+ صح/خطأ</button>
+                    </div>
+                    <button class="btn btn-main" style="margin-top: 20px;" onclick="saveFinalExam()">نشر الامتحان</button>
+                </div>
+            </section>
+
+            <section id="studentSearchSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🔍 بحث متقدم عن الطلاب</h3>
+                    <p style="color: #666; margin-bottom: 20px;">ابحث بالاسم أو كود الطالب للحصول على جميع المعلومات والنشاطات</p>
+                    <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="font-size: 1.1rem;">
+                    <button class="btn btn-main" style="margin-top: 15px;" onclick="performAdvancedSearch()">بحث</button>
+                </div>
+                
+                <div id="searchResults" style="display: none;">
+                    <div class="card">
+                        <h3>📊 معلومات الطالب</h3>
+                        <div id="studentInfo" class="grid-system"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📚 الكورسات المسجل فيها</h3>
+                        <div id="studentCourses"></div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>📝 الامتحانات والدرجات</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الاختبار</th>
+                                        <th>الدرجة</th>
+                                        <th>النسبة المئوية</th>
+                                        <th>التوقيت</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentExams"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card">
+                        <h3>🕒 سجل الدخول للكورسات</h3>
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>الكورس</th>
+                                        <th>وقت الدخول</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="studentAccessLog"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="studentsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>قائمة الطلاب <span style="color: var(--accent);" id="studentCount"></span></h3>
+                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="filterStudents()">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الاسم</th>
+                                    <th>كود الطالب</th>
+                                    <th>المرحلة</th>
+                                    <th>واتساب</th>
+                                    <th>ولي الأمر</th>
+                                    <th>طريقة التسجيل</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="studentList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="resultsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>النتائج <span style="color: var(--accent);" id="resultsCount"></span></h3>
+                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="filterResults()">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الطالب</th>
+                                    <th>كود الطالب</th>
+                                    <th>الاختبار</th>
+                                    <th>الدرجة</th>
+                                    <th>النسبة المئوية</th>
+                                    <th>التوقيت</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resultsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="accessLogsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>سجل الدخول للكورسات <span style="color: var(--accent);" id="logsCount"></span></h3>
+                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="filterLogs()">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الطالب</th>
+                                    <th>كود الطالب</th>
+                                    <th>الكورس</th>
+                                    <th>التوقيت</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="notificationsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🔔 إشعارات دخول الطلاب للكورسات <span style="color: var(--accent);" id="notificationsCount"></span></h3>
+                    <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين دخلوا الكورسات لأول مرة</p>
+                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterNotifications()">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم الطالب</th>
+                                    <th>كود الطالب</th>
+                                    <th>اسم الكورس</th>
+                                    <th>وقت أول دخول</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="notificationsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="reviewsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>آراء الطلاب <span style="color: var(--accent);" id="reviewsCount"></span></h3>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>الطالب</th>
+                                    <th>الرأي</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reviewsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 id="editModalTitle">إدارة الكورس</h3>
+            <div class="card" style="background:#f9f9f9; margin-top:15px;">
+                <label>تعديل الاسم:</label><input type="text" id="editNameField">
+                <label>تعديل الصورة:</label><input type="file" id="editImgField">
+                <button class="btn btn-main" style="margin-top:10px;" id="saveBasicBtn" onclick="updateCourseBasic()">حفظ البيانات الجديدة</button>
+            </div>
+            <h4>إضافة فيديو:</h4>
+            <input type="text" id="vTitle" placeholder="عنوان الفيديو">
+            <input type="text" id="vUrl" placeholder="رابط اليوتيوب">
+            <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)">
+            <button class="btn btn-main" style="margin-top:10px;" onclick="addVideoToCourse()">إضافة الفيديو</button>
+            
+            <h4 style="margin-top:20px;">المحتوى الحالي (فيديوهات واختبارات):</h4>
+            <div id="vListContainer"></div>
+            <div id="qListContainer"></div>
+            <button class="btn btn-danger" style="width:100%; margin-top:20px;" onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, update, remove, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            authDomain: "monaacademy-cd983.firebaseapp.com",
+            databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
+            projectId: "monaacademy-cd983",
+            storageBucket: "monaacademy-cd983.appspot.com",
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+        let activeCID = "";
+        let allStudents = {};
+        let allResults = {};
+        let allLogs = {};
+        let allNotifications = {};
+        let allCourseAccess = {};
+        let allFolders = {};
+
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        };
+
+        onAuthStateChanged(auth, user => {
+            if (user && user.email === "mrsmonakamel6@gmail.com") {
+                document.getElementById('guard-loader').style.display = 'none';
+                document.getElementById('adminApp').style.display = 'flex';
+                syncData();
+            } else { window.location.href = "index.html"; }
+        });
+
+        function syncData() {
+            onValue(ref(db, '/'), snap => {
+                const data = snap.val() || {};
+                allFolders = data.folders || {};
+                renderCourses(allFolders);
+                allStudents = data.students || {};
+                renderStudents(allStudents);
+                allResults = data.quiz_results || {};
+                renderResults(allResults);
+                allLogs = data.course_access_logs || {};
+                renderAccessLogs(allLogs);
+                allNotifications = data.course_access_notifications || {};
+                renderNotifications(allNotifications);
+                allCourseAccess = data.student_course_access || {};
+                renderReviews(data.reviews);
+                fillDropdowns(allFolders);
+            });
+        }
+
+        window.renderCourses = (folders) => {
+            let h = "";
+            if(folders) Object.keys(folders).forEach(id => {
+                h += `<div class="card" style="text-align:center;">
+                    <img src="${folders[id].img || ''}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;">
+                    <h4 style="margin:10px 0;">${folders[id].name}</h4>
+                    <button class="btn btn-main" onclick="openEditModal('${id}', '${folders[id].name}')">تعديل المحتوى</button>
+                    <button class="btn btn-danger" style="width:100%; margin-top:5px;" onclick="delData('folders/${id}')">حذف الكورس</button>
+                </div>`;
+            });
+            document.getElementById('coursesGrid').innerHTML = h;
+        };
+
+        window.addCourse = () => {
+            const name = document.getElementById('cName').value, file = document.getElementById('cImg').files[0];
+            if(!name) return alert("يرجى إدخال اسم الكورس");
+            if(file) {
+                const r = new FileReader();
+                r.onload = () => {
+                    push(ref(db, 'folders'), { name, img: r.result });
+                    document.getElementById('cName').value = "";
+                    document.getElementById('cImg').value = "";
+                    alert("تم إنشاء الكورس");
+                };
+                r.readAsDataURL(file);
+            } else {
+                push(ref(db, 'folders'), { name });
+                document.getElementById('cName').value = "";
+                alert("تم إنشاء الكورس");
+            }
+        };
+
+        window.openEditModal = (id, name) => {
+            activeCID = id;
+            document.getElementById('editNameField').value = name;
+            
+            // تحميل الفيديوهات
+            onValue(ref(db, `folders/${id}`), snap => {
+                const f = snap.val() || {};
+                let vH = "<h5 style='margin-top:15px;'>الفيديوهات:</h5>";
+                if(f.videos) {
+                    Object.entries(f.videos).sort((a,b)=>(a[1].order||0)-(b[1].order||0)).forEach(([vId, v]) => {
+                        vH += `<div class="list-item"><span>${v.order||0}. ${v.title}</span> <button onclick="delData('folders/${id}/videos/${vId}')" style="color:red; border:none; background:none; cursor:pointer;">حذف</button></div>`;
+                    });
+                } else {
+                    vH += "<p style='color:#888; font-size:0.85rem;'>لا توجد فيديوهات بعد</p>";
+                }
+                document.getElementById('vListContainer').innerHTML = vH;
+            }, {onlyOnce: true});
+            
+            // تحميل الاختبارات
+            onValue(ref(db, `quizzes/${id}`), snap => {
+                let qH = "<h5 style='margin-top:15px;'>الاختبارات:</h5>";
+                if(snap.exists()) {
+                    snap.forEach(q => {
+                        const qData = q.val();
+                        const qCount = qData.questions ? Object.keys(qData.questions).length : 0;
+                        qH += `<div class="list-item"><span>${qData.name} (${qCount} سؤال)</span> <button onclick="delData('quizzes/${id}/${q.key}')" style="color:red; border:none; background:none; cursor:pointer;">حذف</button></div>`;
+                    });
+                } else {
+                    qH += "<p style='color:#888; font-size:0.85rem;'>لا توجد اختبارات بعد</p>";
+                }
+                document.getElementById('qListContainer').innerHTML = qH;
+            }, {onlyOnce: true});
+            
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        window.updateCourseBasic = async () => {
+            const name = document.getElementById('editNameField').value;
+            const file = document.getElementById('editImgField').files[0];
+            const btn = document.getElementById('saveBasicBtn');
+            if(!activeCID) return;
+            btn.innerText = "جاري الحفظ..."; btn.disabled = true;
+
+            if(file) {
+                const r = new FileReader();
+                r.onload = async () => {
+                    await update(ref(db, `folders/${activeCID}`), { name, img: r.result });
+                    alert("تم التحديث بنجاح"); 
+                    btn.innerText = "حفظ البيانات الجديدة"; 
+                    btn.disabled = false;
+                    document.getElementById('editImgField').value = "";
+                };
+                r.readAsDataURL(file);
+            } else {
+                await update(ref(db, `folders/${activeCID}`), { name });
+                alert("تم تحديث الاسم"); 
+                btn.innerText = "حفظ البيانات الجديدة"; 
+                btn.disabled = false;
+            }
+        };
+
+        window.addNewQuestion = (type) => {
+            const q = document.createElement('div');
+            q.className = "card"; 
+            q.style = "background:#f1f1f1; position:relative; margin-top:10px;";
+            q.innerHTML = `<i class="fas fa-trash" style="position:absolute; left:10px; top:10px; color:red; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+                <input type="text" class="q-text" placeholder="نص السؤال">
+                ${type==='mcq' ? `<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
+                    <input type="text" class="oA" placeholder="الاختيار A">
+                    <input type="text" class="oB" placeholder="الاختيار B">
+                    <input type="text" class="oC" placeholder="الاختيار C">
+                    <input type="text" class="oD" placeholder="الاختيار D">
+                </div>
+                <select class="q-correct" style="margin-top:5px;">
+                    <option value="a">الإجابة الصحيحة: A</option>
+                    <option value="b">الإجابة الصحيحة: B</option>
+                    <option value="c">الإجابة الصحيحة: C</option>
+                    <option value="d">الإجابة الصحيحة: D</option>
+                </select>` : `
+                <select class="q-correct" style="margin-top:5px;">
+                    <option value="a">الإجابة الصحيحة: صح</option>
+                    <option value="b">الإجابة الصحيحة: خطأ</option>
+                </select>`}`;
+            document.getElementById('questionsArea').appendChild(q);
+        };
+
+        window.saveFinalExam = () => {
+            const fId = document.getElementById('exFolderSelect').value;
+            const title = document.getElementById('exTitle').value;
+            const videoRel = document.getElementById('exVideoRel').value;
+            
+            if(!fId) return alert("يرجى اختيار الكورس");
+            if(!title) return alert("يرجى إدخال عنوان الاختبار");
+            
+            let questions = {};
+            let qIndex = 0;
+            
+            document.querySelectorAll('#questionsArea .card').forEach(c => {
+                const qText = c.querySelector('.q-text').value;
+                if(!qText) return;
+                
+                const oA = c.querySelector('.oA');
+                const oB = c.querySelector('.oB');
+                const correct = c.querySelector('.q-correct').value;
+                
+                if(oA && oB) { // MCQ
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: oA.value || "",
+                        b: oB.value || "",
+                        c: c.querySelector('.oC')?.value || "",
+                        d: c.querySelector('.oD')?.value || "",
+                        correct: correct
+                    };
+                } else { // True/False
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: "صح",
+                        b: "خطأ",
+                        correct: correct
+                    };
+                }
+                qIndex++;
+            });
+            
+            if(Object.keys(questions).length === 0) return alert("يرجى إضافة أسئلة للامتحان");
+            
+            push(ref(db, `quizzes/${fId}`), { 
+                name: title, 
+                questions: questions,
+                videoRel: videoRel
+            }).then(() => { 
+                alert("تم نشر الامتحان بنجاح"); 
+                document.getElementById('questionsArea').innerHTML = "";
+                document.getElementById('exTitle').value = "";
+            });
+        };
+
+        function renderStudents(s) {
+            let h = "";
+            let count = 0;
+            if(s) {
+                Object.keys(s).forEach(id => {
+                    count++;
+                    const student = s[id];
+                    let regMethod = "";
+                    
+                    if(student.username) {
+                        regMethod = '<span class="stat-badge badge-username">يوزر نيم</span>';
+                    } else if(student.email && student.email.includes('@')) {
+                        regMethod = '<span class="stat-badge badge-email">إيميل</span>';
+                    } else {
+                        regMethod = '<span class="stat-badge badge-google">جوجل</span>';
+                    }
+                    
+                    h += `<tr>
+                        <td>${student.name}</td>
+                        <td><span class="student-id-display">${student.shortId || 'غير متوفر'}</span></td>
+                        <td>${student.grade}</td>
+                        <td>${student.whatsapp || '-'}</td>
+                        <td>${student.parentPhone || '-'}</td>
+                        <td>${regMethod}</td>
+                        <td><button onclick="delData('students/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('studentList').innerHTML = h;
+            document.getElementById('studentCount').innerText = `(${count} طالب)`;
+        }
+
+        function renderResults(r) {
+            let h = "";
+            let count = 0;
+            if(r) {
+                Object.keys(r).forEach(id => {
+                    count++;
+                    const result = r[id];
+                    h += `<tr>
+                        <td>${result.student}</td>
+                        <td><span class="student-id-display">${result.studentId || '-'}</span></td>
+                        <td>${result.quiz}</td>
+                        <td>${result.score}/${result.total}</td>
+                        <td>${result.percentage}%</td>
+                        <td>${result.time || '-'}</td>
+                        <td><button onclick="delData('quiz_results/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('resultsList').innerHTML = h;
+            document.getElementById('resultsCount').innerText = `(${count} نتيجة)`;
+        }
+
+        function renderAccessLogs(logs) {
+            let h = "";
+            let count = 0;
+            if(logs) {
+                Object.keys(logs).forEach(id => {
+                    count++;
+                    const log = logs[id];
+                    h += `<tr>
+                        <td>${log.student}</td>
+                        <td><span class="student-id-display">${log.studentId || '-'}</span></td>
+                        <td>${log.course}</td>
+                        <td>${log.time || '-'}</td>
+                        <td><button onclick="delData('course_access_logs/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('logsList').innerHTML = h;
+            document.getElementById('logsCount').innerText = `(${count} سجل)`;
+        }
+
+        function renderReviews(reviews) {
+            let h = "";
+            let count = 0;
+            if(reviews) {
+                Object.keys(reviews).forEach(id => {
+                    count++;
+                    const review = reviews[id];
+                    h += `<tr>
+                        <td>${review.student}</td>
+                        <td style="max-width:400px;">${review.text}</td>
+                        <td><button onclick="delData('reviews/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('reviewsList').innerHTML = h;
+            document.getElementById('reviewsCount').innerText = `(${count} رأي)`;
+        }
+
+        function renderNotifications(notifications) {
+            let h = "";
+            let count = 0;
+            if(notifications) {
+                Object.keys(notifications).forEach(id => {
+                    count++;
+                    const notif = notifications[id];
+                    h += `<tr>
+                        <td>${notif.studentName}</td>
+                        <td><span class="student-id-display">${notif.studentId || '-'}</span></td>
+                        <td>${notif.courseName}</td>
+                        <td>${notif.time || '-'}</td>
+                        <td><button onclick="delData('course_access_notifications/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('notificationsList').innerHTML = h;
+            document.getElementById('notificationsCount').innerText = `(${count} إشعار)`;
+        }
+
+        window.addVideoToCourse = () => {
+            const t = document.getElementById('vTitle').value;
+            const u = document.getElementById('vUrl').value;
+            const o = document.getElementById('vOrder').value;
+            
+            if(!activeCID) return alert("خطأ: لم يتم تحديد الكورس");
+            if(!t || !u) return alert("يرجى إدخال عنوان الفيديو ورابط اليوتيوب");
+            
+            push(ref(db, `folders/${activeCID}/videos`), { 
+                title: t, 
+                url: u, 
+                order: parseInt(o) || 0 
+            }).then(() => {
+                alert("تم إضافة الفيديو");
+                document.getElementById('vTitle').value = "";
+                document.getElementById('vUrl').value = "";
+                document.getElementById('vOrder').value = "";
+                openEditModal(activeCID, document.getElementById('editNameField').value);
+            });
+        };
+
+        window.showSection = (id, btn) => {
+            document.querySelectorAll('.admin-section').forEach(s => s.style.display='none');
+            document.getElementById(id).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            btn.classList.add('active');
+            if(window.innerWidth < 992) toggleSidebar();
+        };
+
+        function fillDropdowns(f) {
+            let o = "<option value=''>اختر الكورس</option>";
+            if(f) Object.keys(f).forEach(id => o += `<option value="${id}">${f[id].name}</option>`);
+            document.getElementById('exFolderSelect').innerHTML = o;
+        }
+
+        window.filterStudents = () => {
+            const search = document.getElementById('studentSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#studentList tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        };
+
+        window.filterResults = () => {
+            const search = document.getElementById('resultSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#resultsList tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        };
+
+        window.filterLogs = () => {
+            const search = document.getElementById('logSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#logsList tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        };
+
+        window.filterNotifications = () => {
+            const search = document.getElementById('notificationSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#notificationsList tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        };
+
+        window.performAdvancedSearch = () => {
+            const searchTerm = document.getElementById('advancedSearch').value.trim().toLowerCase();
+            if(!searchTerm) return alert("يرجى إدخال اسم الطالب أو كود الطالب");
+            
+            let foundStudent = null;
+            let foundUid = null;
+            
+            // Search in students
+            Object.keys(allStudents).forEach(uid => {
+                const student = allStudents[uid];
+                if(student.name.toLowerCase().includes(searchTerm) || 
+                   (student.shortId && student.shortId.toLowerCase().includes(searchTerm))) {
+                    foundStudent = student;
+                    foundUid = uid;
+                }
+            });
+            
+            if(!foundStudent) {
+                alert("لم يتم العثور على الطالب");
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+            
+            // Display student info
+            let infoHtml = `
+                <div style="background:#f0eeff; padding:20px; border-radius:15px;">
+                    <h4 style="color:var(--accent); margin-bottom:10px;">${foundStudent.name}</h4>
+                    <p><strong>كود الطالب:</strong> <span class="student-id-display">${foundStudent.shortId || 'غير متوفر'}</span></p>
+                    <p><strong>المرحلة:</strong> ${foundStudent.grade || '-'}</p>
+                    <p><strong>رقم الواتساب:</strong> ${foundStudent.whatsapp || '-'}</p>
+                    <p><strong>رقم ولي الأمر:</strong> ${foundStudent.parentPhone || '-'}</p>
+                </div>
+            `;
+            document.getElementById('studentInfo').innerHTML = infoHtml;
+            
+            // Display courses
+            let coursesHtml = "";
+            if(allCourseAccess[foundUid]) {
+                Object.keys(allCourseAccess[foundUid]).forEach(courseId => {
+                    const courseData = allCourseAccess[foundUid][courseId];
+                    coursesHtml += `<div class="list-item">
+                        <div>
+                            <strong>${courseData.courseName}</strong><br>
+                            <small style="color:#999;">أول دخول: ${courseData.firstAccessTime}</small>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('studentCourses').innerHTML = coursesHtml || '<p style="text-align:center; color:#999;">لم يسجل في أي كورس بعد</p>';
+            
+            // Display exams and results
+            let examsHtml = "";
+            if(allResults) {
+                Object.keys(allResults).forEach(id => {
+                    const result = allResults[id];
+                    if(result.studentId === foundStudent.shortId) {
+                        examsHtml += `<tr>
+                            <td>${result.quiz}</td>
+                            <td>${result.score}/${result.total}</td>
+                            <td>${result.percentage}%</td>
+                            <td>${result.time || '-'}</td>
+                        </tr>`;
+                    }
+                });
+            }
+            document.getElementById('studentExams').innerHTML = examsHtml || '<tr><td colspan="4" style="text-align:center; color:#999;">لم يكمل أي امتحان بعد</td></tr>';
+            
+            // Display access logs
+            let logsHtml = "";
+            if(allLogs) {
+                Object.keys(allLogs).forEach(id => {
+                    const log = allLogs[id];
+                    if(log.studentId === foundStudent.shortId) {
+                        logsHtml += `<tr>
+                            <td>${log.course}</td>
+                            <td>${log.time || '-'}</td>
+                        </tr>`;
+                    }
+                });
+            }
+            document.getElementById('studentAccessLog').innerHTML = logsHtml || '<tr><td colspan="2" style="text-align:center; color:#999;">لا توجد سجلات دخول</td></tr>';
+            
+            document.getElementById('searchResults').style.display = 'block';
+        };
+
+        window.delData = (path) => { 
+            if(confirm("هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, path)).then(() => alert("تم الحذف بنجاح"));
+            }
+        };
+        
+        window.closeModal = () => document.getElementById('editModal').style.display = 'none';
+        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
+    </script>
+</body>
+</html>
