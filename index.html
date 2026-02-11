@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        /* ================ ROOT VARIABLES ================ */
+        /* ================ ROOT & GLOBAL ================ */
         :root {
             --main: #6c5ce7;
             --dark: #4834d4;
@@ -17,6 +17,7 @@
             --danger: #ff7675;
             --warning: #f1c40f;
             --gray: #a4b0be;
+            --developer: #2c3e50;
         }
 
         * {
@@ -60,59 +61,69 @@
             header { padding: 10px 3%; }
         }
 
-        .auth-btn {
-            background: var(--main);
-            color: white;
-            border: none;
-            padding: 8px 20px;
-            border-radius: 10px;
-            font-weight: bold;
+        /* ================ HAMBURGER MENU ================ */
+        .hamburger-menu {
+            font-size: 1.8rem;
+            color: var(--main);
             cursor: pointer;
-            font-family: 'Cairo';
+            padding: 5px 10px;
+            border-radius: 10px;
             transition: 0.3s;
+            display: inline-block;
         }
 
-        .auth-btn:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
+        .hamburger-menu:hover {
+            background: #f0eeff;
         }
 
-        .logout-btn {
-            background: var(--danger);
-            color: white;
-            border: none;
-            padding: 5px 15px;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-right: 10px;
-            font-family: 'Cairo';
+        .dropdown-menu {
+            position: absolute;
+            top: 70px;
+            left: 20px;
+            background: white;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            width: 250px;
+            padding: 10px 0;
+            z-index: 1001;
+            border: 1px solid #eee;
+            display: none;
         }
 
-        .dashboard-btn {
-            background: var(--main);
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 10px;
+        .dropdown-menu a,
+        .dropdown-menu div {
+            display: block;
+            padding: 12px 20px;
+            text-decoration: none;
+            color: #333;
             font-weight: bold;
+            transition: 0.2s;
             cursor: pointer;
-            font-family: 'Cairo';
-            margin-right: 10px;
-            font-size: 0.9rem;
+            text-align: right;
         }
 
-        .student-id-tag {
+        .dropdown-menu a:hover,
+        .dropdown-menu div:hover {
             background: #f0eeff;
             color: var(--main);
-            padding: 2px 8px;
-            border-radius: 5px;
-            font-size: 0.8rem;
+        }
+
+        .dropdown-menu hr {
+            margin: 8px 0;
+            border: 0.5px solid #eee;
+        }
+
+        /* ================ STUDENT ID (only inside dashboard) ================ */
+        .student-id-badge {
+            background: #f0eeff;
+            padding: 10px 20px;
+            border-radius: 50px;
+            color: var(--main);
+            font-weight: bold;
             border: 1px solid var(--main);
-            margin-right: 10px;
-            cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
         }
 
         /* ================ DASHBOARD STYLES ================ */
@@ -138,15 +149,6 @@
             font-size: 2rem;
             color: var(--dark);
             margin-bottom: 10px;
-        }
-
-        .student-id-badge {
-            background: #f0eeff;
-            padding: 10px 20px;
-            border-radius: 50px;
-            color: var(--main);
-            font-weight: bold;
-            border: 1px solid var(--main);
         }
 
         .stats-grid {
@@ -198,10 +200,6 @@
             border-radius: 10px;
         }
 
-        .course-progress {
-            margin-top: 15px;
-        }
-
         .progress-bar-bg {
             height: 8px;
             background: #eee;
@@ -229,13 +227,8 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.02);
         }
 
-        .exam-item {
-            border-right: 5px solid var(--main);
-        }
-
-        .video-item {
-            border-right: 5px solid var(--warning);
-        }
+        .exam-item { border-right: 5px solid var(--main); }
+        .video-item { border-right: 5px solid var(--warning); }
 
         .exam-score {
             background: var(--success);
@@ -243,6 +236,42 @@
             padding: 5px 15px;
             border-radius: 50px;
             font-weight: bold;
+        }
+
+        /* ================ CONTINUE WATCHING ================ */
+        .continue-card {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            border-right: 6px solid var(--main);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(108,92,231,0.08);
+        }
+
+        .continue-card h4 {
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .continue-card .btn-continue {
+            background: var(--main);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            font-size: 0.9rem;
+            border: none;
+            cursor: pointer;
+        }
+
+        .empty-state {
+            text-align: center;
+            color: #999;
+            padding: 40px;
         }
 
         /* ================ SUBSCRIPTION MODAL ================ */
@@ -292,7 +321,6 @@
         .sub-btn.primary {
             background: var(--main);
             color: white;
-            border: 2px solid var(--main);
         }
 
         .sub-btn:hover {
@@ -322,11 +350,6 @@
             filter: grayscale(0.5);
         }
 
-        .item-card.disabled:hover {
-            transform: none;
-            border-color: #eee;
-        }
-
         .lock-icon {
             position: absolute;
             top: 10px;
@@ -347,7 +370,7 @@
         .progress-bar { height: 6px; background: #eee; border-radius: 10px; margin-bottom: 20px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--main); width: 33%; transition: 0.3s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 5px; padding: 8px; background: #fff5f5; border-radius: 8px; display: flex; align-items: center; gap: 5px; }
+        .error-message { color: var(--danger); font-size: 0.8rem; margin-top: 5px; padding: 8px; background: #fff5f5; border-radius: 8px; }
 
         /* ================ HOME PAGE ================ */
         #homePage { display: block; }
@@ -365,7 +388,7 @@
         .features { padding: 80px 5%; background: #fff; text-align: center; }
         .features h2 { font-size: 2.2rem; margin-bottom: 50px; color: var(--dark); position: relative; display: inline-block; }
         .features h2::after { content: ''; width: 50%; height: 4px; background: var(--main); position: absolute; bottom: -15px; right: 25%; border-radius: 10px; }
-        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; margin-top: 20px; }
+        .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 30px; }
         .feat-card { background: #fff; padding: 40px 30px; border-radius: 30px; box-shadow: 0 10px 30px rgba(108,92,231,0.1); border: 1px solid #f0eeff; transition: 0.4s; }
         .feat-card:hover { transform: translateY(-10px); border-color: var(--main); }
         .feat-card .num-circle { width: 60px; height: 60px; background: var(--main); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; margin: 0 auto 20px; }
@@ -387,7 +410,6 @@
         .badge-video { background: #f0eeff; color: var(--main); }
         .badge-quiz { background: #fff9e6; color: var(--warning); }
 
-        /* ================ QUIZ OVERLAY ================ */
         #quizOverlay { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:#f4f4f9; z-index:3000; overflow-y:auto; padding:20px; }
         .quiz-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; background:white; padding:15px; border-radius:15px; box-shadow:0 2px 10px rgba(0,0,0,0.05); flex-wrap: wrap; gap: 10px; }
         .q-form-card { background:white; padding:25px; border-radius:15px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.04); border-right:6px solid var(--main); text-align:right; }
@@ -397,7 +419,6 @@
         .opt-label.selected { background: #f0eeff; border-color: var(--main); color: var(--main); }
         .opt-label input { width: 20px; height: 20px; accent-color: var(--main); pointer-events: none; }
 
-        /* ================ REVIEWS ================ */
         .reviews { padding: 60px 5%; background: #fff; text-align: center; }
         .reviews-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; }
         .review-card { background: #f9f9f9; padding: 25px; border-radius: 15px; border-top: 4px solid var(--main); text-align: right; margin-bottom: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
@@ -405,73 +426,34 @@
         .add-review-box textarea { width: 100%; padding: 12px; margin: 8px 0; border: none; border-radius: 10px; font-family: 'Cairo'; resize: vertical; }
         .review-locked { background: #eee; color: #777; padding: 20px; border-radius: 15px; border: 1px dashed #ccc; }
 
-        /* ================ LOGIN MODAL ================ */
         .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; }
         .modal-content { background: white; padding: 30px; border-radius: 25px; text-align: center; width: 90%; max-width: 420px; position: relative; max-height: 90vh; overflow-y: auto; }
         .close-modal { position: absolute; left: 20px; top: 15px; font-size: 20px; cursor: pointer; }
 
-        /* ================ FOOTER ================ */
         footer { padding: 40px 5%; text-align: center; background: #fff; border-top: 1px solid #eee; position: relative; }
-        .social-btn { text-decoration: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; color: #fff; margin: 5px; display: inline-block; cursor: pointer; font-family: 'Cairo'; }
-        .wa { background: var(--whatsapp); } .fb { background: #1877f2; }
+        .social-btn { text-decoration: none; font-weight: bold; padding: 10px 20px; border-radius: 10px; color: #fff; margin: 5px; display: inline-block; cursor: pointer; font-family: 'Cairo'; transition: 0.3s; }
+        .social-btn:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        .wa { background: var(--whatsapp); } 
+        .fb { background: #1877f2; }
+        .developer-btn { background: var(--developer); }
 
         .required-field::after { content: " *"; color: var(--danger); }
         .hint-text { font-size: 0.75rem; color: #666; margin-top: -5px; margin-bottom: 10px; }
     </style>
 </head>
 <body>
-    <!-- ================ HEADER ================ -->
     <header>
         <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
-        <div id="authStatus">
-            <button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>
-        </div>
+        <div id="authStatus"></div>
     </header>
 
-    <!-- ================ STUDENT DASHBOARD ================ -->
-    <div id="studentDashboard" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <button onclick="goHome()" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; font-family:'Cairo';">
-                <i class="fas fa-arrow-right"></i> العودة للرئيسية
-            </button>
-            <div class="student-id-badge" id="dashboardStudentId"></div>
-        </div>
-        
-        <div class="dashboard-header">
-            <div class="student-welcome">
-                <h1>مرحباً <span id="studentNameDashboard">...</span>! 👋</h1>
-                <p style="color: #666;">من هنا تشوف كل كورساتك وتقدمك ونتائجك</p>
-            </div>
-        </div>
-
-        <!-- الإحصائيات السريعة -->
-        <div class="stats-grid" id="statsGrid">
-            <div class="stat-card">
-                <div class="stat-number" id="statCourses">0</div>
-                <div class="stat-label">الكورسات المشترك فيها</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statVideos">0</div>
-                <div class="stat-label">فيديو تمت مشاهدته</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statExams">0</div>
-                <div class="stat-label">امتحان تم حله</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statAvgScore">0%</div>
-                <div class="stat-label">متوسط الدرجات</div>
-            </div>
-        </div>
-
-        <h2 class="section-title">📚 كورساتي المشترك فيها</h2>
-        <div id="myCoursesGrid" class="course-grid"></div>
-
-        <h2 class="section-title">📝 آخر الامتحانات</h2>
-        <div id="recentExamsList"></div>
-
-        <h2 class="section-title">🎬 آخر الفيديوهات مشاهدة</h2>
-        <div id="recentVideosList"></div>
+    <!-- ================ HAMBURGER DROPDOWN ================ -->
+    <div id="menuDropdown" class="dropdown-menu">
+        <a onclick="openDashboard()"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> لوحة التحكم</a>
+        <a onclick="goHome()"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <a onclick="openDashboard()"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> متابعة المشاهدة</a>
+        <hr>
+        <a onclick="logout()" style="color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
     </div>
 
     <!-- ================ SUBSCRIPTION MODAL ================ -->
@@ -489,7 +471,7 @@
             <div id="subscriptionIdSection" style="display: none;">
                 <p style="color: #666; margin-bottom: 10px;">أدخل كود الطالب الخاص بك (ID) لتأكيد الاشتراك:</p>
                 <input type="text" id="subscriptionIdInput" class="id-input" placeholder="مثال: 1234567890" maxlength="10">
-                <button id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px;" onclick="confirmSubscription()">تأكيد الاشتراك</button>
+                <button id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="confirmSubscription()">تأكيد الاشتراك</button>
                 <div id="subError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
         </div>
@@ -503,7 +485,7 @@
                 <p>Welcome to your second home! Everything you need to excel is right here.</p><br>
                 <a href="#courses" style="background: #fff; color: var(--main); padding: 15px 35px; border-radius: 50px; text-decoration: none; font-weight: 900;">View Courses</a>
             </div>
-            <div class="hero-image"><img src="mona.jpg"></div>
+            <div class="hero-image"><img src="mona.jpg" alt="Ms. Mona"></div>
         </section>
 
         <section class="about-section">
@@ -544,6 +526,56 @@
         <div id="combinedGrid" class="content-grid"></div>
     </div>
 
+    <!-- ================ STUDENT DASHBOARD ================ -->
+    <div id="studentDashboard" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <button onclick="goHome()" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; font-family:'Cairo';">
+                <i class="fas fa-arrow-right"></i> العودة للرئيسية
+            </button>
+            <div class="student-id-badge" id="dashboardStudentId"></div>
+        </div>
+        
+        <div class="dashboard-header">
+            <div class="student-welcome">
+                <h1>مرحباً <span id="studentNameDashboard">...</span>! 👋</h1>
+                <p style="color: #666;">من هنا تشوف كل كورساتك وتقدمك ونتائجك</p>
+            </div>
+        </div>
+
+        <!-- الإحصائيات السريعة -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="statCourses">0</div>
+                <div class="stat-label">الكورسات المشترك فيها</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statVideos">0</div>
+                <div class="stat-label">فيديو تمت مشاهدته</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statExams">0</div>
+                <div class="stat-label">امتحان تم حله</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="statAvgScore">0%</div>
+                <div class="stat-label">متوسط الدرجات</div>
+            </div>
+        </div>
+
+        <!-- متابعة المشاهدة -->
+        <h2 class="section-title">▶️ متابعة المشاهدة</h2>
+        <div id="continueWatchingGrid" class="content-grid"></div>
+
+        <h2 class="section-title">📚 كورساتي المشترك فيها</h2>
+        <div id="myCoursesGrid" class="course-grid"></div>
+
+        <h2 class="section-title">📝 آخر الامتحانات</h2>
+        <div id="recentExamsList"></div>
+
+        <h2 class="section-title">🎬 آخر الفيديوهات مشاهدة</h2>
+        <div id="recentVideosList"></div>
+    </div>
+
     <!-- ================ QUIZ / VIDEO OVERLAY ================ -->
     <div id="quizOverlay">
         <div class="quiz-header">
@@ -551,7 +583,6 @@
             <button onclick="closeQuiz()" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
         </div>
         <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
-        <div id="relatedExamArea" style="max-width: 800px; margin: 20px auto;"></div>
     </div>
 
     <!-- ================ LOGIN & REGISTRATION MODAL ================ -->
@@ -561,15 +592,15 @@
             <!-- AUTH CHOICE -->
             <div id="authChoice">
                 <h2 style="color:var(--main); margin-bottom:20px;">مرحباً بك 🎓</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginChoice')" style="width:100%; margin-bottom:10px;">تسجيل الدخول</button>
-                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%;">إنشاء حساب جديد</button>
+                <button class="auth-btn" onclick="showAuthForm('loginChoice')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>
+                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">إنشاء حساب جديد</button>
             </div>
             <!-- LOGIN CHOICE -->
             <div id="loginChoice" style="display:none;">
                 <h2 style="color:var(--main); margin-bottom:20px;">اختر طريقة تسجيل الدخول</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginEmail')" style="width:100%; margin-bottom:10px;">الدخول بالإيميل والباسورد</button>
-                <button class="auth-btn" onclick="showAuthForm('loginUsername')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px;">الدخول باليوزر نيم والباسورد</button>
-                <button class="auth-btn" onclick="loginGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer;">
+                <button class="auth-btn" onclick="showAuthForm('loginEmail')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">الدخول بالإيميل والباسورد</button>
+                <button class="auth-btn" onclick="showAuthForm('loginUsername')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">الدخول باليوزر نيم والباسورد</button>
+                <button class="auth-btn" onclick="loginGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> الدخول بواسطة جوجل
                 </button>
                 <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
@@ -579,7 +610,7 @@
                 <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب - الإيميل</h2>
                 <input type="email" id="stEmail" class="reg-input" placeholder="البريد الإلكتروني">
                 <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" id="loginBtn" onclick="loginEmailSubmit()" style="width:100%;">دخول</button>
+                <button class="auth-btn" id="loginBtn" onclick="loginEmailSubmit()" style="width:100%; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">دخول</button>
                 <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
             </div>
             <!-- LOGIN USERNAME -->
@@ -587,7 +618,7 @@
                 <h2 style="color:var(--main); margin-bottom:20px;">دخول الطالب - اليوزر نيم</h2>
                 <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم (Username)">
                 <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" id="loginBtnUsername" onclick="loginUsernameSubmit()" style="width:100%;">دخول</button>
+                <button class="auth-btn" id="loginBtnUsername" onclick="loginUsernameSubmit()" style="width:100%; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">دخول</button>
                 <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
             </div>
             <!-- REGISTRATION FORM -->
@@ -651,7 +682,7 @@
                     </div>
                     <div class="hint-text">اختياري - اتركه فارغاً إذا لم يتوفر</div>
                     
-                    <button id="step1NextBtn" class="auth-btn" onclick="nextStep(2)" style="width:100%; margin-top:10px; opacity:0.6; pointer-events:none;" disabled>التالي</button>
+                    <button id="step1NextBtn" class="auth-btn" onclick="nextStep(2)" style="width:100%; margin-top:10px; opacity:0.6; pointer-events:none; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;" disabled>التالي</button>
                     <div id="step1Error" class="error-message" style="display: none;"></div>
                 </div>
                 <!-- STEP 2 -->
@@ -668,20 +699,20 @@
                         <option value="">يرجى اختيار المرحلة أولاً</option>
                     </select>
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="auth-btn" onclick="nextStep(1)" style="background:#ccc; width:40%;">السابق</button>
-                        <button id="step2NextBtn" class="auth-btn" onclick="nextStep(3)" style="width:60%; opacity:0.6; pointer-events:none;" disabled>التالي</button>
+                        <button class="auth-btn" onclick="nextStep(1)" style="background:#ccc; width:40%; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">السابق</button>
+                        <button id="step2NextBtn" class="auth-btn" onclick="nextStep(3)" style="width:60%; opacity:0.6; pointer-events:none; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold;" disabled>التالي</button>
                     </div>
                     <div id="step2Error" class="error-message" style="display: none;"></div>
                 </div>
                 <!-- STEP 3: CHOOSE METHOD -->
                 <div id="step3" class="step-container">
                     <h3 style="margin-bottom:15px;">اختر طريقة إنشاء الحساب</h3>
-                    <button class="auth-btn" onclick="showRegMethod('email')" style="width:100%; margin-bottom:10px;">إنشاء بالإيميل والباسورد</button>
-                    <button class="auth-btn" onclick="showRegMethod('username')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px;">إنشاء باليوزر نيم والباسورد</button>
-                    <button class="auth-btn" onclick="registerWithGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; margin-bottom:10px;">
+                    <button class="auth-btn" onclick="showRegMethod('email')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">إنشاء بالإيميل والباسورد</button>
+                    <button class="auth-btn" onclick="showRegMethod('username')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">إنشاء باليوزر نيم والباسورد</button>
+                    <button class="auth-btn" onclick="registerWithGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20"> ربط الحساب بجوجل
                     </button>
-                    <button class="auth-btn" onclick="nextStep(2)" style="background:#ccc; width:100%;">السابق</button>
+                    <button class="auth-btn" onclick="nextStep(2)" style="background:#ccc; width:100%; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">السابق</button>
                 </div>
                 <!-- STEP 3: EMAIL -->
                 <div id="step3Email" class="step-container">
@@ -690,8 +721,8 @@
                     <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف على الأقل)">
                     <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="auth-btn" onclick="nextStep(3)" style="background:#ccc; width:40%;">السابق</button>
-                        <button class="auth-btn" id="regBtn" onclick="handleRegisterEmail()" style="width:60%; background:var(--whatsapp);">إنشاء الحساب</button>
+                        <button class="auth-btn" onclick="nextStep(3)" style="background:#ccc; width:40%; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">السابق</button>
+                        <button class="auth-btn" id="regBtn" onclick="handleRegisterEmail()" style="width:60%; background:var(--whatsapp); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">إنشاء الحساب</button>
                     </div>
                 </div>
                 <!-- STEP 3: USERNAME -->
@@ -701,8 +732,8 @@
                     <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف على الأقل)">
                     <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
                     <div style="display:flex; gap:10px; margin-top:10px;">
-                        <button class="auth-btn" onclick="nextStep(3)" style="background:#ccc; width:40%;">السابق</button>
-                        <button class="auth-btn" id="regBtnUser" onclick="handleRegisterUsername()" style="width:60%; background:var(--whatsapp);">إنشاء الحساب</button>
+                        <button class="auth-btn" onclick="nextStep(3)" style="background:#ccc; width:40%; color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">السابق</button>
+                        <button class="auth-btn" id="regBtnUser" onclick="handleRegisterUsername()" style="width:60%; background:var(--whatsapp); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">إنشاء الحساب</button>
                     </div>
                 </div>
             </div>
@@ -721,14 +752,21 @@
 
     <footer>
         <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamal</strong></p>
-        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px;">
-            <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">فيسبوك</a>
-            <div class="social-btn wa" onclick="document.getElementById('waModal').style.display='flex'">واتساب</div>
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">
+                <i class="fab fa-facebook-f" style="margin-left: 5px;"></i> فيسبوك
+            </a>
+            <div class="social-btn wa" onclick="document.getElementById('waModal').style.display='flex'">
+                <i class="fab fa-whatsapp" style="margin-left: 5px;"></i> واتساب
+            </div>
+            <a href="https://wa.me/201062306872" class="social-btn developer-btn" target="_blank">
+                <i class="fas fa-code" style="margin-left: 5px;"></i> Developed by Abdelrahman
+            </a>
         </div>
     </footer>
 
-    <!-- ================ FIREBASE SCRIPT (MODULE) ================ -->
     <script type="module">
+        // ================ FIREBASE IMPORTS ================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, child, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
@@ -754,15 +792,29 @@
         let myShortId = "";
         let currentFolderId = null;
         let currentFolderName = "";
+        let currentStudentGrade = null;
         const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
-        // ================ STEP VALIDATION FUNCTIONS ================
+        // ================ HAMBURGER MENU TOGGLE ================
+        window.toggleMenu = () => {
+            const menu = document.getElementById('menuDropdown');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        };
+
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('menuDropdown');
+            const hamburger = document.querySelector('.hamburger-menu');
+            if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
+                menu.style.display = 'none';
+            }
+        });
+
+        // ================ STEP VALIDATION ================
         window.checkStep1Completion = () => {
             const n1 = document.getElementById('n1').value.trim();
             const n4 = document.getElementById('n4').value.trim();
             const whatsapp = document.getElementById('regWhatsapp').value.trim();
             const parentPhone = document.getElementById('regParentPhone').value.trim();
-            
             const nextBtn = document.getElementById('step1NextBtn');
             const errorDiv = document.getElementById('step1Error');
             
@@ -978,6 +1030,40 @@
             }).catch(err => alert("خطأ: " + err.message));
         };
 
+        // ================ COURSE FILTERING BY GRADE ================
+        function loadFolders() {
+            onValue(ref(db, 'folders'), async (snapshot) => {
+                let html = "";
+                if (!currentUser) {
+                    snapshot.forEach(c => {
+                        html += `<div class="folder-card" onclick="openContent('${c.key}', '${c.val().name}')">
+                            <img src="${c.val().img || 'mona.jpg'}">
+                            <h3>${c.val().name}</h3>
+                        </div>`;
+                    });
+                } else {
+                    const userSnap = await get(child(dbRef, `students/${currentUser.uid}`));
+                    if (userSnap.exists()) {
+                        const studentGrade = userSnap.val().grade;
+                        currentStudentGrade = studentGrade;
+                        snapshot.forEach(c => {
+                            const course = c.val();
+                            if (course.grade === studentGrade) {
+                                html += `<div class="folder-card" onclick="openContent('${c.key}', '${course.name}')">
+                                    <img src="${course.img || 'mona.jpg'}">
+                                    <h3>${course.name}</h3>
+                                </div>`;
+                            }
+                        });
+                        if (html === "") {
+                            html = "<p style='text-align:center; grid-column:1/-1;'>لا توجد كورسات متاحة لصفك الدراسي حالياً</p>";
+                        }
+                    }
+                }
+                document.getElementById('foldersGrid').innerHTML = html;
+            });
+        }
+
         // ================ SUBSCRIPTION SYSTEM ================
         window.openContent = async (folderId, folderName) => {
             if (!currentUser) { openLogin(); return; }
@@ -1006,13 +1092,11 @@
             document.getElementById('subscriptionModal').style.display = 'none';
         };
 
-        // Preview button
         document.getElementById('previewBtn')?.addEventListener('click', async () => {
             closeSubscriptionModal();
             await loadCourseContent(currentFolderId, currentFolderName, false);
         });
 
-        // Subscribe button
         document.getElementById('subscribeBtn')?.addEventListener('click', () => {
             document.getElementById('subscriptionIdSection').style.display = 'block';
         });
@@ -1212,15 +1296,18 @@
             document.getElementById('homePage').style.display = 'none';
             document.getElementById('contentArea').style.display = 'none';
             document.getElementById('studentDashboard').style.display = 'block';
+            
             const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
             if (!studentSnap.exists()) return;
             const student = studentSnap.val();
             myShortId = student.shortId || '';
             document.getElementById('studentNameDashboard').innerText = student.name || currentUser.displayName;
             document.getElementById('dashboardStudentId').innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${myShortId}`;
+
             const subscriptions = student.subscriptions || {};
             const watchedVideos = student.watchedVideos || {};
             const examResults = student.examResults || {};
+
             document.getElementById('statCourses').innerText = Object.keys(subscriptions).length;
             document.getElementById('statVideos').innerText = Object.keys(watchedVideos).length;
             document.getElementById('statExams').innerText = Object.keys(examResults).length;
@@ -1228,6 +1315,7 @@
             Object.values(examResults).forEach(ex => totalPercentage += ex.percentage || 0);
             const avg = Object.keys(examResults).length > 0 ? Math.round(totalPercentage / Object.keys(examResults).length) : 0;
             document.getElementById('statAvgScore').innerText = avg + '%';
+
             let coursesHtml = '';
             for (const [courseId, subData] of Object.entries(subscriptions)) {
                 const courseSnap = await get(child(dbRef, `folders/${courseId}`));
@@ -1238,15 +1326,14 @@
                         <img src="${course.img || 'mona.jpg'}">
                         <h3>${course.name}</h3>
                         <div style="padding: 0 20px 20px;">
-                            <div class="progress-bar-bg">
-                                <div class="progress-fill-green" style="width: ${progress}%;"></div>
-                            </div>
+                            <div class="progress-bar-bg"><div class="progress-fill-green" style="width: ${progress}%;"></div></div>
                             <span style="color: var(--main); font-weight: bold;">${progress}% مكتمل</span>
                         </div>
                     </div>`;
                 }
             }
             document.getElementById('myCoursesGrid').innerHTML = coursesHtml || '<p style="text-align:center; color:#999;">لم تشترك في أي كورس بعد</p>';
+
             let examsHtml = '';
             Object.entries(examResults).sort((a,b) => b[1].completedAt.localeCompare(a[1].completedAt)).slice(0,5).forEach(([id, exam]) => {
                 examsHtml += `<div class="exam-item">
@@ -1255,6 +1342,7 @@
                 </div>`;
             });
             document.getElementById('recentExamsList').innerHTML = examsHtml || '<p style="text-align:center; color:#999;">لم تؤد أي امتحان بعد</p>';
+
             let videosHtml = '';
             Object.entries(watchedVideos).sort((a,b) => b[1].watchedAt.localeCompare(a[1].watchedAt)).slice(0,5).forEach(([id, video]) => {
                 videosHtml += `<div class="video-item">
@@ -1263,6 +1351,67 @@
                 </div>`;
             });
             document.getElementById('recentVideosList').innerHTML = videosHtml || '<p style="text-align:center; color:#999;">لم تشاهد أي فيديو بعد</p>';
+
+            await loadContinueWatching();
+        };
+
+        // ================ CONTINUE WATCHING ================
+        window.loadContinueWatching = async () => {
+            if (!currentUser) return;
+            const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
+            if (!studentSnap.exists()) return;
+            const student = studentSnap.val();
+            const subscriptions = student.subscriptions || {};
+            const watchedVideos = student.watchedVideos || {};
+
+            let continueHtml = "";
+
+            for (const [courseId, subData] of Object.entries(subscriptions)) {
+                const courseSnap = await get(child(dbRef, `folders/${courseId}`));
+                if (!courseSnap.exists()) continue;
+                const course = courseSnap.val();
+                const videos = course.videos || {};
+
+                const videoList = Object.entries(videos).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+                if (videoList.length === 0) continue;
+
+                let nextVideo = null;
+                for (let [vidId, vidData] of videoList) {
+                    if (!watchedVideos[vidId]) {
+                        nextVideo = { id: vidId, ...vidData };
+                        break;
+                    }
+                }
+
+                if (!nextVideo) {
+                    const lastWatched = Object.values(watchedVideos)
+                        .filter(v => v.courseId === courseId)
+                        .sort((a,b) => b.watchedAt.localeCompare(a.watchedAt))[0];
+                    if (lastWatched) {
+                        continueHtml += `<div class="continue-card">
+                            <div>
+                                <h4>${course.name}</h4>
+                                <p style="color: #666;">✨ أكملت كل الفيديوهات! راجع الامتحانات</p>
+                            </div>
+                            <a href="#" onclick="openContent('${courseId}', '${course.name}'); return false;" class="btn-continue">عرض الكورس</a>
+                        </div>`;
+                    }
+                    continue;
+                }
+
+                continueHtml += `<div class="continue-card">
+                    <div>
+                        <h4>${course.name}</h4>
+                        <p style="color: var(--main);">▶️ تابع: ${nextVideo.title}</p>
+                    </div>
+                    <a href="#" onclick="openVideo('${nextVideo.url}', '${nextVideo.title}', '${nextVideo.id}', '${courseId}'); return false;" class="btn-continue">مشاهدة</a>
+                </div>`;
+            }
+
+            if (continueHtml === "") {
+                continueHtml = '<div class="empty-state">لا توجد فيديوهات للمتابعة حالياً. اشترك في كورس وابدأ المشاهدة!</div>';
+            }
+            document.getElementById('continueWatchingGrid').innerHTML = continueHtml;
         };
 
         // ================ AUTH STATE ================
@@ -1284,19 +1433,22 @@
                         await updateProfile(user, { displayName: data.name });
                         displayName = data.name;
                     }
+                    currentStudentGrade = data.grade;
                 }
                 statusDiv.innerHTML = `
-                <div style="display:inline-block; vertical-align:middle; text-align:right;">
-                    <span style="font-weight:bold; color:var(--main); display:block;">${isAdmin ? 'أدمن منى 💎' : displayName}</span>
-                    ${!isAdmin && myShortId ? `<span class="student-id-tag" onclick="navigator.clipboard.writeText('${myShortId}');alert('تم نسخ الكود')">ID: ${myShortId} <i class="fas fa-copy"></i></span>` : ''}
-                </div>
-                ${!isAdmin ? '<button class="dashboard-btn" onclick="openDashboard()"><i class="fas fa-tachometer-alt"></i> لوحة التحكم</button>' : ''}
-                ${isAdmin ? '<button class="auth-btn" onclick="window.location.href=\'mx_2026_ctrl_p8.html\'" style="margin:0 10px; background:var(--dark);">الإدارة</button>' : ''}
-                <button class="logout-btn" onclick="logout()">خروج</button>`;
+                    <div class="hamburger-menu" onclick="toggleMenu()">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                `;
+                if (isAdmin) {
+                    statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
+                }
                 reviewContainer.innerHTML = `<div class="add-review-box"><h3>أضف رأيك هنا 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال</button></div>`;
+                loadFolders();
             } else {
-                statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()">تسجيل الدخول</button>`;
+                statusDiv.innerHTML = `<button class="auth-btn" onclick="openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
                 reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+                loadFolders();
             }
         });
 
@@ -1358,19 +1510,6 @@
         };
 
         // ================ LOAD FOLDERS & REVIEWS ================
-        function loadFolders() {
-            onValue(ref(db, 'folders'), snapshot => {
-                let html = "";
-                snapshot.forEach(c => { 
-                    html += `<div class="folder-card" onclick="openContent('${c.key}', '${c.val().name}')">
-                        <img src="${c.val().img || 'mona.jpg'}">
-                        <h3>${c.val().name}</h3>
-                    </div>`; 
-                });
-                document.getElementById('foldersGrid').innerHTML = html;
-            });
-        }
-
         function loadReviews() {
             onValue(ref(db, 'reviews'), snapshot => {
                 let html = "";
@@ -1388,7 +1527,6 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadFolders();
             loadReviews();
-            // Restrict phone inputs to numbers only
             const phoneInputs = ['regWhatsapp', 'regParentPhone'];
             phoneInputs.forEach(id => {
                 const input = document.getElementById(id);
