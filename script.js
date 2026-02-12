@@ -1025,6 +1025,7 @@ window.submitCourseRating = async (courseId) => {
 window.openVideo = async (url, title, videoId, folderId) => {
     if (!currentUser) return openLogin();
 
+    // التحقق من صحة رابط اليوتيوب
     const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
     if (!match || match[2].length !== 11) {
         alert("❌ رابط الفيديو غير صالح");
@@ -1310,7 +1311,7 @@ window.closeQuiz = () => {
     if (quizContainer) quizContainer.innerHTML = "";
 };
 
-// ================ DASHBOARD (تم إصلاح مشكلة النقر) ================
+// ================ DASHBOARD ================
 window.openDashboard = async () => {
     if (!currentUser) { 
         openLogin(); 
@@ -1377,49 +1378,43 @@ window.openDashboard = async () => {
         badgesContainer.innerHTML = badgesHtml || '<p style="color:#666;">' + t('noBadges') + '</p>';
     }
 
-    // ✅ إصلاح مشكلة النقر على بطاقات الكورسات
+    let coursesHtml = '';
+    for (const [courseId, subData] of Object.entries(subscriptions)) {
+        const courseSnap = await get(child(dbRef, `folders/${courseId}`));
+        if (courseSnap.exists()) {
+            const course = courseSnap.val();
+            const progress = subData.progress || 0;
+            
+            const card = createElementSafely('div', { className: 'folder-card' });
+            
+            const img = createElementSafely('img', {
+                src: course.img || 'mona.jpg',
+                loading: 'lazy'
+            });
+            img.onerror = () => img.src = 'mona.jpg';
+            card.appendChild(img);
+            
+            const h3 = createElementSafely('h3', { textContent: course.name || '' });
+            card.appendChild(h3);
+            
+            const progressDiv = createElementSafely('div', {
+                style: 'padding: 0 20px 20px'
+            });
+            progressDiv.innerHTML = `
+                <div class="progress-bar-bg"><div class="progress-fill-green" style="width: ${progress}%;"></div></div>
+                <span style="color: var(--main); font-weight: bold;">${progress}% ${t('completed')}</span>
+            `;
+            card.appendChild(progressDiv);
+            
+            card.addEventListener('click', () => openContent(courseId, course.name));
+            
+            coursesHtml += card.outerHTML;
+        }
+    }
+    
     const myCoursesGrid = document.getElementById('myCoursesGrid');
     if (myCoursesGrid) {
-        myCoursesGrid.innerHTML = ''; // تفريغ الشبكة
-        
-        for (const [courseId, subData] of Object.entries(subscriptions)) {
-            const courseSnap = await get(child(dbRef, `folders/${courseId}`));
-            if (courseSnap.exists()) {
-                const course = courseSnap.val();
-                const progress = subData.progress || 0;
-                
-                const card = createElementSafely('div', { className: 'folder-card' });
-                
-                const img = createElementSafely('img', {
-                    src: course.img || 'mona.jpg',
-                    loading: 'lazy'
-                });
-                img.onerror = () => img.src = 'mona.jpg';
-                card.appendChild(img);
-                
-                const h3 = createElementSafely('h3', { textContent: course.name || '' });
-                card.appendChild(h3);
-                
-                const progressDiv = createElementSafely('div', {
-                    style: 'padding: 0 20px 20px'
-                });
-                progressDiv.innerHTML = `
-                    <div class="progress-bar-bg"><div class="progress-fill-green" style="width: ${progress}%;"></div></div>
-                    <span style="color: var(--main); font-weight: bold;">${progress}% ${t('completed')}</span>
-                `;
-                card.appendChild(progressDiv);
-                
-                // إضافة مستمع الحدث مباشرة على العنصر
-                card.addEventListener('click', () => openContent(courseId, course.name));
-                
-                myCoursesGrid.appendChild(card); // إضافة العنصر مباشرة
-            }
-        }
-        
-        // إذا لم تكن هناك كورسات
-        if (myCoursesGrid.children.length === 0) {
-            myCoursesGrid.innerHTML = `<p style="text-align:center; color:#999;">${t('noCourses')}</p>`;
-        }
+        myCoursesGrid.innerHTML = coursesHtml || `<p style="text-align:center; color:#999;">${t('noCourses')}</p>`;
     }
 
     let examsHtml = '';
@@ -1457,7 +1452,7 @@ window.openDashboard = async () => {
     await loadContinueWatching();
 };
 
-// ================ CONTINUE WATCHING (تم إصلاح مشكلة النقر) ================
+// ================ CONTINUE WATCHING ================
 window.loadContinueWatching = async () => {
     if (!currentUser) return;
     
@@ -1468,10 +1463,7 @@ window.loadContinueWatching = async () => {
     const subscriptions = student.subscriptions || {};
     const watchedVideos = student.watchedVideos || {};
 
-    const continueWatchingGrid = document.getElementById('continueWatchingGrid');
-    if (!continueWatchingGrid) return;
-    
-    continueWatchingGrid.innerHTML = ''; // تفريغ الشبكة
+    let continueHtml = "";
 
     for (const [courseId, subData] of Object.entries(subscriptions)) {
         const courseSnap = await get(child(dbRef, `folders/${courseId}`));
@@ -1520,7 +1512,7 @@ window.loadContinueWatching = async () => {
                 });
                 card.appendChild(btn);
                 
-                continueWatchingGrid.appendChild(card);
+                continueHtml += card.outerHTML;
             }
             continue;
         }
@@ -1548,11 +1540,16 @@ window.loadContinueWatching = async () => {
         });
         card.appendChild(btn);
         
-        continueWatchingGrid.appendChild(card);
+        continueHtml += card.outerHTML;
     }
 
-    if (continueWatchingGrid.children.length === 0) {
-        continueWatchingGrid.innerHTML = `<div class="empty-state">${t('noContinue')}</div>`;
+    if (continueHtml === "") {
+        continueHtml = `<div class="empty-state">${t('noContinue')}</div>`;
+    }
+    
+    const continueWatchingGrid = document.getElementById('continueWatchingGrid');
+    if (continueWatchingGrid) {
+        continueWatchingGrid.innerHTML = continueHtml;
     }
 };
 
@@ -1622,8 +1619,7 @@ onAuthStateChanged(auth, async user => {
         const isAdmin = user.email === ADMIN_EMAIL;
         const adminsSnap = await get(ref(db, 'admins'));
         const admins = adminsSnap.val() || {};
-        // التحقق من وجود البريد في قائمة الأدمنز (الهيكل الجديد)
-        const isAddedAdmin = admins && Object.values(admins).some(admin => admin.email === user.email);
+        const isAddedAdmin = admins && admins[user.email];
         isAdminUser = isAdmin || isAddedAdmin;
         
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
