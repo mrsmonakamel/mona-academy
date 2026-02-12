@@ -12,6 +12,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
+        /* نفس الـ style الموجود لا تغيير فيه */
         :root {
             --accent: #6c5ce7; --dark-bg: #111417; --card-bg: #ffffff;
             --text-main: #2d3436; --danger: #ff7675; --success: #00b894;
@@ -160,7 +161,8 @@
                     <h3>➕ إضافة كورس جديد</h3>
                     <div class="grid-system">
                         <input type="text" id="cName" placeholder="اسم الكورس">
-                        <input type="file" id="cImg" accept="image/*">
+                        <!-- ✅ تم التعديل: input type="url" بدلاً من file -->
+                        <input type="url" id="cImgUrl" placeholder="https://... (رابط الصورة)" dir="ltr">
                     </div>
                     <button class="btn btn-main" style="margin-top:15px;" onclick="addCourse()">حفظ الكورس</button>
                 </div>
@@ -396,7 +398,9 @@
             <h3 id="editModalTitle">إدارة الكورس</h3>
             <div class="card" style="background:#f9f9f9; margin-top:15px;">
                 <label>تعديل الاسم:</label><input type="text" id="editNameField">
-                <label>تعديل الصورة:</label><input type="file" id="editImgField">
+                <label>تعديل الصورة (رابط):</label>
+                <!-- ✅ تم التعديل: input type="url" بدلاً من file -->
+                <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr">
                 <button class="btn btn-main" style="margin-top:10px;" id="saveBasicBtn" onclick="updateCourseBasic()">حفظ البيانات الجديدة</button>
             </div>
             <h4>إضافة فيديو:</h4>
@@ -415,7 +419,7 @@
     <script type="module">
         // ================ Firebase Imports ================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, update, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, update, remove, set, get, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -488,44 +492,63 @@
             }
         });
 
-        // ================ Sync Data ================
+        // ================ Sync Data (محسّن: كل عقدة مستقلة) ================
         function syncData() {
-            onValue(ref(db, '/'), snap => {
-                const data = snap.val() || {};
-                allFolders = data.folders || {};
+            onValue(ref(db, 'folders'), snap => {
+                allFolders = snap.val() || {};
                 renderCourses(allFolders);
-                allStudents = data.students || {};
+                fillDropdowns(allFolders);
+            });
+            
+            onValue(ref(db, 'students'), snap => {
+                allStudents = snap.val() || {};
                 renderStudents(allStudents);
-                allResults = data.quiz_results || {};
+            });
+            
+            onValue(ref(db, 'quiz_results'), snap => {
+                allResults = snap.val() || {};
                 renderResults(allResults);
                 renderPerfectScores(allResults, allStudents);
-                allLogs = data.course_access_logs || {};
-                renderAccessLogs(allLogs);
-                allNotifications = data.course_access_notifications || {};
-                renderNotifications(allNotifications);
-                allSubscriptionNotifications = data.subscription_notifications || {};
-                renderSubscriptionNotifications(allSubscriptionNotifications);
-                allCourseAccess = data.student_course_access || {};
-                allReviews = data.course_reviews || {};
-                renderReviews(data.reviews);
-                fillDropdowns(allFolders);
-                
-                if (data.admins) {
-                    allAdmins = data.admins;
-                    renderAdmins(allAdmins);
-                }
-                
-                loadAnalytics();
-                loadLeaderboard();
             });
+            
+            onValue(ref(db, 'course_access_logs'), snap => {
+                allLogs = snap.val() || {};
+                renderAccessLogs(allLogs);
+            });
+            
+            onValue(ref(db, 'course_access_notifications'), snap => {
+                allNotifications = snap.val() || {};
+                renderNotifications(allNotifications);
+            });
+            
+            onValue(ref(db, 'subscription_notifications'), snap => {
+                allSubscriptionNotifications = snap.val() || {};
+                renderSubscriptionNotifications(allSubscriptionNotifications);
+            });
+            
+            onValue(ref(db, 'reviews'), snap => {
+                allReviews = snap.val() || {};
+                renderReviews(allReviews);
+            });
+            
+            onValue(ref(db, 'admins'), snap => {
+                allAdmins = snap.val() || {};
+                renderAdmins(allAdmins);
+            });
+            
+            onValue(ref(db, 'student_course_access'), snap => {
+                allCourseAccess = snap.val() || {};
+            });
+            
+            // تحميل التحليلات ولوحة المتصدرين عند فتح القسم فقط (يتم استدعاؤها من showSection)
         }
 
-        // ================ Courses Management ================
+        // ================ Courses Management (بدون Firebase Storage) ================
         window.renderCourses = (folders) => {
             let h = "";
             if(folders) Object.keys(folders).forEach(id => {
                 h += `<div class="card" style="text-align:center;">
-                    <img src="${folders[id].img || ''}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;">
+                    <img src="${folders[id].img || 'mona.jpg'}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;" onerror="this.src='mona.jpg'">
                     <h4 style="margin:10px 0;">${folders[id].name}</h4>
                     <div style="margin-bottom:10px; color: var(--gold);">
                         ${'★'.repeat(Math.round(folders[id].avgRating || 0))} (${folders[id].reviewCount || 0})
@@ -537,30 +560,32 @@
             document.getElementById('coursesGrid').innerHTML = h;
         };
 
-        window.addCourse = () => {
+        // ✅ دالة addCourse معدلة لاستخدام رابط الصورة
+        window.addCourse = async () => {
             const name = document.getElementById('cName').value;
-            const file = document.getElementById('cImg').files[0];
+            const imgUrl = document.getElementById('cImgUrl').value.trim();
             if(!name) return alert("يرجى إدخال اسم الكورس");
             
-            if(file) {
-                const r = new FileReader();
-                r.onload = () => {
-                    push(ref(db, 'folders'), { name, img: r.result, avgRating: 0, reviewCount: 0 });
-                    document.getElementById('cName').value = "";
-                    document.getElementById('cImg').value = "";
-                    alert("تم إنشاء الكورس");
-                };
-                r.readAsDataURL(file);
-            } else {
-                push(ref(db, 'folders'), { name, avgRating: 0, reviewCount: 0 });
-                document.getElementById('cName').value = "";
-                alert("تم إنشاء الكورس");
+            if (imgUrl && !imgUrl.startsWith('http')) {
+                return alert("❌ رابط الصورة غير صحيح. يجب أن يبدأ بـ http:// أو https://");
             }
+            
+            await push(ref(db, 'folders'), { 
+                name, 
+                img: imgUrl || 'mona.jpg', 
+                avgRating: 0, 
+                reviewCount: 0 
+            });
+            
+            document.getElementById('cName').value = "";
+            document.getElementById('cImgUrl').value = "";
+            alert("✅ تم إنشاء الكورس");
         };
 
         window.openEditModal = (id, name) => {
             activeCID = id;
             document.getElementById('editNameField').value = name;
+            document.getElementById('editImgField').value = ""; // فارغ
             
             onValue(ref(db, `folders/${id}`), snap => {
                 const f = snap.val() || {};
@@ -621,29 +646,29 @@
             document.body.appendChild(overlay);
         };
 
+        // ✅ دالة updateCourseBasic معدلة لاستخدام رابط الصورة
         window.updateCourseBasic = async () => {
             const name = document.getElementById('editNameField').value;
-            const file = document.getElementById('editImgField').files[0];
+            const imgUrl = document.getElementById('editImgField').value.trim();
             const btn = document.getElementById('saveBasicBtn');
             if(!activeCID) return;
             btn.innerText = "جاري الحفظ..."; btn.disabled = true;
 
-            if(file) {
-                const r = new FileReader();
-                r.onload = async () => {
-                    await update(ref(db, `folders/${activeCID}`), { name, img: r.result });
-                    alert("تم التحديث بنجاح"); 
-                    btn.innerText = "حفظ البيانات الجديدة"; 
-                    btn.disabled = false;
-                    document.getElementById('editImgField').value = "";
-                };
-                r.readAsDataURL(file);
-            } else {
-                await update(ref(db, `folders/${activeCID}`), { name });
-                alert("تم تحديث الاسم"); 
-                btn.innerText = "حفظ البيانات الجديدة"; 
-                btn.disabled = false;
+            let updateData = { name };
+            if (imgUrl) {
+                if (!imgUrl.startsWith('http')) {
+                    alert("❌ رابط الصورة غير صحيح");
+                    btn.innerText = "حفظ البيانات الجديدة"; btn.disabled = false;
+                    return;
+                }
+                updateData.img = imgUrl;
             }
+
+            await update(ref(db, `folders/${activeCID}`), updateData);
+            alert("✅ تم التحديث بنجاح"); 
+            btn.innerText = "حفظ البيانات الجديدة"; 
+            btn.disabled = false;
+            document.getElementById('editImgField').value = "";
         };
 
         window.addVideoToCourse = () => {
@@ -1511,6 +1536,36 @@
 
         // ================ Logout ================
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
+
+        // ================ ربط الدوال الإضافية بالنطاق العام ================
+        // (بعض الدوال غير مربوطة تلقائياً في الوضع النمطي)
+        window.filterPerfectScores = filterPerfectScores;
+        window.performAdvancedSearch = performAdvancedSearch;
+        window.clearAdvancedSearch = clearAdvancedSearch;
+        window.exportStudentPDF = exportStudentPDF;
+        window.deletePerfectScore = deletePerfectScore;
+        window.addAdmin = addAdmin;
+        window.removeAdmin = removeAdmin;
+        window.addNewQuestion = addNewQuestion;
+        window.saveFinalExam = saveFinalExam;
+        window.delData = delData;
+        window.closeModal = closeModal;
+        window.logout = logout;
+        window.showSection = showSection;
+        window.toggleTheme = toggleTheme;
+        window.toggleSidebar = toggleSidebar;
+        window.addCourse = addCourse;
+        window.openEditModal = openEditModal;
+        window.playVideoAdmin = playVideoAdmin;
+        window.updateCourseBasic = updateCourseBasic;
+        window.addVideoToCourse = addVideoToCourse;
+        window.filterStudents = filterStudents;
+        window.filterResults = filterResults;
+        window.filterLogs = filterLogs;
+        window.filterNotifications = filterNotifications;
+        window.filterSubscriptionNotifications = filterSubscriptionNotifications;
+        window.loadAnalytics = loadAnalytics;
+        window.loadLeaderboard = loadLeaderboard;
 
     </script>
 </body>

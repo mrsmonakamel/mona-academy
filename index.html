@@ -6,7 +6,7 @@
     <title>Ms. Mona Kamal | English Academy</title>
     
     <!-- PWA -->
-<link rel="manifest" href="/mona-academy/manifest.json">
+    <link rel="manifest" href="/mona-academy/manifest.json">
     <meta name="theme-color" content="#6c5ce7">
     
     <!-- Preload fonts and css -->
@@ -113,7 +113,7 @@
             </div>
             <div id="perfectScoresGrid" class="perfect-grid"></div>
             <audio id="successSound" class="sound-on-load" preload="auto">
-                <source src="https://www.soundjay.com/misc/sounds/bell-ringing-05.mp3" type="audio/mpeg">
+                <source src="assets/success-bell.mp3" type="audio/mpeg">
             </audio>
         </section>
 
@@ -137,7 +137,7 @@
         </button>
         <h2 id="folderTitleName" style="margin-bottom:30px; color:var(--dark); text-align:center; font-weight: 900;"></h2>
         
-        <!-- Rating Section (will be injected by JS) -->
+        <!-- Rating Section -->
         <div id="courseRatingSection" class="rating-box" style="display: none;"></div>
         
         <div id="combinedGrid" class="content-grid"></div>
@@ -209,26 +209,190 @@
         <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
     </div>
 
-    <!-- LOGIN & REGISTRATION MODAL -->
+    <!-- ========== LOGIN & REGISTRATION MODAL (كامل ومتكامل) ========== -->
     <div id="loginModal" class="modal">
         <div class="modal-content">
             <span class="close-modal" onclick="closeLogin()">&times;</span>
+            
+            <!-- شاشة اختيار تسجيل دخول / حساب جديد -->
             <div id="authChoice">
                 <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="welcomeTitle">مرحباً بك 🎓</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginChoice')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;"><span data-i18n="login">تسجيل الدخول</span></button>
-                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;"><span data-i18n="register">إنشاء حساب جديد</span></button>
+                <button class="auth-btn" onclick="showAuthForm('loginChoice')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="login">تسجيل الدخول</span>
+                </button>
+                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="register">إنشاء حساب جديد</span>
+                </button>
             </div>
+            
+            <!-- شاشة اختيار طريقة تسجيل الدخول -->
             <div id="loginChoice" style="display:none;">
                 <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="chooseLoginMethod">اختر طريقة تسجيل الدخول</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginEmail')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;"><span data-i18n="loginEmail">الدخول بالإيميل والباسورد</span></button>
-                <button class="auth-btn" onclick="showAuthForm('loginUsername')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;"><span data-i18n="loginUsername">الدخول باليوزر نيم والباسورد</span></button>
+                <button class="auth-btn" onclick="showAuthForm('loginEmail')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="loginEmail">الدخول بالإيميل والباسورد</span>
+                </button>
+                <button class="auth-btn" onclick="showAuthForm('loginUsername')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="loginUsername">الدخول باليوزر نيم والباسورد</span>
+                </button>
                 <button class="auth-btn" onclick="loginGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> <span data-i18n="loginGoogle">الدخول بواسطة جوجل</span>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> 
+                    <span data-i18n="loginGoogle">الدخول بواسطة جوجل</span>
                 </button>
                 <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
             </div>
-            <!-- باقي محتوى المودال (كما هو مع إضافة data-i18n) -->
-            <!-- تم اختصاره للطول الكامل موجود في النسخة النهائية -->
+            
+            <!-- نموذج تسجيل الدخول بالإيميل -->
+            <div id="loginEmail" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="loginEmail">الدخول بالإيميل والباسورد</h2>
+                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
+                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
+                <button class="auth-btn" onclick="loginEmailSubmit()" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="login">تسجيل الدخول</span>
+                </button>
+                <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
+            </div>
+            
+            <!-- نموذج تسجيل الدخول باليوزر نيم -->
+            <div id="loginUsername" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="loginUsername">الدخول باليوزر نيم والباسورد</h2>
+                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
+                <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور">
+                <button class="auth-btn" onclick="loginUsernameSubmit()" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <span data-i18n="login">تسجيل الدخول</span>
+                </button>
+                <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
+            </div>
+            
+            <!-- ========== نموذج التسجيل (3 خطوات) ========== -->
+            <div id="registerForm" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="register">إنشاء حساب جديد</h2>
+                
+                <!-- شريط التقدم -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="regProgress" style="width:33%;"></div>
+                </div>
+                
+                <!-- الخطوة 1: البيانات الشخصية -->
+                <div id="step1" class="step-container active">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">📋 الخطوة 1: البيانات الشخصية</h3>
+                    
+                    <label class="reg-label required-field" data-i18n="fullName">الاسم الرباعي</label>
+                    <div class="name-grid">
+                        <input type="text" id="n1" class="reg-input" placeholder="الأول" oninput="checkStep1Completion()">
+                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" oninput="checkStep1Completion()">
+                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" oninput="checkStep1Completion()">
+                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" oninput="checkStep1Completion()">
+                    </div>
+                    
+                    <label class="reg-label required-field" data-i18n="whatsapp">رقم الواتساب</label>
+                    <div class="phone-row">
+                        <select id="countryCode" class="country-select">
+                            <option value="+20">+20 (مصر)</option>
+                            <option value="+966">+966 (السعودية)</option>
+                            <option value="+971">+971 (الإمارات)</option>
+                            <option value="+974">+974 (قطر)</option>
+                            <option value="+965">+965 (الكويت)</option>
+                        </select>
+                        <input type="text" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" oninput="checkStep1Completion()" style="flex:1;">
+                    </div>
+                    <div class="hint-text" data-i18n="whatsappHint">أدخل الرقم بدون مفتاح الدولة</div>
+                    
+                    <label class="reg-label" data-i18n="parentPhone">رقم ولي الأمر (اختياري)</label>
+                    <div class="phone-row">
+                        <select id="parentCountryCode" class="country-select">
+                            <option value="+20">+20 (مصر)</option>
+                            <option value="+966">+966 (السعودية)</option>
+                            <option value="+971">+971 (الإمارات)</option>
+                        </select>
+                        <input type="text" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" oninput="checkStep1Completion()" style="flex:1;">
+                    </div>
+                    
+                    <div id="step1Error" class="error-message" style="display:none;"></div>
+                    
+                    <button id="step1NextBtn" class="btn btn-main" onclick="nextStep(2)" style="margin-top:20px; width:100%;" disabled>
+                        <span data-i18n="next">التالي</span> <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                
+                <!-- الخطوة 2: المرحلة الدراسية -->
+                <div id="step2" class="step-container">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">📚 الخطوة 2: المرحلة الدراسية</h3>
+                    
+                    <label class="reg-label required-field" data-i18n="level">المرحلة التعليمية</label>
+                    <select id="regLevel" class="reg-input" onchange="updateGrades(); checkStep2Completion()">
+                        <option value="">-- اختر المرحلة --</option>
+                        <option value="primary">المرحلة الابتدائية</option>
+                        <option value="middle">المرحلة الإعدادية</option>
+                    </select>
+                    
+                    <label class="reg-label required-field" data-i18n="grade">الصف الدراسي</label>
+                    <select id="regGrade" class="reg-input" onchange="checkStep2Completion()">
+                        <option value="">-- اختر الصف أولاً --</option>
+                    </select>
+                    
+                    <div id="step2Error" class="error-message" style="display:none;"></div>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button onclick="nextStep(1)" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                            <i class="fas fa-arrow-right"></i> <span data-i18n="previous">السابق</span>
+                        </button>
+                        <button id="step2NextBtn" class="btn btn-main" onclick="nextStep(3)" style="flex:2;" disabled>
+                            <span data-i18n="next">التالي</span> <i class="fas fa-arrow-left"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- الخطوة 3: اختيار طريقة التسجيل -->
+                <div id="step3" class="step-container">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">🔐 الخطوة 3: طريقة التسجيل</h3>
+                    
+                    <div style="display:flex; gap:10px; margin-bottom:20px;">
+                        <button onclick="showRegMethod('email')" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                            <i class="fas fa-envelope"></i> <span data-i18n="email">إيميل</span>
+                        </button>
+                        <button onclick="showRegMethod('username')" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                            <i class="fas fa-user"></i> <span data-i18n="username">يوزر نيم</span>
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بالإيميل -->
+                    <div id="step3Email" class="step-container" style="display:none;">
+                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
+                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
+                        <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
+                        <button id="regBtn" class="btn btn-main" onclick="handleRegisterEmail()" style="width:100%; margin-top:15px;">
+                            <span data-i18n="register">تسجيل</span>
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بيوزر نيم -->
+                    <div id="step3Username" class="step-container" style="display:none;">
+                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
+                        <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
+                        <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
+                        <button id="regBtnUser" class="btn btn-main" onclick="handleRegisterUsername()" style="width:100%; margin-top:15px;">
+                            <span data-i18n="register">تسجيل</span>
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بجوجل -->
+                    <button onclick="registerWithGoogle()" class="auth-btn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:15px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
+                        <span data-i18n="registerGoogle">التسجيل بجوجل</span>
+                    </button>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button onclick="nextStep(2)" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                            <i class="fas fa-arrow-right"></i> <span data-i18n="previous">السابق</span>
+                        </button>
+                        <button onclick="showAuthForm('choice')" class="btn" style="background:var(--danger); color:white; flex:1;">
+                            <span data-i18n="cancel">إلغاء</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main); text-align:center;" data-i18n="back">العودة للخلف</p>
+            </div>
         </div>
     </div>
 
@@ -259,13 +423,13 @@
 
     <script type="module" src="script.js" defer></script>
     <script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/mona-academy/sw.js')
-        .then(reg => console.log('✅ PWA Service Worker registered'))
-        .catch(err => console.log('❌ SW registration failed:', err));
-    });
-  }
-</script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/mona-academy/sw.js')
+                    .then(reg => console.log('✅ PWA Service Worker registered'))
+                    .catch(err => console.log('❌ SW registration failed:', err));
+            });
+        }
+    </script>
 </body>
 </html>

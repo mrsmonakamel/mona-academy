@@ -1,6 +1,6 @@
 // ================ FIREBASE IMPORTS ================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, child, push, onValue, set, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, child, push, onValue, set, update, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // ================ FIREBASE CONFIG ================
@@ -88,7 +88,6 @@ function translatePage() {
         el.placeholder = t(key);
     });
 }
-// Load initial language
 document.addEventListener('DOMContentLoaded', () => switchLanguage(currentLang));
 
 // ================ HAMBURGER MENU ================
@@ -104,6 +103,18 @@ document.addEventListener('click', (e) => {
     }
 });
 
+// ================ ESCAPE HTML (لمنع XSS) ================
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.replace(/[&<>"]/g, function(match) {
+        if (match === '&') return '&amp;';
+        if (match === '<') return '&lt;';
+        if (match === '>') return '&gt;';
+        if (match === '"') return '&quot;';
+        return match;
+    });
+}
+
 // ================ STEP VALIDATION (REGISTRATION) ================
 window.checkStep1Completion = () => {
     const n1 = document.getElementById('n1').value.trim();
@@ -118,9 +129,9 @@ window.checkStep1Completion = () => {
     const isParentPhoneValid = parentPhone === '' || (parentPhone.length >= 10 && /^[0-9]+$/.test(parentPhone));
     
     let errorMessage = '';
-    if (!isNameValid) errorMessage = '❌ يرجى إدخال الاسم الأول واللقب على الأقل';
-    else if (!isWhatsappValid) errorMessage = '❌ يرجى إدخال رقم واتساب صحيح (10 أرقام على الأقل)';
-    else if (!isParentPhoneValid) errorMessage = '❌ رقم ولي الأمر غير صحيح (10 أرقام على الأقل)';
+    if (!isNameValid) errorMessage = t('errorNameRequired') || '❌ يرجى إدخال الاسم الأول واللقب على الأقل';
+    else if (!isWhatsappValid) errorMessage = t('errorWhatsapp') || '❌ يرجى إدخال رقم واتساب صحيح (10 أرقام على الأقل)';
+    else if (!isParentPhoneValid) errorMessage = t('errorParentPhone') || '❌ رقم ولي الأمر غير صحيح (10 أرقام على الأقل)';
     
     if (isNameValid && isWhatsappValid && isParentPhoneValid) {
         nextBtn.disabled = false;
@@ -155,7 +166,7 @@ window.checkStep2Completion = () => {
         nextBtn.style.opacity = '0.6';
         nextBtn.style.pointerEvents = 'none';
         errorDiv.style.display = 'block';
-        errorDiv.innerHTML = '❌ يرجى اختيار المرحلة والصف الدراسي';
+        errorDiv.innerHTML = t('errorLevelGrade') || '❌ يرجى اختيار المرحلة والصف الدراسي';
         return false;
     }
 };
@@ -163,7 +174,7 @@ window.checkStep2Completion = () => {
 // ================ REGISTRATION FUNCTIONS ================
 window.handleRegisterEmail = async () => {
     if (!checkStep1Completion() || !checkStep2Completion()) {
-        return alert(t('error') + " ❌ يرجى إكمال جميع البيانات المطلوبة أولاً");
+        return alert(t('error') + " ❌ " + (t('completeData') || 'يرجى إكمال جميع البيانات المطلوبة أولاً'));
     }
     const n1 = document.getElementById('n1').value.trim();
     const n2 = document.getElementById('n2').value.trim();
@@ -178,9 +189,9 @@ window.handleRegisterEmail = async () => {
     const passConfirm = document.getElementById('regPassConfirm').value;
     
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-    if (!email || !pass) return alert(t('error') + " ❌ يرجى إدخال البريد الإلكتروني وكلمة المرور");
-    if (pass.length < 6) return alert(t('error') + " ❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر");
-    if (pass !== passConfirm) return alert(t('error') + " ❌ كلمة المرور غير متطابقة!");
+    if (!email || !pass) return alert(t('error') + " ❌ " + (t('enterEmailPass') || 'يرجى إدخال البريد الإلكتروني وكلمة المرور'));
+    if (pass.length < 6) return alert(t('error') + " ❌ " + (t('passMin6') || 'يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر'));
+    if (pass !== passConfirm) return alert(t('error') + " ❌ " + (t('passNotMatch') || 'كلمة المرور غير متطابقة!'));
 
     const btn = document.getElementById('regBtn');
     btn.disabled = true; btn.innerText = t('loading') + "...";
@@ -200,7 +211,7 @@ window.handleRegisterEmail = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(t('success') + " ✅ تم التسجيل بنجاح! كود الـ ID الخاص بك هو: " + sid); 
+        alert(t('success') + " ✅ " + (t('registerSuccess') || 'تم التسجيل بنجاح!') + " " + (t('studentId') || 'كود الطالب') + ": " + sid); 
         closeLogin();
     } catch(err) {
         alert(t('error') + " ❌ " + err.message);
@@ -210,7 +221,7 @@ window.handleRegisterEmail = async () => {
 };
 
 window.handleRegisterUsername = async () => {
-    if (!checkStep1Completion() || !checkStep2Completion()) return alert(t('error') + " ❌ يرجى إكمال جميع البيانات المطلوبة أولاً");
+    if (!checkStep1Completion() || !checkStep2Completion()) return alert(t('error') + " ❌ " + (t('completeData') || 'يرجى إكمال جميع البيانات المطلوبة أولاً'));
     const n1 = document.getElementById('n1').value.trim();
     const n2 = document.getElementById('n2').value.trim();
     const n3 = document.getElementById('n3').value.trim();
@@ -223,9 +234,9 @@ window.handleRegisterUsername = async () => {
     const pass = document.getElementById('regPassUser').value;
     const passConfirm = document.getElementById('regPassUserConfirm').value;
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-    if (!username || !pass) return alert(t('error') + " ❌ يرجى إدخال اسم المستخدم وكلمة المرور");
-    if (pass.length < 6) return alert(t('error') + " ❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر");
-    if (pass !== passConfirm) return alert(t('error') + " ❌ كلمة المرور غير متطابقة!");
+    if (!username || !pass) return alert(t('error') + " ❌ " + (t('enterUsernamePass') || 'يرجى إدخال اسم المستخدم وكلمة المرور'));
+    if (pass.length < 6) return alert(t('error') + " ❌ " + (t('passMin6') || 'يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر'));
+    if (pass !== passConfirm) return alert(t('error') + " ❌ " + (t('passNotMatch') || 'كلمة المرور غير متطابقة!'));
     const btn = document.getElementById('regBtnUser');
     btn.disabled = true; btn.innerText = t('loading') + "...";
     try {
@@ -245,7 +256,7 @@ window.handleRegisterUsername = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(t('success') + " ✅ تم التسجيل بنجاح! كود الـ ID الخاص بك هو: " + sid + "\nاليوزر نيم: " + username); 
+        alert(t('success') + " ✅ " + (t('registerSuccess') || 'تم التسجيل بنجاح!') + " " + (t('studentId') || 'كود الطالب') + ": " + sid + "\n" + (t('username') || 'يوزر نيم') + ": " + username); 
         closeLogin();
     } catch(err) {
         alert(t('error') + " ❌ " + err.message);
@@ -254,8 +265,9 @@ window.handleRegisterUsername = async () => {
     }
 };
 
+// ✅ تسجيل جديد بواسطة جوجل (يتم استدعاؤها من نموذج التسجيل)
 window.registerWithGoogle = async () => {
-    if (!checkStep1Completion() || !checkStep2Completion()) return alert(t('error') + " ❌ يرجى إكمال جميع البيانات المطلوبة أولاً");
+    if (!checkStep1Completion() || !checkStep2Completion()) return alert(t('error') + " ❌ " + (t('completeDataFirst') || 'يرجى إكمال جميع البيانات المطلوبة أولاً'));
     const n1 = document.getElementById('n1').value.trim();
     const n2 = document.getElementById('n2').value.trim();
     const n3 = document.getElementById('n3').value.trim();
@@ -268,6 +280,15 @@ window.registerWithGoogle = async () => {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+        
+        // ✅ التحقق مما إذا كان الحساب موجوداً بالفعل
+        const userSnap = await get(child(dbRef, `students/${user.uid}`));
+        if(userSnap.exists()) {
+            alert(t('accountExists') || '❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.');
+            await signOut(auth);
+            return;
+        }
+        
         await updateProfile(user, { displayName: fullName });
         await set(ref(db, 'students/' + user.uid), {
             name: fullName,
@@ -282,7 +303,7 @@ window.registerWithGoogle = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(t('success') + " ✅ تم التسجيل بنجاح! كود الـ ID الخاص بك هو: " + sid);
+        alert(t('success') + " ✅ " + (t('registerSuccess') || 'تم التسجيل بنجاح!') + " " + (t('studentId') || 'كود الطالب') + ": " + sid);
         closeLogin();
     } catch(err) {
         alert(t('error') + " ❌ " + err.message);
@@ -292,66 +313,73 @@ window.registerWithGoogle = async () => {
 // ================ LOGIN FUNCTIONS ================
 window.loginEmailSubmit = () => {
     const e = document.getElementById('stEmail').value.trim(), p = document.getElementById('stPass').value;
-    if(!e || !p) return alert(t('error') + " يرجى إدخال البيانات");
-    signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert(t('error') + " خطأ في الدخول"));
+    if(!e || !p) return alert(t('error') + " " + (t('enterData') || 'يرجى إدخال البيانات'));
+    signInWithEmailAndPassword(auth, e, p).then(() => closeLogin()).catch(() => alert(t('error') + " " + (t('loginError') || 'خطأ في الدخول')));
 };
 
 window.loginUsernameSubmit = () => {
     const username = document.getElementById('stUsername').value.trim();
     const pass = document.getElementById('stPassUsername').value;
-    if(!username || !pass) return alert(t('error') + " يرجى إدخال البيانات");
+    if(!username || !pass) return alert(t('error') + " " + (t('enterData') || 'يرجى إدخال البيانات'));
     const fakeEmail = `${username}@monaacademy.local`;
-    signInWithEmailAndPassword(auth, fakeEmail, pass).then(() => closeLogin()).catch(() => alert(t('error') + " خطأ في الدخول - تأكد من اليوزر نيم وكلمة المرور"));
+    signInWithEmailAndPassword(auth, fakeEmail, pass).then(() => closeLogin()).catch(() => alert(t('error') + " " + (t('loginError') || 'خطأ في الدخول - تأكد من اليوزر نيم وكلمة المرور')));
 };
 
+// ✅ تسجيل الدخول بجوجل (لا ينشئ حساباً جديداً)
 window.loginGoogle = () => {
     signInWithPopup(auth, provider).then(async (result) => {
         const user = result.user;
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         if(!userSnap.exists()) {
-            const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-            await set(ref(db, 'students/' + user.uid), {
-                name: user.displayName,
-                grade: "غير محدد",
-                whatsapp: "",
-                parentPhone: "",
-                shortId: sid,
-                email: user.email,
-                points: 0,
-                badges: [],
-                subscriptions: {},
-                watchedVideos: {},
-                examResults: {}
-            });
+            alert(t('completeRegistration') || '❌ لم يتم العثور على حساب. يرجى التسجيل أولاً عبر نموذج إنشاء حساب.');
+            await signOut(auth);
+            openLogin();
         } else {
-            const studentData = userSnap.val();
-            if (studentData.name && studentData.name !== user.displayName) {
-                await updateProfile(user, { displayName: studentData.name });
-            }
+            closeLogin();
         }
-        closeLogin();
     }).catch(err => alert(t('error') + " ❌ " + err.message));
 };
 
-// ================ COURSE LOADING (NO GRADE FILTER) ================
+// ================ COURSE LOADING (مع إصلاح XSS) ================
 function loadFolders() {
     onValue(ref(db, 'folders'), async (snapshot) => {
-        let html = "";
+        const grid = document.getElementById('foldersGrid');
+        grid.innerHTML = ""; // مسح المحتوى
+        
         snapshot.forEach(c => {
             const course = c.val();
+            const courseId = c.key;
+            const courseName = course.name;
             const avgRating = course.avgRating ? parseFloat(course.avgRating).toFixed(1) : '0.0';
             const stars = '★'.repeat(Math.round(avgRating)) + '☆'.repeat(5 - Math.round(avgRating));
-            html += `<div class="folder-card" onclick="openContent('${c.key}', '${course.name}')">
-                <img src="${course.img || 'mona.jpg'}" loading="lazy">
-                <h3>${course.name}</h3>
-                <div class="course-rating">
-                    <span style="color: #ffd700;">${stars}</span>
-                    <span>(${course.reviewCount || 0})</span>
-                </div>
-            </div>`;
+            
+            const card = document.createElement('div');
+            card.className = 'folder-card';
+            
+            const img = document.createElement('img');
+            img.src = course.img || 'mona.jpg';
+            img.loading = 'lazy';
+            img.alt = courseName;
+            img.onerror = () => img.src = 'mona.jpg';
+            
+            const h3 = document.createElement('h3');
+            h3.textContent = courseName;
+            
+            const ratingDiv = document.createElement('div');
+            ratingDiv.className = 'course-rating';
+            ratingDiv.innerHTML = `<span style="color: #ffd700;">${stars}</span><span>(${course.reviewCount || 0})</span>`;
+            
+            card.appendChild(img);
+            card.appendChild(h3);
+            card.appendChild(ratingDiv);
+            card.addEventListener('click', () => openContent(courseId, courseName));
+            
+            grid.appendChild(card);
         });
-        if (html === "") html = "<p style='text-align:center; grid-column:1/-1;'>لا توجد كورسات حالياً</p>";
-        document.getElementById('foldersGrid').innerHTML = html;
+        
+        if (grid.children.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>" + (t('noCourses') || 'لا توجد كورسات حالياً') + "</p>";
+        }
     });
 }
 
@@ -402,23 +430,22 @@ window.loadPerfectScores = async () => {
         
         if (finalList.length > 0) {
             document.getElementById('perfectScoresSection').style.display = 'block';
-            const audio = document.getElementById('successSound');
-            if (audio) audio.play().catch(e => console.log('Sound play failed:', e));
+            // تشغيل الصوت بعد تفاعل المستخدم (سيتم استدعاؤها من مكان آخر)
             
             let html = '';
             finalList.forEach(ps => {
                 html += `<div class="perfect-card">
                     <div class="perfect-name">
                         <i class="fas fa-user-graduate" style="color: var(--main);"></i>
-                        ${ps.studentName}
+                        ${escapeHTML(ps.studentName)}
                     </div>
                     <div class="perfect-exam">
                         <i class="fas fa-file-alt" style="margin-left: 5px; color: var(--main);"></i>
-                        ${ps.examName}
+                        ${escapeHTML(ps.examName)}
                     </div>
                     <div class="perfect-grade">
                         <i class="fas fa-graduation-cap" style="margin-left: 5px;"></i>
-                        الصف: ${ps.grade}
+                        الصف: ${escapeHTML(ps.grade)}
                     </div>
                     <div class="perfect-score">
                         <i class="fas fa-check-circle"></i> ممتاز - ${ps.score}/${ps.total}
@@ -435,29 +462,35 @@ window.loadPerfectScores = async () => {
     }
 };
 
-// ================ LEADERBOARD ================
+// ================ LEADERBOARD (محسّن) ================
 window.loadLeaderboard = async () => {
-    const studentsSnap = await get(ref(db, 'students'));
-    if (!studentsSnap.exists()) return;
+    const studentsRef = ref(db, 'students');
+    const topStudentsQuery = query(studentsRef, orderByChild('points'), limitToLast(20));
+    const snapshot = await get(topStudentsQuery);
+    
+    if (!snapshot.exists()) {
+        document.getElementById('leaderboardSection').style.display = 'none';
+        return;
+    }
+    
     let leaderboard = [];
-    studentsSnap.forEach(s => {
+    snapshot.forEach(s => {
         const data = s.val();
         if (data.points > 0) {
             leaderboard.push({
                 name: data.name || 'طالب',
-                points: data.points || 0,
-                badges: data.badges?.length || 0
+                points: data.points || 0
             });
         }
     });
+    
     leaderboard.sort((a, b) => b.points - a.points);
-    leaderboard = leaderboard.slice(0, 20);
     
     let html = '<div class="leaderboard-row"><span class="leaderboard-rank">#</span><span>' + t('student') + '</span><span>' + t('points') + '</span></div>';
     leaderboard.forEach((s, i) => {
         html += `<div class="leaderboard-row">
             <span class="leaderboard-rank">#${i+1}</span>
-            <span>${s.name}</span>
+            <span>${escapeHTML(s.name)}</span>
             <span>${s.points} <i class="fas fa-star" style="color: var(--gold);"></i></span>
         </div>`;
     });
@@ -476,7 +509,6 @@ async function awardPoints(uid, action, metadata = {}) {
     const currentPoints = student.points || 0;
     const newPoints = currentPoints + points;
     await update(studentRef, { points: newPoints });
-    // Log activity
     await push(ref(db, `student_activities/${uid}`), {
         action: action,
         points: points,
@@ -484,6 +516,7 @@ async function awardPoints(uid, action, metadata = {}) {
         timestamp: new Date().toLocaleString('ar-EG')
     });
     await checkBadges(uid, newPoints, student);
+    await loadLeaderboard(); // تحديث فوري للوحة المتصدرين
 }
 
 async function checkBadges(uid, totalPoints, studentData) {
@@ -570,21 +603,19 @@ window.confirmSubscription = async () => {
         studentUid: currentUser.uid,
         timestamp: new Date().toLocaleString('ar-EG')
     });
-    // Award points for subscription
     await awardPoints(currentUser.uid, 'SUBSCRIBE_COURSE', { courseId: currentFolderId, courseName: currentFolderName });
     alert('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.');
     closeSubscriptionModal();
     await loadCourseContent(currentFolderId, currentFolderName, true);
 };
 
-// ================ LOAD COURSE CONTENT (WITH QUIZ REVIEW & RATING) ================
+// ================ LOAD COURSE CONTENT (مع إصلاح XSS) ================
 window.loadCourseContent = async (folderId, folderName, hasAccess) => {
     document.getElementById('homePage').style.display = "none";
     document.getElementById('studentDashboard').style.display = "none";
     document.getElementById('contentArea').style.display = "block";
     document.getElementById('folderTitleName').innerText = folderName;
 
-    // Load course rating section
     await loadCourseRatingUI(folderId);
 
     const [vSnap, qSnap] = await Promise.all([
@@ -605,7 +636,8 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
         }
     }
 
-    let html = "";
+    const grid = document.getElementById('combinedGrid');
+    grid.innerHTML = "";
 
     // Videos
     if (vSnap.exists()) {
@@ -614,17 +646,49 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
             let vidId = "error";
             const match = videoData.url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
             if (match && match[2].length == 11) vidId = match[2];
-            const disabledClass = hasAccess ? '' : 'disabled';
-            const onclickAttr = hasAccess ? `onclick="openVideo('${videoData.url}', '${videoData.title}', '${v.key}', '${folderId}')"` : '';
-            html += `<div class="item-card ${disabledClass}" ${onclickAttr}>
-                ${!hasAccess ? '<i class="fas fa-lock lock-icon"></i>' : ''}
-                <img src="https://img.youtube.com/vi/${vidId}/mqdefault.jpg" class="v-thumb" onerror="this.src='mona.jpg'" loading="lazy">
-                <div class="item-details">
-                    <span class="badge badge-video">${t('badge.video') || 'فيديو شرح'}</span>
-                    <h4>${videoData.title}</h4>
-                    ${!hasAccess ? '<span style="color:#ff7675; font-size:0.8rem;">' + (t('subscribeToWatch') || 'اشترك لتشاهد') + '</span>' : ''}
-                </div>
-            </div>`;
+            
+            const card = document.createElement('div');
+            card.className = `item-card ${hasAccess ? '' : 'disabled'}`;
+            
+            if (!hasAccess) {
+                const lockIcon = document.createElement('i');
+                lockIcon.className = 'fas fa-lock lock-icon';
+                card.appendChild(lockIcon);
+            }
+            
+            const img = document.createElement('img');
+            img.src = `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`;
+            img.className = 'v-thumb';
+            img.onerror = () => img.src = 'mona.jpg';
+            img.loading = 'lazy';
+            card.appendChild(img);
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'item-details';
+            
+            const badge = document.createElement('span');
+            badge.className = 'badge badge-video';
+            badge.textContent = t('badge.video') || 'فيديو شرح';
+            detailsDiv.appendChild(badge);
+            
+            const title = document.createElement('h4');
+            title.textContent = videoData.title;
+            detailsDiv.appendChild(title);
+            
+            if (!hasAccess) {
+                const lockMsg = document.createElement('span');
+                lockMsg.style.cssText = 'color:#ff7675; font-size:0.8rem;';
+                lockMsg.textContent = t('subscribeToWatch') || 'اشترك لتشاهد';
+                detailsDiv.appendChild(lockMsg);
+            }
+            
+            card.appendChild(detailsDiv);
+            
+            if (hasAccess) {
+                card.addEventListener('click', () => openVideo(videoData.url, videoData.title, v.key, folderId));
+            }
+            
+            grid.appendChild(card);
         });
     }
 
@@ -633,41 +697,75 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
         qSnap.forEach(q => {
             const quizData = q.val();
             if (quizData.videoRel === "all" || !quizData.videoRel) {
-                const disabledClass = hasAccess ? '' : 'disabled';
                 const quizId = q.key;
                 const isCompleted = examResultsMap[quizId] ? true : false;
                 
-                let buttonHtml = '';
-                let badgeText = t('startQuiz') || 'امتحان شامل';
-                let badgeStyle = '';
+                const card = document.createElement('div');
+                card.className = `item-card ${hasAccess ? '' : 'disabled'}`;
+                
+                if (!hasAccess) {
+                    const lockIcon = document.createElement('i');
+                    lockIcon.className = 'fas fa-lock lock-icon';
+                    card.appendChild(lockIcon);
+                }
+                
+                const iconDiv = document.createElement('div');
+                iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;';
+                const icon = document.createElement('i');
+                icon.className = 'fas fa-file-signature fa-3x';
+                icon.style.color = 'var(--main)';
+                iconDiv.appendChild(icon);
+                card.appendChild(iconDiv);
+                
+                const detailsDiv = document.createElement('div');
+                detailsDiv.className = 'item-details';
+                
+                const badge = document.createElement('span');
+                badge.className = 'badge';
+                if (isCompleted) {
+                    badge.textContent = t('reviewQuiz') || '✅ تم الحل - مراجعة';
+                    badge.style.cssText = 'background: var(--success); color: white;';
+                } else {
+                    badge.textContent = t('startQuiz') || 'امتحان شامل';
+                }
+                detailsDiv.appendChild(badge);
+                
+                const title = document.createElement('h4');
+                title.textContent = quizData.name;
+                detailsDiv.appendChild(title);
+                
+                if (!hasAccess) {
+                    const lockMsg = document.createElement('span');
+                    lockMsg.style.cssText = 'color:#ff7675; font-size:0.8rem;';
+                    lockMsg.textContent = t('subscribeToTake') || 'اشترك لتؤدي الامتحان';
+                    detailsDiv.appendChild(lockMsg);
+                }
                 
                 if (isCompleted) {
-                    badgeText = t('reviewQuiz') || '✅ تم الحل - مراجعة';
-                    badgeStyle = 'background: var(--success); color: white;';
-                    buttonHtml = `onclick="viewQuizResult('${folderId}', '${quizId}')"`;
-                } else {
-                    buttonHtml = hasAccess ? `onclick="startQuiz('${folderId}', '${quizId}')"` : '';
+                    const scoreSpan = document.createElement('span');
+                    scoreSpan.style.cssText = 'display:block; margin-top:8px; color: var(--success); font-size:0.85rem;';
+                    scoreSpan.innerHTML = `<i class="fas fa-check-circle"></i> ${t('score') || 'النتيجة'}: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)`;
+                    detailsDiv.appendChild(scoreSpan);
                 }
-
-                html += `<div class="item-card ${disabledClass}" ${buttonHtml}>
-                    ${!hasAccess ? '<i class="fas fa-lock lock-icon"></i>' : ''}
-                    <div style="height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;">
-                        <i class="fas fa-file-signature fa-3x" style="color:var(--main)"></i>
-                    </div>
-                    <div class="item-details">
-                        <span class="badge" style="${badgeStyle}">${badgeText}</span>
-                        <h4>${quizData.name}</h4>
-                        ${!hasAccess ? '<span style="color:#ff7675; font-size:0.8rem;">' + (t('subscribeToTake') || 'اشترك لتؤدي الامتحان') + '</span>' : ''}
-                        ${isCompleted ? `<span style="display:block; margin-top:8px; color: var(--success); font-size:0.85rem;">
-                            <i class="fas fa-check-circle"></i> ${t('score') || 'النتيجة'}: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)
-                        </span>` : ''}
-                    </div>
-                </div>`;
+                
+                card.appendChild(detailsDiv);
+                
+                if (hasAccess) {
+                    if (isCompleted) {
+                        card.addEventListener('click', () => viewQuizResult(folderId, quizId));
+                    } else {
+                        card.addEventListener('click', () => startQuiz(folderId, quizId));
+                    }
+                }
+                
+                grid.appendChild(card);
             }
         });
     }
 
-    document.getElementById('combinedGrid').innerHTML = html || "<p style='text-align:center; grid-column:1/-1;'>" + (t('comingSoon') || 'قريباً...') + "</p>";
+    if (grid.children.length === 0) {
+        grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>" + (t('comingSoon') || 'قريباً...') + "</p>";
+    }
 };
 
 // ================ COURSE RATING UI ================
@@ -688,7 +786,6 @@ async function loadCourseRatingUI(courseId) {
         <span>(${reviewCount} ${t('reviews')})</span>
     </div>`;
     
-    // Check if user already reviewed this course
     const userReviewsSnap = await get(child(dbRef, `course_reviews/${courseId}`));
     let userReviewed = false;
     if (userReviewsSnap.exists()) {
@@ -725,13 +822,11 @@ window.submitCourseRating = async (courseId) => {
         review: review,
         timestamp: new Date().toLocaleString('ar-EG')
     });
-    // Update average rating
     const reviewsSnap = await get(child(dbRef, `course_reviews/${courseId}`));
     let total = 0, count = 0;
     reviewsSnap.forEach(r => { total += r.val().rating; count++; });
     const avg = count > 0 ? (total / count).toFixed(1) : 0;
     await update(ref(db, `folders/${courseId}`), { avgRating: avg, reviewCount: count });
-    // Award points
     await awardPoints(currentUser.uid, 'ADD_REVIEW', { courseId });
     alert('✅ تم إرسال تقييمك، شكراً لك!');
     loadCourseRatingUI(courseId);
@@ -747,12 +842,11 @@ window.openVideo = async (url, title, videoId, folderId) => {
         watchedAt: new Date().toLocaleString('ar-EG')
     });
     await updateCourseProgress(currentUser.uid, folderId);
-    // Award points for first video watch
+    
     const studentSnap = await get(child(dbRef, `students/${currentUser.uid}/watchedVideos`));
     const watchedCount = Object.keys(studentSnap.val() || {}).length;
     if (watchedCount === 1) {
         await awardPoints(currentUser.uid, 'FIRST_VIDEO', { videoId, title });
-        // Grant FIRST_VIDEO badge
         const student = (await get(ref(db, `students/${currentUser.uid}`))).val();
         const badges = student.badges || [];
         if (!badges.includes('FIRST_VIDEO')) {
@@ -805,13 +899,13 @@ window.startQuiz = async (folderId, quizId) => {
     Object.keys(questions).forEach((qKey, idx) => {
         const q = questions[qKey];
         html += `<div class="q-form-card">
-            <span class="q-text">س${idx + 1}: ${q.text}</span>
+            <span class="q-text">س${idx + 1}: ${escapeHTML(q.text)}</span>
             <div class="opt-container">`;
         ['a', 'b', 'c', 'd'].forEach(opt => {
             if(q[opt]) {
                 html += `<label class="opt-label" onclick="selectOption(this)">
                     <input type="radio" name="q${idx}" value="${opt}">
-                    <span>${q[opt]}</span>
+                    <span>${escapeHTML(q[opt])}</span>
                 </label>`;
             }
         });
@@ -873,11 +967,9 @@ window.submitQuiz = async (folderId, quizId) => {
         time: new Date().toLocaleString('ar-EG')
     });
 
-    // Award points
     const isPerfect = (score === total);
     if (isPerfect) {
         await awardPoints(currentUser.uid, 'PERFECT_QUIZ', { quizId, quizName: quizData.name });
-        // Grant PERFECT_SCORE badge
         const student = (await get(ref(db, `students/${currentUser.uid}`))).val();
         const badges = student.badges || [];
         if (!badges.includes('PERFECT_SCORE')) {
@@ -888,7 +980,7 @@ window.submitQuiz = async (folderId, quizId) => {
     } else {
         await awardPoints(currentUser.uid, 'PASS_QUIZ', { quizId, quizName: quizData.name, score, total });
     }
-    // Check for FIRST_EXAM badge
+    
     const examResultsSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults`));
     const examCount = Object.keys(examResultsSnap.val() || {}).length;
     if (examCount === 1) {
@@ -935,7 +1027,7 @@ window.viewQuizResult = async (folderId, quizId) => {
         const isCorrect = userAnswer === correctAnswer;
 
         html += `<div class="q-form-card" style="border-right-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">`;
-        html += `<span class="q-text">س${idx + 1}: ${q.text}</span>`;
+        html += `<span class="q-text">س${idx + 1}: ${escapeHTML(q.text)}</span>`;
         html += `<div class="opt-container">`;
 
         ['a', 'b', 'c', 'd'].forEach(opt => {
@@ -949,7 +1041,7 @@ window.viewQuizResult = async (folderId, quizId) => {
                 }
                 html += `<label class="opt-label" style="${style}">`;
                 html += `<input type="radio" name="q${idx}" value="${opt}" ${userAnswer === opt ? 'checked' : ''} disabled>`;
-                html += `<span>${q[opt]}</span>`;
+                html += `<span>${escapeHTML(q[opt])}</span>`;
                 if (correctAnswer === opt) {
                     html += ` <span style="color: var(--success); font-size: 0.85rem;">(${t('correctAnswer')})</span>`;
                 }
@@ -962,7 +1054,7 @@ window.viewQuizResult = async (folderId, quizId) => {
         if (isCorrect) {
             html += `<span style="color: var(--success);"><i class="fas fa-check-circle"></i> ${t('correct')}</span>`;
         } else {
-            html += `<span style="color: var(--danger);"><i class="fas fa-times-circle"></i> ${t('wrong')} (${t('yourAnswer')}: ${userAnswer ? q[userAnswer] : '—'})</span>`;
+            html += `<span style="color: var(--danger);"><i class="fas fa-times-circle"></i> ${t('wrong')} (${t('yourAnswer')}: ${userAnswer ? escapeHTML(q[userAnswer]) : '—'})</span>`;
         }
         html += `</div>`;
         html += `</div>`;
@@ -989,7 +1081,7 @@ window.openDashboard = async () => {
     const student = studentSnap.val();
     myShortId = student.shortId || '';
     document.getElementById('studentNameDashboard').innerText = student.name || currentUser.displayName;
-    document.getElementById('dashboardStudentId').innerHTML = `<i class="fas fa-id-card"></i> ${t('studentId') || 'كود الطالب'}: ${myShortId}`;
+    document.getElementById('dashboardStudentId').innerHTML = `<i class="fas fa-id-card"></i> ${t('studentId') || 'كود الطالب'}: ${escapeHTML(myShortId)}`;
 
     const subscriptions = student.subscriptions || {};
     const watchedVideos = student.watchedVideos || {};
@@ -1006,7 +1098,6 @@ window.openDashboard = async () => {
     document.getElementById('statAvgScore').innerText = avg + '%';
     document.getElementById('statPoints').innerText = points;
 
-    // Display badges
     let badgesHtml = '';
     badges.forEach(b => {
         const badge = BADGES[b];
@@ -1020,9 +1111,9 @@ window.openDashboard = async () => {
         if (courseSnap.exists()) {
             const course = courseSnap.val();
             const progress = subData.progress || 0;
-            coursesHtml += `<div class="folder-card" onclick="openContent('${courseId}', '${course.name}')">
-                <img src="${course.img || 'mona.jpg'}" loading="lazy">
-                <h3>${course.name}</h3>
+            coursesHtml += `<div class="folder-card" onclick="openContent('${courseId}', '${escapeHTML(course.name)}')">
+                <img src="${course.img || 'mona.jpg'}" loading="lazy" onerror="this.src='mona.jpg'">
+                <h3>${escapeHTML(course.name)}</h3>
                 <div style="padding: 0 20px 20px;">
                     <div class="progress-bar-bg"><div class="progress-fill-green" style="width: ${progress}%;"></div></div>
                     <span style="color: var(--main); font-weight: bold;">${progress}% ${t('completed') || 'مكتمل'}</span>
@@ -1035,7 +1126,7 @@ window.openDashboard = async () => {
     let examsHtml = '';
     Object.entries(examResults).sort((a,b) => b[1].completedAt.localeCompare(a[1].completedAt)).slice(0,5).forEach(([id, exam]) => {
         examsHtml += `<div class="exam-item">
-            <div><strong style="color: var(--main);">${exam.quizName}</strong><div style="color: #666; font-size: 0.85rem;">${exam.courseName}</div></div>
+            <div><strong style="color: var(--main);">${escapeHTML(exam.quizName)}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(exam.courseName)}</div></div>
             <div><span class="exam-score">${exam.score}/${exam.total}</span><span style="color: #666; margin-right: 10px;">${exam.completedAt}</span></div>
         </div>`;
     });
@@ -1044,7 +1135,7 @@ window.openDashboard = async () => {
     let videosHtml = '';
     Object.entries(watchedVideos).sort((a,b) => b[1].watchedAt.localeCompare(a[1].watchedAt)).slice(0,5).forEach(([id, video]) => {
         videosHtml += `<div class="video-item">
-            <div><strong>${video.videoTitle}</strong><div style="color: #666; font-size: 0.85rem;">${video.courseName}</div></div>
+            <div><strong>${escapeHTML(video.videoTitle)}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(video.courseName)}</div></div>
             <span style="color: #f1c40f;">${video.watchedAt}</span>
         </div>`;
     });
@@ -1088,10 +1179,10 @@ window.loadContinueWatching = async () => {
             if (lastWatched) {
                 continueHtml += `<div class="continue-card">
                     <div>
-                        <h4>${course.name}</h4>
+                        <h4>${escapeHTML(course.name)}</h4>
                         <p style="color: #666;">✨ ${t('allCompleted') || 'أكملت كل الفيديوهات! راجع الامتحانات'}</p>
                     </div>
-                    <a href="#" onclick="openContent('${courseId}', '${course.name}'); return false;" class="btn-continue">${t('viewCourse') || 'عرض الكورس'}</a>
+                    <a href="#" onclick="openContent('${courseId}', '${escapeHTML(course.name)}'); return false;" class="btn-continue">${t('viewCourse') || 'عرض الكورس'}</a>
                 </div>`;
             }
             continue;
@@ -1099,10 +1190,10 @@ window.loadContinueWatching = async () => {
 
         continueHtml += `<div class="continue-card">
             <div>
-                <h4>${course.name}</h4>
-                <p style="color: var(--main);">▶️ ${t('continue') || 'تابع'}: ${nextVideo.title}</p>
+                <h4>${escapeHTML(course.name)}</h4>
+                <p style="color: var(--main);">▶️ ${t('continue') || 'تابع'}: ${escapeHTML(nextVideo.title)}</p>
             </div>
-            <a href="#" onclick="openVideo('${nextVideo.url}', '${nextVideo.title}', '${nextVideo.id}', '${courseId}'); return false;" class="btn-continue">${t('watch') || 'مشاهدة'}</a>
+            <a href="#" onclick="openVideo('${nextVideo.url}', '${escapeHTML(nextVideo.title)}', '${nextVideo.id}', '${courseId}'); return false;" class="btn-continue">${t('watch') || 'مشاهدة'}</a>
         </div>`;
     }
 
@@ -1112,25 +1203,32 @@ window.loadContinueWatching = async () => {
     document.getElementById('continueWatchingGrid').innerHTML = continueHtml;
 };
 
-// ================ NOTIFICATIONS (FCM) ================
+// ================ NOTIFICATIONS (FCM) مُصحح ================
 async function initializeMessaging() {
     try {
         if ('Notification' in window && 'serviceWorker' in navigator) {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
+                // تسجيل Service Worker الخاص بالإشعارات أولاً
+                const registration = await navigator.serviceWorker.register('/mona-academy/firebase-messaging-sw.js');
+                console.log('FCM SW registered:', registration);
+                
                 const { getMessaging, getToken, onMessage } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
                 messaging = getMessaging(app);
-                // Replace with your VAPID key from Firebase Console -> Project Settings -> Cloud Messaging
+                
                 const token = await getToken(messaging, { 
-                    vapidKey: 'BAofIHy3Jf7a13xLzRNZ8InnTV7b3iyWLpnBe-xNc0V7s6AeheOODKcgIsVf5XTsyNPMCb27IL4_9glKaz8KToA' 
+                    vapidKey: 'BAofIHy3Jf7a13xLzRNZ8InnTV7b3iyWLpnBe-xNc0V7s6AeheOODKcgIsVf5XTsyNPMCb27IL4_9glKaz8KToA',
+                    serviceWorkerRegistration: registration
                 });
                 console.log('FCM Token:', token);
-                if (currentUser) {
+                
+                if (currentUser && token) {
                     await set(ref(db, `students/${currentUser.uid}/notificationTokens/${token}`), {
                         token: token,
                         timestamp: new Date().toLocaleString('ar-EG')
                     });
                 }
+                
                 onMessage(messaging, (payload) => {
                     console.log('Foreground message:', payload);
                     showNotification(payload.notification?.title || 'Mona Academy', 
@@ -1142,6 +1240,7 @@ async function initializeMessaging() {
         console.error('Messaging init error:', error);
     }
 }
+
 function showNotification(title, body) {
     const toast = document.createElement('div');
     toast.style.cssText = `
@@ -1149,7 +1248,7 @@ function showNotification(title, body) {
         padding: 15px 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
         z-index: 10000; max-width: 300px; animation: slideIn 0.3s ease; direction: rtl;
     `;
-    toast.innerHTML = `<strong>${title}</strong><br>${body}`;
+    toast.innerHTML = `<strong>${escapeHTML(title)}</strong><br>${escapeHTML(body)}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 }
@@ -1243,9 +1342,12 @@ window.updateGrades = () => {
     const level = document.getElementById('regLevel').value;
     const gradeSelect = document.getElementById('regGrade');
     gradeSelect.innerHTML = "";
-    const grades = { primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"], middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"] };
+    const grades = { 
+        primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"], 
+        middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"] 
+    };
     if (level) {
-        grades[level].forEach(g => gradeSelect.innerHTML += `<option value="${g}">${g}</option>`);
+        grades[level].forEach(g => gradeSelect.innerHTML += `<option value="${escapeHTML(g)}">${escapeHTML(g)}</option>`);
         gradeSelect.value = grades[level][0];
     } else {
         gradeSelect.innerHTML = `<option value="">يرجى اختيار المرحلة أولاً</option>`;
@@ -1258,9 +1360,9 @@ function loadReviews() {
         let html = "";
         snapshot.forEach(c => { 
             html += `<div class="review-card">
-                <p>"${c.val().text}"</p>
-                <h4 style="color:var(--main);">- ${c.val().student}</h4>
-                <span style="color: #999; font-size:0.75rem;">${c.val().timestamp || ''}</span>
+                <p>"${escapeHTML(c.val().text)}"</p>
+                <h4 style="color:var(--main);">- ${escapeHTML(c.val().student)}</h4>
+                <span style="color: #999; font-size:0.75rem;">${escapeHTML(c.val().timestamp || '')}</span>
             </div>`; 
         });
         document.getElementById('testiGrid').innerHTML = html;

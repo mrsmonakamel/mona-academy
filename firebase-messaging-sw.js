@@ -13,16 +13,48 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// استقبال الإشعارات في الخلفية
 messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload);
-  const notificationTitle = payload.notification?.title || 'Mona Academy';
+  console.log('[firebase-messaging-sw.js] إشعار خلفي:', payload);
+
+  // التأكد من وجود بيانات الإشعار
+  if (!payload.notification) return;
+
+  const notificationTitle = payload.notification.title || 'Mona Academy';
   const notificationOptions = {
-    body: payload.notification?.body || 'You have a new notification',
-    icon: '/icon-192x192.png',
-    badge: '/badge.png',
-    data: payload.data,
+    body: payload.notification.body || 'لديك إشعار جديد',
+    // ✅ تم إزالة icon و badge – لا يوجد أيقونات
     vibrate: [200, 100, 200],
-    requireInteraction: true
+    requireInteraction: true,
+    data: payload.data || {},
+    actions: [
+      {
+        action: 'open',
+        title: 'فتح التطبيق'
+      }
+    ]
   };
+
   self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+// فتح التطبيق عند النقر على الإشعار
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  // فتح الصفحة الرئيسية (عدّل المسار حسب هيكل موقعك)
+  const urlToOpen = '/mona-academy/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // إذا كان هناك نافذة مفتوحة بالفعل، ركز عليها
+      for (const client of windowClients) {
+        if (client.url === urlToOpen && 'focus' in client) {
+          return client.focus();
+        }
+      }
+      // وإلا افتح نافذة جديدة
+      return clients.openWindow(urlToOpen);
+    })
+  );
 });
