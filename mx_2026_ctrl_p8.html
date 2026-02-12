@@ -3,16 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mona Academy | Pro Admin Panel</title>
+    <title>Mona Academy | Pro Admin Panel (آمن)</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js for analytics -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- PDF Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* نفس الـ style الموجود لا تغيير فيه */
+        /* ========== الأنماط كما هي ========== */
         :root {
             --accent: #6c5ce7; --dark-bg: #111417; --card-bg: #ffffff;
             --text-main: #2d3436; --danger: #ff7675; --success: #00b894;
@@ -99,7 +97,6 @@
         .badge-super { background: var(--danger); color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.7rem; }
         .perfect-score-row { background: linear-gradient(145deg, #fff9e6, #fff); border-right: 5px solid var(--gold); }
         
-        /* Analytics Cards */
         .analytics-grid {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px;
         }
@@ -161,7 +158,6 @@
                     <h3>➕ إضافة كورس جديد</h3>
                     <div class="grid-system">
                         <input type="text" id="cName" placeholder="اسم الكورس">
-                        <!-- ✅ تم التعديل: input type="url" بدلاً من file -->
                         <input type="url" id="cImgUrl" placeholder="https://... (رابط الصورة)" dir="ltr">
                     </div>
                     <button class="btn btn-main" style="margin-top:15px;" onclick="addCourse()">حفظ الكورس</button>
@@ -399,7 +395,6 @@
             <div class="card" style="background:#f9f9f9; margin-top:15px;">
                 <label>تعديل الاسم:</label><input type="text" id="editNameField">
                 <label>تعديل الصورة (رابط):</label>
-                <!-- ✅ تم التعديل: input type="url" بدلاً من file -->
                 <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr">
                 <button class="btn btn-main" style="margin-top:10px;" id="saveBasicBtn" onclick="updateCourseBasic()">حفظ البيانات الجديدة</button>
             </div>
@@ -417,11 +412,12 @@
     </div>
 
     <script type="module">
-        // ================ Firebase Imports ================
+        // ================ FIREBASE IMPORTS ================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, update, remove, set, get, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, onValue, push, update, remove, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
+        // ================ CONFIG ================
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
             authDomain: "monaacademy-cd983.firebaseapp.com",
@@ -434,8 +430,8 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        
-        // ================ Global Variables ================
+
+        // ================ GLOBAL VARIABLES ================
         let activeCID = "";
         let allStudents = {};
         let allResults = {};
@@ -455,7 +451,25 @@
         let currentStudentData = null;
         let currentStudentUid = null;
 
-        // ================ Theme Toggle ================
+        // ================ FUNCIÓN ESCAPE HTML ================
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"]/g, function(match) {
+                if (match === '&') return '&amp;';
+                if (match === '<') return '&lt;';
+                if (match === '>') return '&gt;';
+                if (match === '"') return '&quot;';
+                return match;
+            });
+        }
+
+        // ================ FUNCIÓN ESCAPE JS (للاستخدام الآمن في onclick) ================
+        function escapeJS(str) {
+            if (str === undefined || str === null) return '';
+            return JSON.stringify(str);
+        }
+
+        // ================ THEME ================
         window.toggleTheme = () => {
             document.body.classList.toggle('dark-mode');
             const isDark = document.body.classList.contains('dark-mode');
@@ -464,20 +478,21 @@
         const savedTheme = localStorage.getItem('adminTheme');
         if (savedTheme === 'dark') document.body.classList.add('dark-mode');
 
-        // ================ Sidebar Toggle ================
+        // ================ SIDEBAR ================
         window.toggleSidebar = () => {
             document.getElementById('sidebar').classList.toggle('open');
             document.getElementById('overlay').classList.toggle('active');
         };
 
-        // ================ Auth State ================
+        // ================ AUTH STATE ================
         onAuthStateChanged(auth, async user => {
             if (user) {
                 const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
                 const adminsSnap = await get(ref(db, 'admins'));
                 const admins = adminsSnap.val() || {};
                 allAdmins = admins;
-                const isAdmin = isSuperAdmin || (admins && admins[user.email]);
+                // التحقق من وجود البريد في قائمة الأدمنز (بعد التعديل الجديد)
+                const isAdmin = isSuperAdmin || Object.values(admins).some(admin => admin.email === user.email);
                 
                 if (isAdmin) {
                     document.getElementById('guard-loader').style.display = 'none';
@@ -492,7 +507,7 @@
             }
         });
 
-        // ================ Sync Data (محسّن: كل عقدة مستقلة) ================
+        // ================ SYNC DATA ================
         function syncData() {
             onValue(ref(db, 'folders'), snap => {
                 allFolders = snap.val() || {};
@@ -539,32 +554,30 @@
             onValue(ref(db, 'student_course_access'), snap => {
                 allCourseAccess = snap.val() || {};
             });
-            
-            // تحميل التحليلات ولوحة المتصدرين عند فتح القسم فقط (يتم استدعاؤها من showSection)
         }
 
-        // ================ Courses Management (بدون Firebase Storage) ================
+        // ================ COURSES MANAGEMENT ================
         window.renderCourses = (folders) => {
             let h = "";
-            if(folders) Object.keys(folders).forEach(id => {
+            if (folders) Object.keys(folders).forEach(id => {
+                const f = folders[id];
                 h += `<div class="card" style="text-align:center;">
-                    <img src="${folders[id].img || 'mona.jpg'}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;" onerror="this.src='mona.jpg'">
-                    <h4 style="margin:10px 0;">${folders[id].name}</h4>
+                    <img src="${escapeHTML(f.img || 'mona.jpg')}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;" onerror="this.src='mona.jpg'">
+                    <h4 style="margin:10px 0;">${escapeHTML(f.name)}</h4>
                     <div style="margin-bottom:10px; color: var(--gold);">
-                        ${'★'.repeat(Math.round(folders[id].avgRating || 0))} (${folders[id].reviewCount || 0})
+                        ${'★'.repeat(Math.round(f.avgRating || 0))} (${escapeHTML(f.reviewCount || 0)})
                     </div>
-                    <button class="btn btn-main" onclick="openEditModal('${id}', '${folders[id].name}')">تعديل المحتوى</button>
+                    <button class="btn btn-main" onclick="openEditModal(${escapeJS(id)}, ${escapeJS(f.name)})">تعديل المحتوى</button>
                     <button class="btn btn-danger" style="width:100%; margin-top:5px;" onclick="delData('folders/${id}')">حذف الكورس</button>
                 </div>`;
             });
-            document.getElementById('coursesGrid').innerHTML = h;
+            document.getElementById('coursesGrid').innerHTML = h || "<p style='text-align:center;'>لا توجد كورسات بعد</p>";
         };
 
-        // ✅ دالة addCourse معدلة لاستخدام رابط الصورة
         window.addCourse = async () => {
-            const name = document.getElementById('cName').value;
+            const name = document.getElementById('cName').value.trim();
             const imgUrl = document.getElementById('cImgUrl').value.trim();
-            if(!name) return alert("يرجى إدخال اسم الكورس");
+            if (!name) return alert("يرجى إدخال اسم الكورس");
             
             if (imgUrl && !imgUrl.startsWith('http')) {
                 return alert("❌ رابط الصورة غير صحيح. يجب أن يبدأ بـ http:// أو https://");
@@ -585,17 +598,18 @@
         window.openEditModal = (id, name) => {
             activeCID = id;
             document.getElementById('editNameField').value = name;
-            document.getElementById('editImgField').value = ""; // فارغ
+            document.getElementById('editImgField').value = "";
             
+            // فيديوهات الكورس
             onValue(ref(db, `folders/${id}`), snap => {
                 const f = snap.val() || {};
                 let vH = "<h5 style='margin-top:15px;'>الفيديوهات:</h5>";
-                if(f.videos) {
+                if (f.videos) {
                     Object.entries(f.videos).sort((a,b)=>(a[1].order||0)-(b[1].order||0)).forEach(([vId, v]) => {
-                        vH += `<div class="list-item" style="display: flex; justify-content: space-between; align-items: center;">
-                            <span>${v.order||0}. ${v.title}</span>
+                        vH += `<div class="list-item">
+                            <span>${escapeHTML(v.order || 0)}. ${escapeHTML(v.title)}</span>
                             <div>
-                                <button onclick="playVideoAdmin('${v.url}', '${v.title}')" class="btn-play" style="background: var(--accent); color: white; border: none; padding: 5px 12px; border-radius: 8px; margin-left: 8px; cursor: pointer;">
+                                <button onclick="playVideoAdmin(${escapeJS(v.url)}, ${escapeJS(v.title)})" class="btn-play">
                                     <i class="fas fa-play"></i> عرض
                                 </button>
                                 <button onclick="delData('folders/${id}/videos/${vId}')" style="color:red; border:none; background:none; cursor:pointer;">
@@ -608,28 +622,36 @@
                     vH += "<p style='color:#888; font-size:0.85rem;'>لا توجد فيديوهات بعد</p>";
                 }
                 document.getElementById('vListContainer').innerHTML = vH;
-            }, {onlyOnce: true});
+            }, { onlyOnce: true });
             
+            // اختبارات الكورس
             onValue(ref(db, `quizzes/${id}`), snap => {
                 let qH = "<h5 style='margin-top:15px;'>الاختبارات:</h5>";
-                if(snap.exists()) {
+                if (snap.exists()) {
                     snap.forEach(q => {
                         const qData = q.val();
                         const qCount = qData.questions ? Object.keys(qData.questions).length : 0;
-                        qH += `<div class="list-item"><span>${qData.name} (${qCount} سؤال)</span> <button onclick="delData('quizzes/${id}/${q.key}')" style="color:red; border:none; background:none; cursor:pointer;">حذف</button></div>`;
+                        qH += `<div class="list-item">
+                            <span>${escapeHTML(qData.name)} (${escapeHTML(qCount)} سؤال)</span>
+                            <button onclick="delData('quizzes/${id}/${q.key}')" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
+                        </div>`;
                     });
                 } else {
                     qH += "<p style='color:#888; font-size:0.85rem;'>لا توجد اختبارات بعد</p>";
                 }
                 document.getElementById('qListContainer').innerHTML = qH;
-            }, {onlyOnce: true});
+            }, { onlyOnce: true });
             
             document.getElementById('editModal').style.display = 'flex';
         };
 
         window.playVideoAdmin = (url, title) => {
             const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-            const videoId = (match && match[2].length == 11) ? match[2] : 'error';
+            if (!match || match[2].length !== 11) {
+                alert("❌ رابط الفيديو غير صالح");
+                return;
+            }
+            const videoId = match[2];
             const overlay = document.createElement('div');
             overlay.className = 'video-player-overlay';
             const iframe = document.createElement('iframe');
@@ -646,14 +668,14 @@
             document.body.appendChild(overlay);
         };
 
-        // ✅ دالة updateCourseBasic معدلة لاستخدام رابط الصورة
         window.updateCourseBasic = async () => {
-            const name = document.getElementById('editNameField').value;
+            const name = document.getElementById('editNameField').value.trim();
             const imgUrl = document.getElementById('editImgField').value.trim();
             const btn = document.getElementById('saveBasicBtn');
-            if(!activeCID) return;
+            if (!activeCID) return;
+            if (!name) return alert("يرجى إدخال اسم الكورس");
+            
             btn.innerText = "جاري الحفظ..."; btn.disabled = true;
-
             let updateData = { name };
             if (imgUrl) {
                 if (!imgUrl.startsWith('http')) {
@@ -663,7 +685,6 @@
                 }
                 updateData.img = imgUrl;
             }
-
             await update(ref(db, `folders/${activeCID}`), updateData);
             alert("✅ تم التحديث بنجاح"); 
             btn.innerText = "حفظ البيانات الجديدة"; 
@@ -672,11 +693,11 @@
         };
 
         window.addVideoToCourse = () => {
-            const t = document.getElementById('vTitle').value;
-            const u = document.getElementById('vUrl').value;
+            const t = document.getElementById('vTitle').value.trim();
+            const u = document.getElementById('vUrl').value.trim();
             const o = document.getElementById('vOrder').value;
-            if(!activeCID) return alert("خطأ: لم يتم تحديد الكورس");
-            if(!t || !u) return alert("يرجى إدخال عنوان الفيديو ورابط اليوتيوب");
+            if (!activeCID) return alert("خطأ: لم يتم تحديد الكورس");
+            if (!t || !u) return alert("يرجى إدخال عنوان الفيديو ورابط اليوتيوب");
             push(ref(db, `folders/${activeCID}/videos`), { 
                 title: t, 
                 url: u, 
@@ -690,7 +711,7 @@
             });
         };
 
-        // ================ Exams Management ================
+        // ================ EXAMS MANAGEMENT ================
         window.addNewQuestion = (type) => {
             const q = document.createElement('div');
             q.className = "card"; 
@@ -718,30 +739,30 @@
 
         window.saveFinalExam = () => {
             const fId = document.getElementById('exFolderSelect').value;
-            const title = document.getElementById('exTitle').value;
+            const title = document.getElementById('exTitle').value.trim();
             const videoRel = document.getElementById('exVideoRel').value;
             
-            if(!fId) return alert("يرجى اختيار الكورس");
-            if(!title) return alert("يرجى إدخال عنوان الاختبار");
+            if (!fId) return alert("يرجى اختيار الكورس");
+            if (!title) return alert("يرجى إدخال عنوان الاختبار");
             
             let questions = {};
             let qIndex = 0;
             
             document.querySelectorAll('#questionsArea .card').forEach(c => {
-                const qText = c.querySelector('.q-text').value;
-                if(!qText) return;
+                const qText = c.querySelector('.q-text').value.trim();
+                if (!qText) return;
                 
                 const oA = c.querySelector('.oA');
                 const oB = c.querySelector('.oB');
                 const correct = c.querySelector('.q-correct').value;
                 
-                if(oA && oB) {
+                if (oA && oB) {
                     questions[`q${qIndex}`] = {
                         text: qText,
-                        a: oA.value || "",
-                        b: oB.value || "",
-                        c: c.querySelector('.oC')?.value || "",
-                        d: c.querySelector('.oD')?.value || "",
+                        a: (oA.value || "").trim(),
+                        b: (oB.value || "").trim(),
+                        c: (c.querySelector('.oC')?.value || "").trim(),
+                        d: (c.querySelector('.oD')?.value || "").trim(),
                         correct: correct
                     };
                 } else {
@@ -755,39 +776,39 @@
                 qIndex++;
             });
             
-            if(Object.keys(questions).length === 0) return alert("يرجى إضافة أسئلة للامتحان");
+            if (Object.keys(questions).length === 0) return alert("يرجى إضافة أسئلة للامتحان");
             
             push(ref(db, `quizzes/${fId}`), { 
                 name: title, 
                 questions: questions,
                 videoRel: videoRel
             }).then(() => { 
-                alert("تم نشر الامتحان بنجاح"); 
+                alert("✅ تم نشر الامتحان بنجاح"); 
                 document.getElementById('questionsArea').innerHTML = "";
                 document.getElementById('exTitle').value = "";
             });
         };
 
-        // ================ Render Students ================
+        // ================ RENDER STUDENTS ================
         function renderStudents(s) {
             let h = ""; let count = 0;
-            if(s) Object.keys(s).forEach(id => {
+            if (s) Object.keys(s).forEach(id => {
                 count++;
                 const student = s[id];
                 let regMethod = "";
-                if(student.username) regMethod = '<span class="stat-badge badge-username">يوزر نيم</span>';
-                else if(student.email && student.email.includes('@')) regMethod = '<span class="stat-badge badge-email">إيميل</span>';
+                if (student.username) regMethod = '<span class="stat-badge badge-username">يوزر نيم</span>';
+                else if (student.email && student.email.includes('@')) regMethod = '<span class="stat-badge badge-email">إيميل</span>';
                 else regMethod = '<span class="stat-badge badge-google">جوجل</span>';
                 const subsCount = student.subscriptions ? Object.keys(student.subscriptions).length : 0;
                 h += `<tr>
-                    <td>${student.name}</td>
-                    <td><span class="student-id-display">${student.shortId || 'غير متوفر'}</span></td>
-                    <td>${student.grade}</td>
-                    <td>${student.whatsapp || '-'}</td>
-                    <td>${student.parentPhone || '-'}</td>
+                    <td>${escapeHTML(student.name)}</td>
+                    <td><span class="student-id-display">${escapeHTML(student.shortId || '—')}</span></td>
+                    <td>${escapeHTML(student.grade || '—')}</td>
+                    <td>${escapeHTML(student.whatsapp || '—')}</td>
+                    <td>${escapeHTML(student.parentPhone || '—')}</td>
                     <td>${regMethod}</td>
-                    <td><span class="progress-badge">${subsCount} اشتراك</span></td>
-                    <td>${student.points || 0}</td>
+                    <td><span class="progress-badge">${escapeHTML(subsCount)} اشتراك</span></td>
+                    <td>${escapeHTML(student.points || 0)}</td>
                     <td><button onclick="delData('students/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
             });
@@ -795,19 +816,19 @@
             document.getElementById('studentCount').innerText = `(${count} طالب)`;
         }
 
-        // ================ Render Results ================
+        // ================ RENDER RESULTS ================
         function renderResults(r) {
             let h = ""; let count = 0;
-            if(r) Object.keys(r).forEach(id => {
+            if (r) Object.keys(r).forEach(id => {
                 count++;
                 const result = r[id];
                 h += `<tr>
-                    <td>${result.student}</td>
-                    <td><span class="student-id-display">${result.studentId || '-'}</span></td>
-                    <td>${result.quiz}</td>
-                    <td>${result.score}/${result.total}</td>
-                    <td>${result.percentage}%</td>
-                    <td>${result.time || '-'}</td>
+                    <td>${escapeHTML(result.student)}</td>
+                    <td><span class="student-id-display">${escapeHTML(result.studentId || '—')}</span></td>
+                    <td>${escapeHTML(result.quiz)}</td>
+                    <td>${escapeHTML(result.score)}/${escapeHTML(result.total)}</td>
+                    <td>${escapeHTML(result.percentage)}%</td>
+                    <td>${escapeHTML(result.time || '—')}</td>
                     <td><button onclick="delData('quiz_results/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
             });
@@ -815,17 +836,17 @@
             document.getElementById('resultsCount').innerText = `(${count} نتيجة)`;
         }
 
-        // ================ Render Access Logs ================
+        // ================ RENDER ACCESS LOGS ================
         function renderAccessLogs(logs) {
             let h = ""; let count = 0;
-            if(logs) Object.keys(logs).forEach(id => {
+            if (logs) Object.keys(logs).forEach(id => {
                 count++;
                 const log = logs[id];
                 h += `<tr>
-                    <td>${log.student}</td>
-                    <td><span class="student-id-display">${log.studentId || '-'}</span></td>
-                    <td>${log.course}</td>
-                    <td>${log.time || '-'}</td>
+                    <td>${escapeHTML(log.student)}</td>
+                    <td><span class="student-id-display">${escapeHTML(log.studentId || '—')}</span></td>
+                    <td>${escapeHTML(log.course)}</td>
+                    <td>${escapeHTML(log.time || '—')}</td>
                     <td><button onclick="delData('course_access_logs/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
             });
@@ -833,15 +854,15 @@
             document.getElementById('logsCount').innerText = `(${count} سجل)`;
         }
 
-        // ================ Render Reviews ================
+        // ================ RENDER REVIEWS ================
         function renderReviews(reviews) {
             let h = ""; let count = 0;
-            if(reviews) Object.keys(reviews).forEach(id => {
+            if (reviews) Object.keys(reviews).forEach(id => {
                 count++;
                 const review = reviews[id];
                 h += `<tr>
-                    <td>${review.student}</td>
-                    <td style="max-width:400px;">${review.text}</td>
+                    <td>${escapeHTML(review.student)}</td>
+                    <td style="max-width:400px;">${escapeHTML(review.text)}</td>
                     <td>-</td>
                     <td><button onclick="delData('reviews/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
@@ -850,17 +871,17 @@
             document.getElementById('reviewsCount').innerText = `(${count} رأي)`;
         }
 
-        // ================ Render Notifications (first access) ================
+        // ================ RENDER NOTIFICATIONS ================
         function renderNotifications(notifications) {
             let h = ""; let count = 0;
-            if(notifications) Object.keys(notifications).forEach(id => {
+            if (notifications) Object.keys(notifications).forEach(id => {
                 count++;
                 const notif = notifications[id];
                 h += `<tr>
-                    <td>${notif.studentName}</td>
-                    <td><span class="student-id-display">${notif.studentId || '-'}</span></td>
-                    <td>${notif.courseName}</td>
-                    <td>${notif.time || '-'}</td>
+                    <td>${escapeHTML(notif.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(notif.studentId || '—')}</span></td>
+                    <td>${escapeHTML(notif.courseName)}</td>
+                    <td>${escapeHTML(notif.time || '—')}</td>
                     <td><button onclick="delData('course_access_notifications/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
             });
@@ -868,17 +889,17 @@
             document.getElementById('notificationsCount').innerText = `(${count} إشعار)`;
         }
 
-        // ================ Render Subscription Notifications ================
+        // ================ RENDER SUBSCRIPTION NOTIFICATIONS ================
         function renderSubscriptionNotifications(subscriptions) {
             let h = ""; let count = 0;
-            if(subscriptions) Object.keys(subscriptions).forEach(id => {
+            if (subscriptions) Object.keys(subscriptions).forEach(id => {
                 count++;
                 const sub = subscriptions[id];
                 h += `<tr>
-                    <td>${sub.studentName}</td>
-                    <td><span class="student-id-display">${sub.studentId || '-'}</span></td>
-                    <td>${sub.courseName}</td>
-                    <td>${sub.timestamp || sub.subscribedAt || '-'}</td>
+                    <td>${escapeHTML(sub.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(sub.studentId || '—')}</span></td>
+                    <td>${escapeHTML(sub.courseName)}</td>
+                    <td>${escapeHTML(sub.timestamp || sub.subscribedAt || '—')}</td>
                     <td><button onclick="delData('subscription_notifications/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
                 </tr>`;
             });
@@ -886,20 +907,21 @@
             document.getElementById('subscriptionNotificationsCount').innerText = `(${count} إشعار)`;
         }
 
-        // ================ Render Admins ================
+        // ================ RENDER ADMINS (بعد التعديل) ================
         function renderAdmins(admins) {
             let html = "";
             if (admins) {
-                Object.keys(admins).forEach(email => {
-                    const admin = admins[email];
+                Object.entries(admins).forEach(([key, admin]) => {
+                    const email = admin.email;
+                    const name = admin.name;
                     html += `<div class="admin-item">
                         <div>
-                            <span class="admin-email">${email}</span>
-                            <span style="margin-right: 10px; color: #666;">${admin.name || ''}</span>
+                            <span class="admin-email">${escapeHTML(email)}</span>
+                            <span style="margin-right: 10px; color: #666;">${escapeHTML(name || '')}</span>
                         </div>
                         <div>
                             ${email === SUPER_ADMIN_EMAIL ? '<span class="badge-super">سوبر أدمن</span>' : ''}
-                            ${email !== SUPER_ADMIN_EMAIL ? `<button onclick="removeAdmin('${email}')" class="btn btn-danger btn-sm" style="padding: 4px 12px;">
+                            ${email !== SUPER_ADMIN_EMAIL ? `<button onclick="removeAdmin(${escapeJS(email)})" class="btn btn-danger btn-sm" style="padding: 4px 12px;">
                                 <i class="fas fa-trash"></i> حذف
                             </button>` : ''}
                         </div>
@@ -910,7 +932,7 @@
             document.getElementById('adminsList').innerHTML = html;
         }
 
-        // ================ Add Admin ================
+        // ================ ADD ADMIN (تم الإصلاح) ================
         window.addAdmin = async () => {
             const email = document.getElementById('newAdminEmail').value.trim();
             const name = document.getElementById('newAdminName').value.trim();
@@ -919,11 +941,18 @@
             if (email === SUPER_ADMIN_EMAIL) {
                 return alert("❌ هذا البريد هو للسوبر أدمن ولا يمكن إضافته مرة أخرى");
             }
-            if (allAdmins && allAdmins[email]) {
+
+            // التحقق من عدم وجود البريد مسبقاً
+            const adminsSnap = await get(ref(db, 'admins'));
+            const admins = adminsSnap.val() || {};
+            const alreadyExists = Object.values(admins).some(admin => admin.email === email);
+            if (alreadyExists) {
                 return alert("❌ هذا البريد مضاف بالفعل");
             }
+
             try {
-                await set(ref(db, `admins/${email}`), {
+                await push(ref(db, 'admins'), {
+                    email: email,
                     name: name,
                     addedAt: new Date().toLocaleString('ar-EG')
                 });
@@ -935,18 +964,32 @@
             }
         };
 
-        // ================ Remove Admin ================
+        // ================ REMOVE ADMIN (تم الإصلاح) ================
         window.removeAdmin = async (email) => {
             if (email === SUPER_ADMIN_EMAIL) {
                 return alert("❌ لا يمكن حذف السوبر أدمن");
             }
-            if (confirm(`هل أنت متأكد من حذف ${email} من قائمة الأدمنز؟`)) {
-                await remove(ref(db, `admins/${email}`));
+            if (!confirm(`هل أنت متأكد من حذف ${email} من قائمة الأدمنز؟`)) return;
+
+            // البحث عن المفتاح المرتبط بالبريد
+            const adminsSnap = await get(ref(db, 'admins'));
+            const admins = adminsSnap.val() || {};
+            let keyToDelete = null;
+            for (const [key, admin] of Object.entries(admins)) {
+                if (admin.email === email) {
+                    keyToDelete = key;
+                    break;
+                }
+            }
+            if (keyToDelete) {
+                await remove(ref(db, `admins/${keyToDelete}`));
                 alert("✅ تم الحذف بنجاح");
+            } else {
+                alert("❌ لم يتم العثور على الأدمن");
             }
         };
 
-        // ================ Perfect Scores Management ================
+        // ================ PERFECT SCORES ================
         function renderPerfectScores(results, students) {
             if (!results) { 
                 document.getElementById('perfectScoresList').innerHTML = '<tr><td colspan="7" style="text-align:center;">لا توجد نتائج بعد</td></tr>';
@@ -986,14 +1029,14 @@
             let html = '';
             perfectArray.forEach(p => {
                 html += `<tr class="perfect-score-row">
-                    <td>${p.studentName}</td>
-                    <td><span class="student-id-display">${p.studentId || '—'}</span></td>
-                    <td>${p.quizName}</td>
-                    <td>${p.grade}</td>
-                    <td>${p.time || '—'}</td>
-                    <td><span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 50px;">${p.score}/${p.total}</span></td>
+                    <td>${escapeHTML(p.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(p.studentId || '—')}</span></td>
+                    <td>${escapeHTML(p.quizName)}</td>
+                    <td>${escapeHTML(p.grade)}</td>
+                    <td>${escapeHTML(p.time || '—')}</td>
+                    <td><span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 50px;">${escapeHTML(p.score)}/${escapeHTML(p.total)}</span></td>
                     <td>
-                        <button onclick="deletePerfectScore('${p.key}', '${p.uid || ''}', '${p.quizId || ''}', '${p.studentName}', '${p.quizName}')" class="btn btn-danger btn-sm">
+                        <button onclick="deletePerfectScore(${escapeJS(p.key)}, ${escapeJS(p.uid)}, ${escapeJS(p.quizId)}, ${escapeJS(p.studentName)}, ${escapeJS(p.quizName)})" class="btn btn-danger btn-sm">
                             <i class="fas fa-trash"></i> حذف
                         </button>
                     </td>
@@ -1048,7 +1091,7 @@
             });
         };
 
-        // ================ Analytics & Charts ================
+        // ================ ANALYTICS ================
         window.loadAnalytics = async () => {
             const studentsCount = Object.keys(allStudents).length;
             const coursesCount = Object.keys(allFolders).length;
@@ -1060,28 +1103,28 @@
                     <div class="analytics-icon"><i class="fas fa-user-graduate"></i></div>
                     <div class="analytics-info">
                         <h4>إجمالي الطلاب</h4>
-                        <div class="number">${studentsCount}</div>
+                        <div class="number">${escapeHTML(studentsCount)}</div>
                     </div>
                 </div>
                 <div class="analytics-card">
                     <div class="analytics-icon"><i class="fas fa-book"></i></div>
                     <div class="analytics-info">
                         <h4>الكورسات</h4>
-                        <div class="number">${coursesCount}</div>
+                        <div class="number">${escapeHTML(coursesCount)}</div>
                     </div>
                 </div>
                 <div class="analytics-card">
                     <div class="analytics-icon"><i class="fas fa-file-alt"></i></div>
                     <div class="analytics-info">
                         <h4>الامتحانات المحلولة</h4>
-                        <div class="number">${examsCount}</div>
+                        <div class="number">${escapeHTML(examsCount)}</div>
                     </div>
                 </div>
                 <div class="analytics-card">
                     <div class="analytics-icon"><i class="fas fa-trophy"></i></div>
                     <div class="analytics-info">
                         <h4>الدرجات النهائية</h4>
-                        <div class="number">${perfectCount}</div>
+                        <div class="number">${escapeHTML(perfectCount)}</div>
                     </div>
                 </div>
             `;
@@ -1181,7 +1224,7 @@
             }
         };
 
-        // ================ Load Leaderboard ================
+        // ================ LEADERBOARD ================
         window.loadLeaderboard = async () => {
             const studentsSnap = await get(ref(db, 'students'));
             if (!studentsSnap.exists()) return;
@@ -1202,33 +1245,33 @@
             leaderboard.forEach((s, i) => {
                 html += `<div class="leaderboard-row">
                     <span class="leaderboard-rank">#${i+1}</span>
-                    <span>${s.name}</span>
-                    <span>${s.points} <i class="fas fa-star" style="color: var(--gold);"></i></span>
+                    <span>${escapeHTML(s.name)}</span>
+                    <span>${escapeHTML(s.points)} <i class="fas fa-star" style="color: var(--gold);"></i></span>
                 </div>`;
             });
             document.getElementById('adminLeaderboard').innerHTML = html;
         };
 
-        // ================ Show Section ================
+        // ================ SHOW SECTION ================
         window.showSection = (id, btn) => {
             document.querySelectorAll('.admin-section').forEach(s => s.style.display='none');
             document.getElementById(id).style.display = 'block';
             document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
             btn.classList.add('active');
-            if(window.innerWidth < 992) toggleSidebar();
+            if (window.innerWidth < 992) toggleSidebar();
             if (id === 'analyticsSection') {
                 setTimeout(() => loadAnalytics(), 200);
             }
         };
 
-        // ================ Fill Dropdowns ================
+        // ================ FILL DROPDOWNS ================
         function fillDropdowns(f) {
             let o = "<option value=''>اختر الكورس</option>";
-            if(f) Object.keys(f).forEach(id => o += `<option value="${id}">${f[id].name}</option>`);
+            if (f) Object.keys(f).forEach(id => o += `<option value="${id}">${escapeHTML(f[id].name)}</option>`);
             document.getElementById('exFolderSelect').innerHTML = o;
         }
 
-        // ================ Filter Functions ================
+        // ================ FILTER FUNCTIONS ================
         window.filterStudents = () => {
             const search = document.getElementById('studentSearch').value.toLowerCase();
             const rows = document.querySelectorAll('#studentList tr');
@@ -1270,24 +1313,24 @@
             });
         };
 
-        // ================ Advanced Search ================
+        // ================ ADVANCED SEARCH ================
         window.performAdvancedSearch = async () => {
             const searchTerm = document.getElementById('advancedSearch').value.trim().toLowerCase();
-            if(!searchTerm) return alert("يرجى إدخال اسم الطالب أو كود الطالب");
+            if (!searchTerm) return alert("يرجى إدخال اسم الطالب أو كود الطالب");
             
             let foundStudent = null;
             let foundUid = null;
             
             Object.keys(allStudents).forEach(uid => {
                 const student = allStudents[uid];
-                if(student.name.toLowerCase().includes(searchTerm) || 
+                if (student.name && student.name.toLowerCase().includes(searchTerm) || 
                    (student.shortId && student.shortId.toLowerCase().includes(searchTerm))) {
                     foundStudent = student;
                     foundUid = uid;
                 }
             });
             
-            if(!foundStudent) {
+            if (!foundStudent) {
                 alert("لم يتم العثور على الطالب");
                 document.getElementById('searchResults').style.display = 'none';
                 return;
@@ -1299,27 +1342,27 @@
             currentStudentData = studentFull;
             
             let infoHtml = `<div style="background:#f0eeff; padding:20px; border-radius:15px;">
-                <h4 style="color:var(--accent); margin-bottom:10px;">${foundStudent.name}</h4>
-                <p><strong>كود الطالب:</strong> <span class="student-id-display">${foundStudent.shortId || 'غير متوفر'}</span></p>
-                <p><strong>المرحلة:</strong> ${foundStudent.grade || '-'}</p>
-                <p><strong>رقم الواتساب:</strong> ${foundStudent.whatsapp || '-'}</p>
-                <p><strong>رقم ولي الأمر:</strong> ${foundStudent.parentPhone || '-'}</p>
-                <p><strong>النقاط:</strong> ${studentFull.points || 0}</p>
-                <p><strong>الشارات:</strong> ${studentFull.badges?.length || 0}</p>
+                <h4 style="color:var(--accent); margin-bottom:10px;">${escapeHTML(foundStudent.name)}</h4>
+                <p><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(foundStudent.shortId || 'غير متوفر')}</span></p>
+                <p><strong>المرحلة:</strong> ${escapeHTML(foundStudent.grade || '-')}</p>
+                <p><strong>رقم الواتساب:</strong> ${escapeHTML(foundStudent.whatsapp || '-')}</p>
+                <p><strong>رقم ولي الأمر:</strong> ${escapeHTML(foundStudent.parentPhone || '-')}</p>
+                <p><strong>النقاط:</strong> ${escapeHTML(studentFull.points || 0)}</p>
+                <p><strong>الشارات:</strong> ${escapeHTML(studentFull.badges?.length || 0)}</p>
             </div>`;
             document.getElementById('studentInfo').innerHTML = infoHtml;
 
             const subscriptions = studentFull.subscriptions || {};
             let subsHtml = "";
-            if(Object.keys(subscriptions).length > 0) {
+            if (Object.keys(subscriptions).length > 0) {
                 for (const [courseId, subData] of Object.entries(subscriptions)) {
                     const courseSnap = await get(ref(db, `folders/${courseId}`));
                     const courseName = courseSnap.exists() ? courseSnap.val().name : subData.courseName || 'غير معروف';
                     subsHtml += `<div class="list-item">
                         <div>
-                            <strong>${courseName}</strong><br>
-                            <small style="color:#999;">اشترك في: ${subData.subscribedAt || '-'}</small><br>
-                            <span class="progress-badge">التقدم: ${subData.progress || 0}%</span>
+                            <strong>${escapeHTML(courseName)}</strong><br>
+                            <small style="color:#999;">اشترك في: ${escapeHTML(subData.subscribedAt || '-')}</small><br>
+                            <span class="progress-badge">التقدم: ${escapeHTML(subData.progress || 0)}%</span>
                         </div>
                     </div>`;
                 }
@@ -1328,14 +1371,14 @@
 
             const watchedVideos = studentFull.watchedVideos || {};
             let watchedHtml = "";
-            if(Object.keys(watchedVideos).length > 0) {
+            if (Object.keys(watchedVideos).length > 0) {
                 const recentWatched = Object.values(watchedVideos).sort((a,b) => (b.watchedAt || '').localeCompare(a.watchedAt || '')).slice(0,5);
-                watchedHtml = `<p>إجمالي المشاهدات: ${Object.keys(watchedVideos).length}</p>`;
+                watchedHtml = `<p>إجمالي المشاهدات: ${escapeHTML(Object.keys(watchedVideos).length)}</p>`;
                 recentWatched.forEach(v => {
                     watchedHtml += `<div class="list-item">
                         <div>
-                            <strong>${v.videoTitle || 'فيديو'}</strong><br>
-                            <small>${v.courseName || ''} - ${v.watchedAt || ''}</small>
+                            <strong>${escapeHTML(v.videoTitle || 'فيديو')}</strong><br>
+                            <small>${escapeHTML(v.courseName || '')} - ${escapeHTML(v.watchedAt || '')}</small>
                         </div>
                     </div>`;
                 });
@@ -1344,26 +1387,26 @@
 
             const examResults = studentFull.examResults || {};
             let examsHtml = "";
-            if(Object.keys(examResults).length > 0) {
+            if (Object.keys(examResults).length > 0) {
                 Object.values(examResults).sort((a,b) => (b.completedAt || '').localeCompare(a.completedAt || '')).forEach(exam => {
                     examsHtml += `<tr>
-                        <td>${exam.quizName}</td>
-                        <td>${exam.score}/${exam.total}</td>
-                        <td>${exam.percentage}%</td>
-                        <td>${exam.completedAt || '-'}</td>
+                        <td>${escapeHTML(exam.quizName)}</td>
+                        <td>${escapeHTML(exam.score)}/${escapeHTML(exam.total)}</td>
+                        <td>${escapeHTML(exam.percentage)}%</td>
+                        <td>${escapeHTML(exam.completedAt || '-')}</td>
                     </tr>`;
                 });
             }
             document.getElementById('studentExamResults').innerHTML = examsHtml || '<tr><td colspan="4" style="text-align:center; color:#999;">لا توجد نتائج بعد</td></tr>';
 
             let coursesHtml = "";
-            if(allCourseAccess[foundUid]) {
+            if (allCourseAccess[foundUid]) {
                 Object.keys(allCourseAccess[foundUid]).forEach(courseId => {
                     const courseData = allCourseAccess[foundUid][courseId];
                     coursesHtml += `<div class="list-item">
                         <div>
-                            <strong>${courseData.courseName}</strong><br>
-                            <small style="color:#999;">أول دخول: ${courseData.firstAccessTime}</small>
+                            <strong>${escapeHTML(courseData.courseName)}</strong><br>
+                            <small style="color:#999;">أول دخول: ${escapeHTML(courseData.firstAccessTime)}</small>
                         </div>
                     </div>`;
                 });
@@ -1371,15 +1414,15 @@
             document.getElementById('studentCourses').innerHTML = coursesHtml || '<p style="text-align:center; color:#999;">لم يسجل في أي كورس (دخول) بعد</p>';
 
             let globalExamsHtml = "";
-            if(allResults) {
+            if (allResults) {
                 Object.keys(allResults).forEach(id => {
                     const result = allResults[id];
-                    if(result.studentId === foundStudent.shortId) {
+                    if (result.studentId === foundStudent.shortId) {
                         globalExamsHtml += `<tr>
-                            <td>${result.quiz}</td>
-                            <td>${result.score}/${result.total}</td>
-                            <td>${result.percentage}%</td>
-                            <td>${result.time || '-'}</td>
+                            <td>${escapeHTML(result.quiz)}</td>
+                            <td>${escapeHTML(result.score)}/${escapeHTML(result.total)}</td>
+                            <td>${escapeHTML(result.percentage)}%</td>
+                            <td>${escapeHTML(result.time || '-')}</td>
                         </tr>`;
                     }
                 });
@@ -1387,13 +1430,13 @@
             document.getElementById('studentExams').innerHTML = globalExamsHtml || '<tr><td colspan="4" style="text-align:center; color:#999;">لم يكمل أي امتحان بعد</td></tr>';
 
             let logsHtml = "";
-            if(allLogs) {
+            if (allLogs) {
                 Object.keys(allLogs).forEach(id => {
                     const log = allLogs[id];
-                    if(log.studentId === foundStudent.shortId) {
+                    if (log.studentId === foundStudent.shortId) {
                         logsHtml += `<tr>
-                            <td>${log.course}</td>
-                            <td>${log.time || '-'}</td>
+                            <td>${escapeHTML(log.course)}</td>
+                            <td>${escapeHTML(log.time || '-')}</td>
                         </tr>`;
                     }
                 });
@@ -1410,7 +1453,7 @@
             currentStudentUid = null;
         };
 
-        // ================ Export Student PDF ================
+        // ================ EXPORT STUDENT PDF ================
         window.exportStudentPDF = async () => {
             if (!currentStudentData || !currentStudentUid) {
                 alert("❌ لم يتم العثور على بيانات الطالب، يرجى إجراء بحث أولاً");
@@ -1524,21 +1567,20 @@
             doc.save(`تقرير_${currentStudentData.shortId || currentStudentData.name}.pdf`);
         };
 
-        // ================ Delete Data ================
+        // ================ DELETE DATA ================
         window.delData = (path) => { 
-            if(confirm("هل أنت متأكد من الحذف النهائي؟")) {
-                remove(ref(db, path)).then(() => alert("تم الحذف بنجاح"));
+            if (confirm("هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, path)).then(() => alert("✅ تم الحذف بنجاح"));
             }
         };
 
-        // ================ Close Modal ================
+        // ================ CLOSE MODAL ================
         window.closeModal = () => document.getElementById('editModal').style.display = 'none';
 
-        // ================ Logout ================
+        // ================ LOGOUT ================
         window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
 
         // ================ ربط الدوال الإضافية بالنطاق العام ================
-        // (بعض الدوال غير مربوطة تلقائياً في الوضع النمطي)
         window.filterPerfectScores = filterPerfectScores;
         window.performAdvancedSearch = performAdvancedSearch;
         window.clearAdvancedSearch = clearAdvancedSearch;

@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
+<meta name="description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات، متابعة مستمرة">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Ms. Mona Kamal | English Academy</title>
@@ -42,14 +43,13 @@
             <div id="authStatus"></div>
         </div>
     </header>
-
     <!-- HAMBURGER DROPDOWN -->
     <div id="menuDropdown" class="dropdown-menu">
-        <a onclick="openDashboard()"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> <span data-i18n="dashboard">لوحة التحكم</span></a>
-        <a onclick="goHome()"><i class="fas fa-home" style="margin-left: 10px;"></i> <span data-i18n="home">الرئيسية</span></a>
-        <a onclick="openDashboard()"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> <span data-i18n="continueWatching">متابعة المشاهدة</span></a>
+        <a onclick="openDashboard(); closeMenu()"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> <span data-i18n="dashboard">لوحة التحكم</span></a>
+        <a onclick="goHome(); closeMenu()"><i class="fas fa-home" style="margin-left: 10px;"></i> <span data-i18n="home">الرئيسية</span></a>
+        <a onclick="openDashboard(); closeMenu()"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> <span data-i18n="continueWatching">متابعة المشاهدة</span></a>
         <hr>
-        <a onclick="logout()" style="color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> <span data-i18n="logout">تسجيل الخروج</span></a>
+        <a onclick="logout(); closeMenu()" style="color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> <span data-i18n="logout">تسجيل الخروج</span></a>
     </div>
 
     <!-- SUBSCRIPTION MODAL -->
@@ -112,9 +112,9 @@
                 <i class="fas fa-star"></i>
             </div>
             <div id="perfectScoresGrid" class="perfect-grid"></div>
-            <audio id="successSound" class="sound-on-load" preload="auto">
-                <source src="assets/success-bell.mp3" type="audio/mpeg">
-            </audio>
+<audio id="successSound" class="sound-on-load" preload="none">
+    <source src="assets/success-bell.mp3" type="audio/mpeg">
+</audio>
         </section>
 
         <!-- LEADERBOARD SECTION -->
@@ -416,7 +416,7 @@
                 <i class="fab fa-whatsapp" style="margin-left: 5px;"></i> واتساب
             </div>
             <a href="https://wa.me/201062306872" class="social-btn developer-btn" target="_blank">
-                <i class="fas fa-code" style="margin-left: 5px;"></i> Developed by Abdelrahman Adawi
+                <i class="fas fa-code" style="margin-left: 5px;"></i> Developed by Abdelrahman adawi
             </a>
         </div>
     </footer>
@@ -425,7 +425,8 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/mona-academy/sw.js')
+                // ✅ تصحيح مسار Service Worker – استخدم الملف الصحيح
+                navigator.serviceWorker.register('/mona-academy/firebase-messaging-sw.js')
                     .then(reg => console.log('✅ PWA Service Worker registered'))
                     .catch(err => console.log('❌ SW registration failed:', err));
             });
