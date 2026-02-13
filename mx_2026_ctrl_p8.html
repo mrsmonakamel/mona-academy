@@ -1,0 +1,1932 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mona Academy | Pro Admin Panel (آمن)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        /* ========== الأنماط ========== */
+        :root {
+            --accent: #6c5ce7;
+            --dark-bg: #111417;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --danger: #ff7675;
+            --success: #00b894;
+            --warning: #f1c40f;
+            --gold: #ffd700;
+            --perfect: #ffb142;
+            --border-color: #ddd;
+            --hover-bg: #f1f5f9;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #f0f2f5;
+            color: var(--text-main);
+            overflow-x: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
+        
+        .mobile-header {
+            display: none;
+            background: var(--dark-bg);
+            color: white;
+            padding: 15px;
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .wrapper {
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: 280px;
+            background: var(--dark-bg);
+            color: white;
+            padding: 25px;
+            position: fixed;
+            height: 100vh;
+            right: 0;
+            transition: 0.4s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .main-content {
+            margin-right: 280px;
+            flex: 1;
+            padding: 20px;
+            transition: 0.4s;
+            width: 100%;
+        }
+        
+        .logo {
+            font-size: 22px;
+            font-weight: 900;
+            text-align: center;
+            margin-bottom: 40px;
+            color: var(--accent);
+            border-bottom: 1px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-bottom: 10px;
+            color: #a4b0be;
+        }
+        
+        .nav-link:hover,
+        .nav-link.active {
+            background: var(--accent);
+            color: white;
+        }
+        
+        @media (max-width: 992px) {
+            .mobile-header {
+                display: flex;
+            }
+            .sidebar {
+                right: -280px;
+            }
+            .sidebar.open {
+                right: 0;
+            }
+            .main-content {
+                margin-right: 0;
+            }
+            .overlay {
+                display: none;
+                position: fixed;
+                inset: 0;
+                background: rgba(0, 0, 0, 0.5);
+                z-index: 999;
+            }
+            .overlay.active {
+                display: block;
+            }
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .grid-system {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            margin-top: 8px;
+            font-family: 'Cairo';
+            outline: none;
+            background: var(--card-bg);
+            color: var(--text-main);
+        }
+        
+        .btn {
+            padding: 12px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            font-family: 'Cairo';
+            transition: 0.3s;
+        }
+        
+        .btn-main {
+            background: var(--accent);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-danger {
+            background: #fff0f0;
+            color: var(--danger);
+            border: 1px solid #ff7675;
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-pdf {
+            background: #d32f2f;
+            color: white;
+        }
+        
+        .btn-play {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        
+        .btn-perfect {
+            background: var(--gold);
+            color: #2d3436;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: bold;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+        
+        th {
+            text-align: right;
+            padding: 12px;
+            background: #f8f9fa;
+            font-size: 0.85rem;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+        }
+        
+        .modal-content {
+            background: var(--card-bg);
+            width: 100%;
+            max-width: 800px;
+            border-radius: 25px;
+            padding: 25px;
+            max-height: 90vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        #guard-loader {
+            position: fixed;
+            inset: 0;
+            background: var(--dark-bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 10px;
+            margin-bottom: 8px;
+            border-right: 5px solid var(--accent);
+        }
+        
+        .stat-badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+        
+        .badge-email {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+        
+        .badge-username {
+            background: #f3e5f5;
+            color: #7b1fa2;
+        }
+        
+        .badge-google {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+        
+        .student-id-display {
+            background: #f0eeff;
+            color: var(--accent);
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.75rem;
+            border: 1px solid var(--accent);
+            font-weight: bold;
+        }
+        
+        .progress-badge {
+            background: var(--success);
+            color: white;
+            padding: 3px 8px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.9rem;
+        }
+        
+        .video-player-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .video-player-iframe {
+            width: 90%;
+            max-width: 1000px;
+            height: 80%;
+            border: none;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+        
+        .video-player-close {
+            position: absolute;
+            top: 20px;
+            left: 30px;
+            font-size: 50px;
+            color: white;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        
+        .video-player-close:hover {
+            color: var(--danger);
+        }
+        
+        .admin-item {
+            background: #f9f9f9;
+            border-radius: 12px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            border-right: 5px solid var(--accent);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .admin-email {
+            font-weight: bold;
+            color: var(--dark-bg);
+        }
+        
+        .badge-super {
+            background: var(--danger);
+            color: white;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+        }
+        
+        .perfect-score-row {
+            background: linear-gradient(145deg, #fff9e6, #fff);
+            border-right: 5px solid var(--gold);
+        }
+        
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .analytics-card {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .analytics-icon {
+            width: 60px;
+            height: 60px;
+            background: var(--accent);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+        }
+        
+        .analytics-info h4 {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .analytics-info .number {
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--accent);
+        }
+        
+        .chart-container {
+            height: 300px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="mobile-header">
+        <span style="font-weight: 900;">لوحة إدارة مـنى</span>
+        <div style="display: flex; gap: 10px;">
+            <i class="fas fa-bars fa-lg" onclick="toggleSidebar()"></i>
+        </div>
+    </div>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
+
+    <div id="guard-loader">
+        <i class="fas fa-user-shield fa-spin fa-3x" style="color: var(--accent);"></i>
+        <h3 style="margin-top: 20px;">التحقق من الهوية...</h3>
+    </div>
+
+    <div class="wrapper" id="adminApp" style="display: none;">
+        <aside class="sidebar" id="sidebar">
+            <div class="logo">Mona Academy</div>
+            <div class="nav-link active" onclick="showSection('coursesSection', this)"><i class="fas fa-th-large"></i> إدارة الكورسات</div>
+            <div class="nav-link" onclick="showSection('examsSection', this)"><i class="fas fa-edit"></i> مصنع الاختبارات</div>
+            <div class="nav-link" onclick="showSection('studentSearchSection', this)"><i class="fas fa-search"></i> بحث متقدم عن الطلاب</div>
+            <div class="nav-link" onclick="showSection('studentsSection', this)"><i class="fas fa-user-graduate"></i> الطلاب المسجلين</div>
+            <div class="nav-link" onclick="showSection('resultsSection', this)"><i class="fas fa-poll-h"></i> درجات الطلاب</div>
+            <div class="nav-link" onclick="showSection('accessLogsSection', this)"><i class="fas fa-history"></i> سجل الدخول للكورسات</div>
+            <div class="nav-link" onclick="showSection('notificationsSection', this)"><i class="fas fa-bell"></i> إشعارات دخول الكورسات</div>
+            <div class="nav-link" onclick="showSection('subscriptionNotificationsSection', this)"><i class="fas fa-user-plus"></i> إشعارات الاشتراكات</div>
+            <div class="nav-link" onclick="showSection('reviewsSection', this)"><i class="fas fa-comments"></i> آراء الطلاب</div>
+            <div class="nav-link" onclick="showSection('adminsSection', this)"><i class="fas fa-user-shield"></i> إدارة الأدمنز</div>
+            <div class="nav-link" onclick="showSection('perfectScoresSection', this)"><i class="fas fa-trophy"></i> الدرجات النهائية</div>
+            <div class="nav-link" onclick="showSection('analyticsSection', this)"><i class="fas fa-chart-line"></i> التحليلات</div>
+            <div style="margin-top: 30px; border-top: 1px solid #333; padding-top: 20px;">
+                <a href="index.html" class="nav-link" style="color: var(--success);"><i class="fas fa-home"></i> العودة للموقع</a>
+                <div class="nav-link" onclick="logout()" style="color: var(--danger);"><i class="fas fa-power-off"></i> خروج</div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <!-- ========== إدارة الكورسات ========== -->
+            <section id="coursesSection" class="admin-section">
+                <div class="card">
+                    <h3>➕ إضافة كورس جديد</h3>
+                    <div class="grid-system">
+                        <input type="text" id="cName" placeholder="اسم الكورس">
+                        <input type="url" id="cImgUrl" placeholder="https://... (رابط الصورة)" dir="ltr">
+                    </div>
+                    <button class="btn btn-main" style="margin-top:15px;" onclick="addCourse()">حفظ الكورس</button>
+                </div>
+                <div id="coursesGrid" class="grid-system"></div>
+            </section>
+
+            <!-- ========== مصنع الاختبارات ========== -->
+            <section id="examsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>📝 بناء اختبار جديد</h3>
+                    <select id="exFolderSelect"></select>
+                    <input type="text" id="exTitle" placeholder="عنوان الاختبار">
+                    <label style="margin-top: 10px; display: block;">ربط الامتحان بـ:</label>
+                    <select id="exVideoRel">
+                        <option value="all">امتحان شامل (يظهر مع كل الفيديوهات)</option>
+                    </select>
+                    <div id="questionsArea" style="margin-top: 15px;"></div>
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn" style="background:#eee;" onclick="addNewQuestion('mcq')">+ اختيارات</button>
+                        <button class="btn" style="background:#eee;" onclick="addNewQuestion('tf')">+ صح/خطأ</button>
+                    </div>
+                    <button class="btn btn-main" style="margin-top: 20px;" onclick="saveFinalExam()">نشر الامتحان</button>
+                </div>
+            </section>
+
+            <!-- ========== بحث متقدم عن الطلاب ========== -->
+            <section id="studentSearchSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🔍 بحث متقدم عن الطلاب</h3>
+                    <p style="color: #666; margin-bottom: 20px;">ابحث بالاسم أو كود الطالب للحصول على جميع المعلومات والنشاطات</p>
+                    <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="font-size: 1.1rem;">
+                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                        <button class="btn btn-main" style="flex: 2;" onclick="performAdvancedSearch()">🔍 بحث</button>
+                        <button class="btn btn-danger" style="flex: 1;" onclick="clearAdvancedSearch()">
+                            <i class="fas fa-times"></i> إلغاء
+                        </button>
+                    </div>
+                </div>
+                <div id="searchResults" style="display: none;">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                            <h3>📊 معلومات الطالب</h3>
+                            <button class="btn btn-pdf btn-sm" onclick="exportStudentPDF()">
+                                <i class="fas fa-file-pdf"></i> تصدير PDF
+                            </button>
+                        </div>
+                        <div id="studentInfo" class="grid-system"></div>
+                    </div>
+                    <div class="card"><h3>📚 الاشتراكات في الكورسات</h3><div id="studentSubscriptions"></div></div>
+                    <div class="card"><h3>🎬 الفيديوهات المشاهدة</h3><div id="studentWatchedVideos"></div></div>
+                    <div class="card">
+                        <h3>📝 نتائج الامتحانات (من سجل الطالب)</h3>
+                        <div class="table-container"><table><thead><tr><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th></tr></thead><tbody id="studentExamResults"></tbody></table></div>
+                    </div>
+                    <div class="card"><h3>📚 الكورسات المسجل فيها (دخول)</h3><div id="studentCourses"></div></div>
+                    <div class="card">
+                        <h3>📝 الامتحانات والدرجات (من السجل العام)</h3>
+                        <div class="table-container"><table><thead><tr><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th></tr></thead><tbody id="studentExams"></tbody></table></div>
+                    </div>
+                    <div class="card">
+                        <h3>🕒 سجل الدخول للكورسات</h3>
+                        <div class="table-container"><table><thead><tr><th>الكورس</th><th>وقت الدخول</th></tr></thead><tbody id="studentAccessLog"></tbody></table></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== الطلاب المسجلين ========== -->
+            <section id="studentsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>📋 قائمة الطلاب <span style="color: var(--accent);" id="studentCount"></span></h3>
+                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="filterStudents()">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>الاسم</th><th>كود الطالب</th><th>المرحلة</th><th>واتساب</th><th>ولي الأمر</th><th>طريقة التسجيل</th><th>الاشتراكات</th><th>النقاط</th><th>حذف</th></tr></thead>
+                            <tbody id="studentList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== درجات الطلاب ========== -->
+            <section id="resultsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>📊 النتائج <span style="color: var(--accent);" id="resultsCount"></span></h3>
+                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="filterResults()">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th><th>حذف</th></tr></thead>
+                            <tbody id="resultsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== سجل الدخول للكورسات ========== -->
+            <section id="accessLogsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🕒 سجل الدخول للكورسات <span style="color: var(--accent);" id="logsCount"></span></h3>
+                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="filterLogs()">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الكورس</th><th>التوقيت</th><th>حذف</th></tr></thead>
+                            <tbody id="logsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== إشعارات دخول الكورسات ========== -->
+            <section id="notificationsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🔔 إشعارات دخول الطلاب للكورسات <span style="color: var(--accent);" id="notificationsCount"></span></h3>
+                    <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين دخلوا الكورسات لأول مرة</p>
+                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterNotifications()">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>وقت أول دخول</th><th>حذف</th></tr></thead>
+                            <tbody id="notificationsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== إشعارات الاشتراكات ========== -->
+            <section id="subscriptionNotificationsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🔔 إشعارات اشتراكات الطلاب في الكورسات <span style="color: var(--accent);" id="subscriptionNotificationsCount"></span></h3>
+                    <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين اشتركوا في الكورسات</p>
+                    <input type="text" id="subscriptionNotificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterSubscriptionNotifications()">
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>تاريخ الاشتراك</th><th>حذف</th></tr></thead>
+                            <tbody id="subscriptionNotificationsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== آراء الطلاب ========== -->
+            <section id="reviewsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>💬 آراء الطلاب <span style="color: var(--accent);" id="reviewsCount"></span></h3>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>الطالب</th><th>الرأي</th><th>التقييم</th><th>حذف</th></tr></thead>
+                            <tbody id="reviewsList"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== إدارة الأدمنز ========== -->
+            <section id="adminsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>➕ إضافة أدمن جديد</h3>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني للأدمن" style="flex: 2;">
+                        <input type="text" id="newAdminName" placeholder="اسم الأدمن" style="flex: 1;">
+                        <button class="btn btn-success" style="flex: 0.5;" onclick="addAdmin()"><i class="fas fa-user-plus"></i> إضافة</button>
+                    </div>
+                    <p style="color: #666; font-size: 0.85rem; margin-top: 5px;">سيتمكن الأدمن من الدخول إلى لوحة التحكم باستخدام حسابه في جوجل</p>
+                </div>
+                <div class="card">
+                    <h3>📋 قائمة الأدمنز الحاليين</h3>
+                    <div id="adminsList" style="margin-top: 15px;"></div>
+                </div>
+            </section>
+
+            <!-- ========== الدرجات النهائية ========== -->
+            <section id="perfectScoresSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>🏆 طلاب الدرجة النهائية <span style="color: var(--accent);" id="perfectScoresCount"></span></h3>
+                    <p style="color: #666; margin-bottom: 15px;">هذه قائمة بجميع الطلاب الذين حصلوا على الدرجة الكاملة في الامتحانات. يمكنك حذف أي نتيجة لإعادة فتح الامتحان للطالب.</p>
+                    <input type="text" id="perfectScoreSearch" placeholder="🔍 ابحث باسم الطالب أو الكود أو الامتحان..." style="margin-bottom: 15px;" onkeyup="filterPerfectScores()">
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>اسم الطالب</th>
+                                    <th>كود الطالب</th>
+                                    <th>الامتحان</th>
+                                    <th>الصف الدراسي</th>
+                                    <th>التاريخ</th>
+                                    <th>الدرجة</th>
+                                    <th>حذف</th>
+                                </tr>
+                            </thead>
+                            <tbody id="perfectScoresList"></tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 20px; padding: 15px; background: #fff0e6; border-radius: 12px; border-right: 5px solid var(--gold);">
+                        <i class="fas fa-info-circle" style="color: var(--gold); margin-left: 8px;"></i>
+                        <strong>تنبيه:</strong> حذف نتيجة الطالب سيسمح له بإعادة الامتحان مرة أخرى، وسيتم إزالتها من قائمة الدرجات النهائية في الموقع الرئيسي.
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========== التحليلات والإحصائيات ========== -->
+            <section id="analyticsSection" class="admin-section" style="display: none;">
+                <div class="card">
+                    <h3>📈 نظرة عامة على المنصة</h3>
+                    <div class="analytics-grid" id="analyticsSummary"></div>
+                </div>
+                <div class="card">
+                    <h3>📊 أكثر الكورسات مشاهدة</h3>
+                    <div class="chart-container">
+                        <canvas id="topCoursesChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📝 توزيع درجات الامتحانات</h3>
+                    <div class="chart-container">
+                        <canvas id="examScoresChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>📅 نشاط الطلاب (آخر 7 أيام)</h3>
+                    <div class="chart-container">
+                        <canvas id="activityChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <h3>🏅 لوحة المتصدرين</h3>
+                    <div id="adminLeaderboard" class="leaderboard-table" style="margin-top: 0;"></div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- ========== مودال تعديل الكورس ========== -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <h3 id="editModalTitle">إدارة الكورس</h3>
+            <div class="card" style="background:#f9f9f9; margin-top:15px;">
+                <label>تعديل الاسم:</label><input type="text" id="editNameField">
+                <label>تعديل الصورة (رابط):</label>
+                <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr">
+                <button class="btn btn-main" style="margin-top:10px;" id="saveBasicBtn" onclick="updateCourseBasic()">حفظ البيانات الجديدة</button>
+            </div>
+            <h4>إضافة فيديو:</h4>
+            <input type="text" id="vTitle" placeholder="عنوان الفيديو">
+            <input type="text" id="vUrl" placeholder="رابط اليوتيوب">
+            <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)">
+            <button class="btn btn-main" style="margin-top:10px;" onclick="addVideoToCourse()">إضافة الفيديو</button>
+            
+            <h4 style="margin-top:20px;">المحتوى الحالي (فيديوهات واختبارات):</h4>
+            <div id="vListContainer"></div>
+            <div id="qListContainer"></div>
+            <button class="btn btn-danger" style="width:100%; margin-top:20px;" onclick="closeModal()">إغلاق</button>
+        </div>
+    </div>
+
+    <script type="module">
+        // ================ FIREBASE IMPORTS ================
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, onValue, push, update, remove, set, get, child } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // ================ CONFIG ================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            authDomain: "monaacademy-cd983.firebaseapp.com",
+            databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
+            projectId: "monaacademy-cd983",
+            storageBucket: "monaacademy-cd983.appspot.com",
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // ================ GLOBAL VARIABLES ================
+        let activeCID = "";
+        let allStudents = {};
+        let allResults = {};
+        let allLogs = {};
+        let allNotifications = {};
+        let allCourseAccess = {};
+        let allFolders = {};
+        let allSubscriptionNotifications = {};
+        let allReviews = {};
+        let allPerfectScores = [];
+        let chartsInitialized = false;
+        let topCoursesChart, examScoresChart, activityChart;
+
+        const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+        let allAdmins = {};
+
+        let currentStudentData = null;
+        let currentStudentUid = null;
+
+        // ================ FUNCIÓN ESCAPE HTML ================
+        function escapeHTML(str) {
+            if (str === null || str === undefined) return '';
+            return String(str).replace(/[&<>"]/g, function(match) {
+                if (match === '&') return '&amp;';
+                if (match === '<') return '&lt;';
+                if (match === '>') return '&gt;';
+                if (match === '"') return '&quot;';
+                return match;
+            });
+        }
+
+        // ================ FUNCIÓN ESCAPE JS (تم التعديل هنا) ================
+        function escapeJS(str) {
+            if (str === undefined || str === null) return '';
+            // إزالة علامات الاقتباس من البداية والنهاية
+            let json = JSON.stringify(str);
+            return json.substring(1, json.length - 1);
+        }
+
+        // ================ SIDEBAR ================
+        window.toggleSidebar = () => {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('active');
+        };
+
+        // ================ AUTH STATE ================
+        onAuthStateChanged(auth, async user => {
+            if (user) {
+                const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
+                const adminsSnap = await get(ref(db, 'admins'));
+                const admins = adminsSnap.val() || {};
+                allAdmins = admins;
+                const isAdmin = isSuperAdmin || Object.values(admins).some(admin => admin.email === user.email);
+                
+                if (isAdmin) {
+                    document.getElementById('guard-loader').style.display = 'none';
+                    document.getElementById('adminApp').style.display = 'flex';
+                    syncData();
+                } else {
+                    alert("❌ ليس لديك صلاحية الدخول إلى لوحة الإدارة");
+                    window.location.href = "index.html";
+                }
+            } else {
+                window.location.href = "index.html";
+            }
+        });
+
+        // ================ SYNC DATA ================
+        function syncData() {
+            onValue(ref(db, 'folders'), snap => {
+                allFolders = snap.val() || {};
+                renderCourses(allFolders);
+                fillDropdowns(allFolders);
+            });
+            
+            onValue(ref(db, 'students'), snap => {
+                allStudents = snap.val() || {};
+                renderStudents(allStudents);
+            });
+            
+            onValue(ref(db, 'quiz_results'), snap => {
+                allResults = snap.val() || {};
+                renderResults(allResults);
+                renderPerfectScores(allResults, allStudents);
+            });
+            
+            onValue(ref(db, 'course_access_logs'), snap => {
+                allLogs = snap.val() || {};
+                renderAccessLogs(allLogs);
+            });
+            
+            onValue(ref(db, 'course_access_notifications'), snap => {
+                allNotifications = snap.val() || {};
+                renderNotifications(allNotifications);
+            });
+            
+            onValue(ref(db, 'subscription_notifications'), snap => {
+                allSubscriptionNotifications = snap.val() || {};
+                renderSubscriptionNotifications(allSubscriptionNotifications);
+            });
+            
+            onValue(ref(db, 'reviews'), snap => {
+                allReviews = snap.val() || {};
+                renderReviews(allReviews);
+            });
+            
+            onValue(ref(db, 'admins'), snap => {
+                allAdmins = snap.val() || {};
+                renderAdmins(allAdmins);
+            });
+            
+            onValue(ref(db, 'student_course_access'), snap => {
+                allCourseAccess = snap.val() || {};
+            });
+        }
+
+        // ================ COURSES MANAGEMENT ================
+        function renderCourses(folders) {
+            let h = "";
+            if (folders) Object.keys(folders).forEach(id => {
+                const f = folders[id];
+                h += `<div class="card" style="text-align:center;">
+                    <img src="${escapeHTML(f.img || 'mona.jpg')}" style="width:65px; height:65px; border-radius:12px; object-fit:cover;" onerror="this.src='mona.jpg'">
+                    <h4 style="margin:10px 0;">${escapeHTML(f.name)}</h4>
+                    <div style="margin-bottom:10px; color: var(--gold);">
+                        ${'★'.repeat(Math.round(f.avgRating || 0))} (${escapeHTML(f.reviewCount || 0)})
+                    </div>
+                    <button class="btn btn-main" onclick='openEditModal("${id}", ${JSON.stringify(f.name).replace(/'/g, "\\'")})'>تعديل المحتوى</button>
+                    <button class="btn btn-danger" style="width:100%; margin-top:5px;" onclick="delData('folders/${id}')">حذف الكورس</button>
+                </div>`;
+            });
+            document.getElementById('coursesGrid').innerHTML = h || "<p style='text-align:center;'>لا توجد كورسات بعد</p>";
+        }
+
+        window.renderCourses = renderCourses;
+
+        window.addCourse = async () => {
+            const name = document.getElementById('cName').value.trim();
+            const imgUrl = document.getElementById('cImgUrl').value.trim();
+            if (!name) return alert("يرجى إدخال اسم الكورس");
+            
+            if (imgUrl && !imgUrl.startsWith('http')) {
+                return alert("❌ رابط الصورة غير صحيح. يجب أن يبدأ بـ http:// أو https://");
+            }
+            
+            await push(ref(db, 'folders'), { 
+                name, 
+                img: imgUrl || 'mona.jpg', 
+                avgRating: 0, 
+                reviewCount: 0 
+            });
+            
+            document.getElementById('cName').value = "";
+            document.getElementById('cImgUrl').value = "";
+            alert("✅ تم إنشاء الكورس");
+        };
+
+        window.openEditModal = (id, name) => {
+            activeCID = id;
+            document.getElementById('editNameField').value = name;
+            document.getElementById('editImgField').value = "";
+            
+            onValue(ref(db, `folders/${id}`), snap => {
+                const f = snap.val() || {};
+                let vH = "<h5 style='margin-top:15px;'>الفيديوهات:</h5>";
+                if (f.videos) {
+                    Object.entries(f.videos).sort((a,b)=>(a[1].order||0)-(b[1].order||0)).forEach(([vId, v]) => {
+                        vH += `<div class="list-item">
+                            <span>${escapeHTML(v.order || 0)}. ${escapeHTML(v.title)}</span>
+                            <div>
+                                <button onclick='playVideoAdmin(${JSON.stringify(v.url)}, ${JSON.stringify(v.title)})' class="btn-play">
+                                    <i class="fas fa-play"></i> عرض
+                                </button>
+                                <button onclick="delData('folders/${id}/videos/${vId}')" style="color:red; border:none; background:none; cursor:pointer;">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                    });
+                } else {
+                    vH += "<p style='color:#888; font-size:0.85rem;'>لا توجد فيديوهات بعد</p>";
+                }
+                document.getElementById('vListContainer').innerHTML = vH;
+            }, { onlyOnce: true });
+            
+            onValue(ref(db, `quizzes/${id}`), snap => {
+                let qH = "<h5 style='margin-top:15px;'>الاختبارات:</h5>";
+                if (snap.exists()) {
+                    snap.forEach(q => {
+                        const qData = q.val();
+                        const qCount = qData.questions ? Object.keys(qData.questions).length : 0;
+                        qH += `<div class="list-item">
+                            <span>${escapeHTML(qData.name)} (${escapeHTML(qCount)} سؤال)</span>
+                            <button onclick="delData('quizzes/${id}/${q.key}')" style="color:red; border:none; background:none; cursor:pointer;">حذف</button>
+                        </div>`;
+                    });
+                } else {
+                    qH += "<p style='color:#888; font-size:0.85rem;'>لا توجد اختبارات بعد</p>";
+                }
+                document.getElementById('qListContainer').innerHTML = qH;
+            }, { onlyOnce: true });
+            
+            document.getElementById('editModal').style.display = 'flex';
+        };
+
+        window.playVideoAdmin = (url, title) => {
+            const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
+            if (!match || match[2].length !== 11) {
+                alert("❌ رابط الفيديو غير صالح");
+                return;
+            }
+            const videoId = match[2];
+            const overlay = document.createElement('div');
+            overlay.className = 'video-player-overlay';
+            const iframe = document.createElement('iframe');
+            iframe.className = 'video-player-iframe';
+            iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+            iframe.allow = 'autoplay; encrypted-media';
+            iframe.allowFullscreen = true;
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'video-player-close';
+            closeBtn.innerHTML = '&times;';
+            closeBtn.onclick = () => overlay.remove();
+            overlay.appendChild(iframe);
+            overlay.appendChild(closeBtn);
+            document.body.appendChild(overlay);
+        };
+
+        window.updateCourseBasic = async () => {
+            const name = document.getElementById('editNameField').value.trim();
+            const imgUrl = document.getElementById('editImgField').value.trim();
+            const btn = document.getElementById('saveBasicBtn');
+            if (!activeCID) return;
+            if (!name) return alert("يرجى إدخال اسم الكورس");
+            
+            btn.innerText = "جاري الحفظ..."; btn.disabled = true;
+            let updateData = { name };
+            if (imgUrl) {
+                if (!imgUrl.startsWith('http')) {
+                    alert("❌ رابط الصورة غير صحيح");
+                    btn.innerText = "حفظ البيانات الجديدة"; btn.disabled = false;
+                    return;
+                }
+                updateData.img = imgUrl;
+            }
+            await update(ref(db, `folders/${activeCID}`), updateData);
+            alert("✅ تم التحديث بنجاح"); 
+            btn.innerText = "حفظ البيانات الجديدة"; 
+            btn.disabled = false;
+            document.getElementById('editImgField').value = "";
+        };
+
+        window.addVideoToCourse = () => {
+            const t = document.getElementById('vTitle').value.trim();
+            const u = document.getElementById('vUrl').value.trim();
+            const o = document.getElementById('vOrder').value;
+            if (!activeCID) return alert("خطأ: لم يتم تحديد الكورس");
+            if (!t || !u) return alert("يرجى إدخال عنوان الفيديو ورابط اليوتيوب");
+            push(ref(db, `folders/${activeCID}/videos`), { 
+                title: t, 
+                url: u, 
+                order: parseInt(o) || 0 
+            }).then(() => {
+                alert("تم إضافة الفيديو");
+                document.getElementById('vTitle').value = "";
+                document.getElementById('vUrl').value = "";
+                document.getElementById('vOrder').value = "";
+                openEditModal(activeCID, document.getElementById('editNameField').value);
+            });
+        };
+
+        // ================ EXAMS MANAGEMENT ================
+        window.addNewQuestion = (type) => {
+            const q = document.createElement('div');
+            q.className = "card"; 
+            q.style = "background:#f1f1f1; position:relative; margin-top:10px;";
+            q.innerHTML = `<i class="fas fa-trash" style="position:absolute; left:10px; top:10px; color:red; cursor:pointer;" onclick="this.parentElement.remove()"></i>
+                <input type="text" class="q-text" placeholder="نص السؤال">
+                ${type==='mcq' ? `<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
+                    <input type="text" class="oA" placeholder="الاختيار A">
+                    <input type="text" class="oB" placeholder="الاختيار B">
+                    <input type="text" class="oC" placeholder="الاختيار C">
+                    <input type="text" class="oD" placeholder="الاختيار D">
+                </div>
+                <select class="q-correct" style="margin-top:5px;">
+                    <option value="a">الإجابة الصحيحة: A</option>
+                    <option value="b">الإجابة الصحيحة: B</option>
+                    <option value="c">الإجابة الصحيحة: C</option>
+                    <option value="d">الإجابة الصحيحة: D</option>
+                </select>` : `
+                <select class="q-correct" style="margin-top:5px;">
+                    <option value="a">الإجابة الصحيحة: صح</option>
+                    <option value="b">الإجابة الصحيحة: خطأ</option>
+                </select>`}`;
+            document.getElementById('questionsArea').appendChild(q);
+        };
+
+        window.saveFinalExam = () => {
+            const fId = document.getElementById('exFolderSelect').value;
+            const title = document.getElementById('exTitle').value.trim();
+            const videoRel = document.getElementById('exVideoRel').value;
+            
+            if (!fId) return alert("يرجى اختيار الكورس");
+            if (!title) return alert("يرجى إدخال عنوان الاختبار");
+            
+            let questions = {};
+            let qIndex = 0;
+            
+            document.querySelectorAll('#questionsArea .card').forEach(c => {
+                const qText = c.querySelector('.q-text').value.trim();
+                if (!qText) return;
+                
+                const oA = c.querySelector('.oA');
+                const oB = c.querySelector('.oB');
+                const correct = c.querySelector('.q-correct').value;
+                
+                if (oA && oB) {
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: (oA.value || "").trim(),
+                        b: (oB.value || "").trim(),
+                        c: (c.querySelector('.oC')?.value || "").trim(),
+                        d: (c.querySelector('.oD')?.value || "").trim(),
+                        correct: correct
+                    };
+                } else {
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: "صح",
+                        b: "خطأ",
+                        correct: correct
+                    };
+                }
+                qIndex++;
+            });
+            
+            if (Object.keys(questions).length === 0) return alert("يرجى إضافة أسئلة للامتحان");
+            
+            push(ref(db, `quizzes/${fId}`), { 
+                name: title, 
+                questions: questions,
+                videoRel: videoRel
+            }).then(() => { 
+                alert("✅ تم نشر الامتحان بنجاح"); 
+                document.getElementById('questionsArea').innerHTML = "";
+                document.getElementById('exTitle').value = "";
+            });
+        };
+
+        // ================ RENDER STUDENTS ================
+        function renderStudents(s) {
+            let h = ""; let count = 0;
+            if (s) Object.keys(s).forEach(id => {
+                count++;
+                const student = s[id];
+                let regMethod = "";
+                if (student.username) regMethod = '<span class="stat-badge badge-username">يوزر نيم</span>';
+                else if (student.email && student.email.includes('@')) regMethod = '<span class="stat-badge badge-email">إيميل</span>';
+                else regMethod = '<span class="stat-badge badge-google">جوجل</span>';
+                const subsCount = student.subscriptions ? Object.keys(student.subscriptions).length : 0;
+                h += `<tr>
+                    <td>${escapeHTML(student.name)}</td>
+                    <td><span class="student-id-display">${escapeHTML(student.shortId || '—')}</span></td>
+                    <td>${escapeHTML(student.grade || '—')}</td>
+                    <td>${escapeHTML(student.whatsapp || '—')}</td>
+                    <td>${escapeHTML(student.parentPhone || '—')}</td>
+                    <td>${regMethod}</td>
+                    <td><span class="progress-badge">${escapeHTML(subsCount)} اشتراك</span></td>
+                    <td>${escapeHTML(student.points || 0)}</td>
+                    <td><button onclick="delData('students/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('studentList').innerHTML = h;
+            document.getElementById('studentCount').innerText = `(${count} طالب)`;
+        }
+
+        // ================ RENDER RESULTS ================
+        function renderResults(r) {
+            let h = ""; let count = 0;
+            if (r) Object.keys(r).forEach(id => {
+                count++;
+                const result = r[id];
+                h += `<tr>
+                    <td>${escapeHTML(result.student)}</td>
+                    <td><span class="student-id-display">${escapeHTML(result.studentId || '—')}</span></td>
+                    <td>${escapeHTML(result.quiz)}</td>
+                    <td>${escapeHTML(result.score)}/${escapeHTML(result.total)}</td>
+                    <td>${escapeHTML(result.percentage)}%</td>
+                    <td>${escapeHTML(result.time || '—')}</td>
+                    <td><button onclick="delData('quiz_results/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('resultsList').innerHTML = h;
+            document.getElementById('resultsCount').innerText = `(${count} نتيجة)`;
+        }
+
+        // ================ RENDER ACCESS LOGS ================
+        function renderAccessLogs(logs) {
+            let h = ""; let count = 0;
+            if (logs) Object.keys(logs).forEach(id => {
+                count++;
+                const log = logs[id];
+                h += `<tr>
+                    <td>${escapeHTML(log.student)}</td>
+                    <td><span class="student-id-display">${escapeHTML(log.studentId || '—')}</span></td>
+                    <td>${escapeHTML(log.course)}</td>
+                    <td>${escapeHTML(log.time || '—')}</td>
+                    <td><button onclick="delData('course_access_logs/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('logsList').innerHTML = h;
+            document.getElementById('logsCount').innerText = `(${count} سجل)`;
+        }
+
+        // ================ RENDER REVIEWS ================
+        function renderReviews(reviews) {
+            let h = ""; let count = 0;
+            if (reviews) Object.keys(reviews).forEach(id => {
+                count++;
+                const review = reviews[id];
+                h += `<tr>
+                    <td>${escapeHTML(review.student)}</td>
+                    <td style="max-width:400px;">${escapeHTML(review.text)}</td>
+                    <td>-</td>
+                    <td><button onclick="delData('reviews/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('reviewsList').innerHTML = h;
+            document.getElementById('reviewsCount').innerText = `(${count} رأي)`;
+        }
+
+        // ================ RENDER NOTIFICATIONS ================
+        function renderNotifications(notifications) {
+            let h = ""; let count = 0;
+            if (notifications) Object.keys(notifications).forEach(id => {
+                count++;
+                const notif = notifications[id];
+                h += `<tr>
+                    <td>${escapeHTML(notif.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(notif.studentId || '—')}</span></td>
+                    <td>${escapeHTML(notif.courseName)}</td>
+                    <td>${escapeHTML(notif.time || '—')}</td>
+                    <td><button onclick="delData('course_access_notifications/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('notificationsList').innerHTML = h;
+            document.getElementById('notificationsCount').innerText = `(${count} إشعار)`;
+        }
+
+        // ================ RENDER SUBSCRIPTION NOTIFICATIONS ================
+        function renderSubscriptionNotifications(subscriptions) {
+            let h = ""; let count = 0;
+            if (subscriptions) Object.keys(subscriptions).forEach(id => {
+                count++;
+                const sub = subscriptions[id];
+                h += `<tr>
+                    <td>${escapeHTML(sub.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(sub.studentId || '—')}</span></td>
+                    <td>${escapeHTML(sub.courseName)}</td>
+                    <td>${escapeHTML(sub.timestamp || sub.subscribedAt || '—')}</td>
+                    <td><button onclick="delData('subscription_notifications/${id}')" class="btn btn-danger" style="font-size:0.8rem; padding:6px 12px;">حذف</button></td>
+                </tr>`;
+            });
+            document.getElementById('subscriptionNotificationsList').innerHTML = h;
+            document.getElementById('subscriptionNotificationsCount').innerText = `(${count} إشعار)`;
+        }
+
+        // ================ RENDER ADMINS ================
+        function renderAdmins(admins) {
+            let html = "";
+            if (admins) {
+                Object.entries(admins).forEach(([key, admin]) => {
+                    const email = admin.email;
+                    const name = admin.name;
+                    html += `<div class="admin-item">
+                        <div>
+                            <span class="admin-email">${escapeHTML(email)}</span>
+                            <span style="margin-right: 10px; color: #666;">${escapeHTML(name || '')}</span>
+                        </div>
+                        <div>
+                            ${email === SUPER_ADMIN_EMAIL ? '<span class="badge-super">سوبر أدمن</span>' : ''}
+                            ${email !== SUPER_ADMIN_EMAIL ? `<button onclick="removeAdmin(${escapeJS(email)})" class="btn btn-danger btn-sm" style="padding: 4px 12px;">
+                                <i class="fas fa-trash"></i> حذف
+                            </button>` : ''}
+                        </div>
+                    </div>`;
+                });
+            }
+            if (html === "") html = "<p style='text-align:center; color:#999;'>لا يوجد أدمنز مضافين حالياً</p>";
+            document.getElementById('adminsList').innerHTML = html;
+        }
+
+        // ================ ADD ADMIN ================
+        window.addAdmin = async () => {
+            const email = document.getElementById('newAdminEmail').value.trim();
+            const name = document.getElementById('newAdminName').value.trim();
+            if (!email) return alert("❌ يرجى إدخال البريد الإلكتروني");
+            if (!name) return alert("❌ يرجى إدخال اسم الأدمن");
+            if (email === SUPER_ADMIN_EMAIL) {
+                return alert("❌ هذا البريد هو للسوبر أدمن ولا يمكن إضافته مرة أخرى");
+            }
+
+            const adminsSnap = await get(ref(db, 'admins'));
+            const admins = adminsSnap.val() || {};
+            const alreadyExists = Object.values(admins).some(admin => admin.email === email);
+            if (alreadyExists) {
+                return alert("❌ هذا البريد مضاف بالفعل");
+            }
+
+            try {
+                await push(ref(db, 'admins'), {
+                    email: email,
+                    name: name,
+                    addedAt: new Date().toLocaleString('ar-EG')
+                });
+                alert("✅ تم إضافة الأدمن بنجاح");
+                document.getElementById('newAdminEmail').value = "";
+                document.getElementById('newAdminName').value = "";
+            } catch (error) {
+                alert("❌ خطأ: " + error.message);
+            }
+        };
+
+        // ================ REMOVE ADMIN ================
+        window.removeAdmin = async (email) => {
+            if (email === SUPER_ADMIN_EMAIL) {
+                return alert("❌ لا يمكن حذف السوبر أدمن");
+            }
+            if (!confirm(`هل أنت متأكد من حذف ${email} من قائمة الأدمنز؟`)) return;
+
+            const adminsSnap = await get(ref(db, 'admins'));
+            const admins = adminsSnap.val() || {};
+            let keyToDelete = null;
+            for (const [key, admin] of Object.entries(admins)) {
+                if (admin.email === email) {
+                    keyToDelete = key;
+                    break;
+                }
+            }
+            if (keyToDelete) {
+                await remove(ref(db, `admins/${keyToDelete}`));
+                alert("✅ تم الحذف بنجاح");
+            } else {
+                alert("❌ لم يتم العثور على الأدمن");
+            }
+        };
+
+        // ================ PERFECT SCORES ================
+        function renderPerfectScores(results, students) {
+            if (!results) { 
+                document.getElementById('perfectScoresList').innerHTML = '<tr><td colspan="7" style="text-align:center;">لا توجد نتائج بعد</td></tr>';
+                document.getElementById('perfectScoresCount').innerText = '(0)';
+                return;
+            }
+
+            const gradeMap = {};
+            if (students) {
+                Object.values(students).forEach(student => {
+                    if (student.shortId) gradeMap[student.shortId] = student.grade || 'غير محدد';
+                });
+            }
+
+            let perfectArray = [];
+            Object.keys(results).forEach(key => {
+                const res = results[key];
+                if (res.score === res.total && res.score > 0) {
+                    perfectArray.push({
+                        key: key,
+                        studentName: res.student || 'طالب',
+                        studentId: res.studentId || '',
+                        quizName: res.quiz || 'امتحان',
+                        grade: gradeMap[res.studentId] || 'غير محدد',
+                        score: res.score,
+                        total: res.total,
+                        time: res.time || '',
+                        uid: res.uid || null,
+                        quizId: res.quizId || null
+                    });
+                }
+            });
+
+            perfectArray.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+            allPerfectScores = perfectArray;
+
+            let html = '';
+            perfectArray.forEach(p => {
+                html += `<tr class="perfect-score-row">
+                    <td>${escapeHTML(p.studentName)}</td>
+                    <td><span class="student-id-display">${escapeHTML(p.studentId || '—')}</span></td>
+                    <td>${escapeHTML(p.quizName)}</td>
+                    <td>${escapeHTML(p.grade)}</td>
+                    <td>${escapeHTML(p.time || '—')}</td>
+                    <td><span style="background: var(--success); color: white; padding: 4px 12px; border-radius: 50px;">${escapeHTML(p.score)}/${escapeHTML(p.total)}</span></td>
+                    <td>
+                        <button onclick='deletePerfectScore(${JSON.stringify(p.key)}, ${JSON.stringify(p.uid)}, ${JSON.stringify(p.quizId)}, ${JSON.stringify(p.studentName)}, ${JSON.stringify(p.quizName)})' class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> حذف
+                        </button>
+                    </td>
+                </tr>`;
+            });
+
+            if (html === '') {
+                html = '<tr><td colspan="7" style="text-align:center; padding:30px;">🏆 لا يوجد طلاب حصلوا على الدرجة النهائية بعد</td></tr>';
+            }
+
+            document.getElementById('perfectScoresList').innerHTML = html;
+            document.getElementById('perfectScoresCount').innerText = `(${perfectArray.length})`;
+        }
+
+        window.deletePerfectScore = async (resultKey, uid, quizId, studentName, quizName) => {
+            if (!confirm(`❓ هل أنت متأكد من حذف نتيجة الطالب "${studentName}" في امتحان "${quizName}"؟\n\nسيتمكن الطالب من إعادة الامتحان مرة أخرى.`)) {
+                return;
+            }
+            try {
+                await remove(ref(db, `quiz_results/${resultKey}`));
+                if (uid && quizId) {
+                    await remove(ref(db, `students/${uid}/examResults/${quizId}`));
+                } else {
+                    const studentId = allPerfectScores.find(p => p.key === resultKey)?.studentId;
+                    if (studentId) {
+                        let foundUid = null;
+                        if (allStudents) {
+                            Object.keys(allStudents).forEach(uidKey => {
+                                if (allStudents[uidKey].shortId === studentId) {
+                                    foundUid = uidKey;
+                                }
+                            });
+                        }
+                        if (foundUid && quizId) {
+                            await remove(ref(db, `students/${foundUid}/examResults/${quizId}`));
+                        }
+                    }
+                }
+                alert('✅ تم حذف النتيجة بنجاح');
+            } catch (error) {
+                console.error(error);
+                alert('❌ حدث خطأ أثناء الحذف: ' + error.message);
+            }
+        };
+
+        window.filterPerfectScores = () => {
+            const search = document.getElementById('perfectScoreSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#perfectScoresList tr');
+            rows.forEach(row => {
+                const text = row.textContent.toLowerCase();
+                row.style.display = text.includes(search) ? '' : 'none';
+            });
+        };
+
+        // ================ ANALYTICS ================
+        window.loadAnalytics = async () => {
+            const studentsCount = Object.keys(allStudents).length;
+            const coursesCount = Object.keys(allFolders).length;
+            const examsCount = Object.keys(allResults).length;
+            const perfectCount = allPerfectScores.length;
+
+            document.getElementById('analyticsSummary').innerHTML = `
+                <div class="analytics-card">
+                    <div class="analytics-icon"><i class="fas fa-user-graduate"></i></div>
+                    <div class="analytics-info">
+                        <h4>إجمالي الطلاب</h4>
+                        <div class="number">${escapeHTML(studentsCount)}</div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-icon"><i class="fas fa-book"></i></div>
+                    <div class="analytics-info">
+                        <h4>الكورسات</h4>
+                        <div class="number">${escapeHTML(coursesCount)}</div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-icon"><i class="fas fa-file-alt"></i></div>
+                    <div class="analytics-info">
+                        <h4>الامتحانات المحلولة</h4>
+                        <div class="number">${escapeHTML(examsCount)}</div>
+                    </div>
+                </div>
+                <div class="analytics-card">
+                    <div class="analytics-icon"><i class="fas fa-trophy"></i></div>
+                    <div class="analytics-info">
+                        <h4>الدرجات النهائية</h4>
+                        <div class="number">${escapeHTML(perfectCount)}</div>
+                    </div>
+                </div>
+            `;
+
+            // Top courses chart
+            const courseViews = {};
+            if (allLogs) {
+                Object.values(allLogs).forEach(log => {
+                    if (log.course) courseViews[log.course] = (courseViews[log.course] || 0) + 1;
+                });
+            }
+            const topCourses = Object.entries(courseViews).sort((a,b) => b[1] - a[1]).slice(0,5);
+            const ctx1 = document.getElementById('topCoursesChart')?.getContext('2d');
+            if (ctx1) {
+                if (topCoursesChart) topCoursesChart.destroy();
+                topCoursesChart = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: topCourses.map(c => c[0]),
+                        datasets: [{
+                            label: 'عدد المشاهدات',
+                            data: topCourses.map(c => c[1]),
+                            backgroundColor: 'rgba(108, 92, 231, 0.7)',
+                            borderColor: 'rgba(108, 92, 231, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        scales: { y: { beginAtZero: true } }
+                    }
+                });
+            }
+
+            // Exam scores distribution
+            const scoreRanges = [0,0,0,0,0];
+            if (allResults) {
+                Object.values(allResults).forEach(r => {
+                    const perc = r.percentage || 0;
+                    if (perc <= 20) scoreRanges[0]++;
+                    else if (perc <= 40) scoreRanges[1]++;
+                    else if (perc <= 60) scoreRanges[2]++;
+                    else if (perc <= 80) scoreRanges[3]++;
+                    else scoreRanges[4]++;
+                });
+            }
+            const ctx2 = document.getElementById('examScoresChart')?.getContext('2d');
+            if (ctx2) {
+                if (examScoresChart) examScoresChart.destroy();
+                examScoresChart = new Chart(ctx2, {
+                    type: 'pie',
+                    data: {
+                        labels: ['0-20%', '21-40%', '41-60%', '61-80%', '81-100%'],
+                        datasets: [{
+                            data: scoreRanges,
+                            backgroundColor: ['#ff7675', '#fdcb6e', '#ffeaa7', '#74b9ff', '#00b894']
+                        }]
+                    }
+                });
+            }
+
+            // Activity last 7 days
+            const last7Days = Array.from({length: 7}, (_, i) => {
+                const d = new Date();
+                d.setDate(d.getDate() - i);
+                return d.toLocaleDateString('ar-EG', { day: 'numeric', month: 'numeric' });
+            }).reverse();
+            const activityData = [0,0,0,0,0,0,0];
+            if (allLogs) {
+                Object.values(allLogs).forEach(log => {
+                    if (log.time) {
+                        const logDate = log.time.split(' ')[0];
+                        const index = last7Days.findIndex(d => logDate.includes(d));
+                        if (index !== -1) activityData[index]++;
+                    }
+                });
+            }
+            const ctx3 = document.getElementById('activityChart')?.getContext('2d');
+            if (ctx3) {
+                if (activityChart) activityChart.destroy();
+                activityChart = new Chart(ctx3, {
+                    type: 'line',
+                    data: {
+                        labels: last7Days,
+                        datasets: [{
+                            label: 'الدخول للكورسات',
+                            data: activityData,
+                            borderColor: '#6c5ce7',
+                            backgroundColor: 'rgba(108,92,231,0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false }
+                });
+            }
+        };
+
+        // ================ LEADERBOARD ================
+        window.loadLeaderboard = async () => {
+            const studentsSnap = await get(ref(db, 'students'));
+            if (!studentsSnap.exists()) return;
+            let leaderboard = [];
+            studentsSnap.forEach(s => {
+                const data = s.val();
+                if (data.points > 0) {
+                    leaderboard.push({
+                        name: data.name || 'طالب',
+                        points: data.points || 0,
+                        badges: data.badges?.length || 0
+                    });
+                }
+            });
+            leaderboard.sort((a, b) => b.points - a.points);
+            leaderboard = leaderboard.slice(0, 20);
+            let html = '<div class="leaderboard-row"><span class="leaderboard-rank">#</span><span>الطالب</span><span>النقاط</span></div>';
+            leaderboard.forEach((s, i) => {
+                html += `<div class="leaderboard-row">
+                    <span class="leaderboard-rank">#${i+1}</span>
+                    <span>${escapeHTML(s.name)}</span>
+                    <span>${escapeHTML(s.points)} <i class="fas fa-star" style="color: var(--gold);"></i></span>
+                </div>`;
+            });
+            document.getElementById('adminLeaderboard').innerHTML = html;
+        };
+
+        // ================ SHOW SECTION ================
+        window.showSection = (id, btn) => {
+            document.querySelectorAll('.admin-section').forEach(s => s.style.display='none');
+            document.getElementById(id).style.display = 'block';
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            btn.classList.add('active');
+            if (window.innerWidth < 992) toggleSidebar();
+            if (id === 'analyticsSection') {
+                setTimeout(() => loadAnalytics(), 200);
+            }
+        };
+
+        // ================ FILL DROPDOWNS ================
+        function fillDropdowns(f) {
+            let o = "<option value=''>اختر الكورس</option>";
+            if (f) Object.keys(f).forEach(id => o += `<option value="${id}">${escapeHTML(f[id].name)}</option>`);
+            document.getElementById('exFolderSelect').innerHTML = o;
+        }
+
+        // ================ FILTER FUNCTIONS ================
+        window.filterStudents = () => {
+            const search = document.getElementById('studentSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#studentList tr');
+            rows.forEach(row => { 
+                const text = row.textContent.toLowerCase(); 
+                row.style.display = text.includes(search) ? '' : 'none'; 
+            });
+        };
+        window.filterResults = () => {
+            const search = document.getElementById('resultSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#resultsList tr');
+            rows.forEach(row => { 
+                const text = row.textContent.toLowerCase(); 
+                row.style.display = text.includes(search) ? '' : 'none'; 
+            });
+        };
+        window.filterLogs = () => {
+            const search = document.getElementById('logSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#logsList tr');
+            rows.forEach(row => { 
+                const text = row.textContent.toLowerCase(); 
+                row.style.display = text.includes(search) ? '' : 'none'; 
+            });
+        };
+        window.filterNotifications = () => {
+            const search = document.getElementById('notificationSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#notificationsList tr');
+            rows.forEach(row => { 
+                const text = row.textContent.toLowerCase(); 
+                row.style.display = text.includes(search) ? '' : 'none'; 
+            });
+        };
+        window.filterSubscriptionNotifications = () => {
+            const search = document.getElementById('subscriptionNotificationSearch').value.toLowerCase();
+            const rows = document.querySelectorAll('#subscriptionNotificationsList tr');
+            rows.forEach(row => { 
+                const text = row.textContent.toLowerCase(); 
+                row.style.display = text.includes(search) ? '' : 'none'; 
+            });
+        };
+
+        // ================ ADVANCED SEARCH ================
+        window.performAdvancedSearch = async () => {
+            const searchTerm = document.getElementById('advancedSearch').value.trim().toLowerCase();
+            if (!searchTerm) return alert("يرجى إدخال اسم الطالب أو كود الطالب");
+            
+            let foundStudent = null;
+            let foundUid = null;
+            
+            Object.keys(allStudents).forEach(uid => {
+                const student = allStudents[uid];
+                if (student.name && student.name.toLowerCase().includes(searchTerm) || 
+                   (student.shortId && student.shortId.toLowerCase().includes(searchTerm))) {
+                    foundStudent = student;
+                    foundUid = uid;
+                }
+            });
+            
+            if (!foundStudent) {
+                alert("لم يتم العثور على الطالب");
+                document.getElementById('searchResults').style.display = 'none';
+                return;
+            }
+
+            currentStudentUid = foundUid;
+            const studentSnap = await get(ref(db, `students/${foundUid}`));
+            const studentFull = studentSnap.val() || foundStudent;
+            currentStudentData = studentFull;
+            
+            let infoHtml = `<div style="background:#f0eeff; padding:20px; border-radius:15px;">
+                <h4 style="color:var(--accent); margin-bottom:10px;">${escapeHTML(foundStudent.name)}</h4>
+                <p><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(foundStudent.shortId || 'غير متوفر')}</span></p>
+                <p><strong>المرحلة:</strong> ${escapeHTML(foundStudent.grade || '-')}</p>
+                <p><strong>رقم الواتساب:</strong> ${escapeHTML(foundStudent.whatsapp || '-')}</p>
+                <p><strong>رقم ولي الأمر:</strong> ${escapeHTML(foundStudent.parentPhone || '-')}</p>
+                <p><strong>النقاط:</strong> ${escapeHTML(studentFull.points || 0)}</p>
+                <p><strong>الشارات:</strong> ${escapeHTML(studentFull.badges?.length || 0)}</p>
+            </div>`;
+            document.getElementById('studentInfo').innerHTML = infoHtml;
+
+            const subscriptions = studentFull.subscriptions || {};
+            let subsHtml = "";
+            if (Object.keys(subscriptions).length > 0) {
+                for (const [courseId, subData] of Object.entries(subscriptions)) {
+                    const courseSnap = await get(ref(db, `folders/${courseId}`));
+                    const courseName = courseSnap.exists() ? courseSnap.val().name : subData.courseName || 'غير معروف';
+                    subsHtml += `<div class="list-item">
+                        <div>
+                            <strong>${escapeHTML(courseName)}</strong><br>
+                            <small style="color:#999;">اشترك في: ${escapeHTML(subData.subscribedAt || '-')}</small><br>
+                            <span class="progress-badge">التقدم: ${escapeHTML(subData.progress || 0)}%</span>
+                        </div>
+                    </div>`;
+                }
+            }
+            document.getElementById('studentSubscriptions').innerHTML = subsHtml || '<p style="text-align:center; color:#999;">لا يوجد اشتراكات بعد</p>';
+
+            const watchedVideos = studentFull.watchedVideos || {};
+            let watchedHtml = "";
+            if (Object.keys(watchedVideos).length > 0) {
+                const recentWatched = Object.values(watchedVideos).sort((a,b) => (b.watchedAt || '').localeCompare(a.watchedAt || '')).slice(0,5);
+                watchedHtml = `<p>إجمالي المشاهدات: ${escapeHTML(Object.keys(watchedVideos).length)}</p>`;
+                recentWatched.forEach(v => {
+                    watchedHtml += `<div class="list-item">
+                        <div>
+                            <strong>${escapeHTML(v.videoTitle || 'فيديو')}</strong><br>
+                            <small>${escapeHTML(v.courseName || '')} - ${escapeHTML(v.watchedAt || '')}</small>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('studentWatchedVideos').innerHTML = watchedHtml || '<p style="text-align:center; color:#999;">لم يشاهد أي فيديو بعد</p>';
+
+            const examResults = studentFull.examResults || {};
+            let examsHtml = "";
+            if (Object.keys(examResults).length > 0) {
+                Object.values(examResults).sort((a,b) => (b.completedAt || '').localeCompare(a.completedAt || '')).forEach(exam => {
+                    examsHtml += `<tr>
+                        <td>${escapeHTML(exam.quizName)}</td>
+                        <td>${escapeHTML(exam.score)}/${escapeHTML(exam.total)}</td>
+                        <td>${escapeHTML(exam.percentage)}%</td>
+                        <td>${escapeHTML(exam.completedAt || '-')}</td>
+                    </tr>`;
+                });
+            }
+            document.getElementById('studentExamResults').innerHTML = examsHtml || '<tr><td colspan="4" style="text-align:center; color:#999;">لا توجد نتائج بعد</td></tr>';
+
+            let coursesHtml = "";
+            if (allCourseAccess[foundUid]) {
+                Object.keys(allCourseAccess[foundUid]).forEach(courseId => {
+                    const courseData = allCourseAccess[foundUid][courseId];
+                    coursesHtml += `<div class="list-item">
+                        <div>
+                            <strong>${escapeHTML(courseData.courseName)}</strong><br>
+                            <small style="color:#999;">أول دخول: ${escapeHTML(courseData.firstAccessTime)}</small>
+                        </div>
+                    </div>`;
+                });
+            }
+            document.getElementById('studentCourses').innerHTML = coursesHtml || '<p style="text-align:center; color:#999;">لم يسجل في أي كورس (دخول) بعد</p>';
+
+            let globalExamsHtml = "";
+            if (allResults) {
+                Object.keys(allResults).forEach(id => {
+                    const result = allResults[id];
+                    if (result.studentId === foundStudent.shortId) {
+                        globalExamsHtml += `<tr>
+                            <td>${escapeHTML(result.quiz)}</td>
+                            <td>${escapeHTML(result.score)}/${escapeHTML(result.total)}</td>
+                            <td>${escapeHTML(result.percentage)}%</td>
+                            <td>${escapeHTML(result.time || '-')}</td>
+                        </tr>`;
+                    }
+                });
+            }
+            document.getElementById('studentExams').innerHTML = globalExamsHtml || '<tr><td colspan="4" style="text-align:center; color:#999;">لم يكمل أي امتحان بعد</td></tr>';
+
+            let logsHtml = "";
+            if (allLogs) {
+                Object.keys(allLogs).forEach(id => {
+                    const log = allLogs[id];
+                    if (log.studentId === foundStudent.shortId) {
+                        logsHtml += `<tr>
+                            <td>${escapeHTML(log.course)}</td>
+                            <td>${escapeHTML(log.time || '-')}</td>
+                        </tr>`;
+                    }
+                });
+            }
+            document.getElementById('studentAccessLog').innerHTML = logsHtml || '<tr><td colspan="2" style="text-align:center; color:#999;">لا توجد سجلات دخول</td></tr>';
+
+            document.getElementById('searchResults').style.display = 'block';
+        };
+
+        window.clearAdvancedSearch = () => {
+            document.getElementById('searchResults').style.display = 'none';
+            document.getElementById('advancedSearch').value = '';
+            currentStudentData = null;
+            currentStudentUid = null;
+        };
+
+        // ================ EXPORT STUDENT PDF ================
+        window.exportStudentPDF = async () => {
+            if (!currentStudentData || !currentStudentUid) {
+                alert("❌ لم يتم العثور على بيانات الطالب، يرجى إجراء بحث أولاً");
+                return;
+            }
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+            
+            doc.setFont('helvetica', 'normal');
+            doc.setR2L(true);
+            
+            doc.setFontSize(22);
+            doc.setTextColor(108, 92, 231);
+            doc.text(`تقرير الطالب: ${currentStudentData.name}`, 105, 20, { align: 'center' });
+            
+            doc.setDrawColor(108, 92, 231);
+            doc.setLineWidth(0.5);
+            doc.line(20, 25, 190, 25);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`كود الطالب: ${currentStudentData.shortId || 'غير متوفر'}`, 190, 40, { align: 'right' });
+            doc.text(`المرحلة: ${currentStudentData.grade || 'غير محدد'}`, 190, 50, { align: 'right' });
+            doc.text(`رقم الواتساب: ${currentStudentData.whatsapp || '-'}`, 190, 60, { align: 'right' });
+            doc.text(`ولي الأمر: ${currentStudentData.parentPhone || '-'}`, 190, 70, { align: 'right' });
+            doc.text(`النقاط: ${currentStudentData.points || 0}`, 190, 80, { align: 'right' });
+            
+            const subsCount = currentStudentData.subscriptions ? Object.keys(currentStudentData.subscriptions).length : 0;
+            const videosCount = currentStudentData.watchedVideos ? Object.keys(currentStudentData.watchedVideos).length : 0;
+            const examsCount = currentStudentData.examResults ? Object.keys(currentStudentData.examResults).length : 0;
+            
+            let totalPercentage = 0;
+            if (currentStudentData.examResults) {
+                Object.values(currentStudentData.examResults).forEach(ex => totalPercentage += ex.percentage || 0);
+            }
+            const avgScore = examsCount > 0 ? Math.round(totalPercentage / examsCount) : 0;
+            
+            doc.text(`عدد الاشتراكات: ${subsCount}`, 190, 95, { align: 'right' });
+            doc.text(`الفيديوهات المشاهدة: ${videosCount}`, 190, 105, { align: 'right' });
+            doc.text(`الامتحانات المحلولة: ${examsCount}`, 190, 115, { align: 'right' });
+            doc.text(`متوسط الدرجات: ${avgScore}%`, 190, 125, { align: 'right' });
+
+            if (subsCount > 0) {
+                doc.setFontSize(16);
+                doc.setTextColor(108, 92, 231);
+                doc.text('📚 الكورسات المشترك فيها', 190, 140, { align: 'right' });
+                
+                const subsData = [];
+                for (const [courseId, sub] of Object.entries(currentStudentData.subscriptions)) {
+                    const courseSnap = await get(ref(db, `folders/${courseId}`));
+                    const courseName = courseSnap.exists() ? courseSnap.val().name : sub.courseName || 'غير معروف';
+                    subsData.push([courseName, `${sub.progress || 0}%`, sub.subscribedAt || '-']);
+                }
+                
+                doc.autoTable({
+                    startY: 145,
+                    head: [['اسم الكورس', 'نسبة التقدم', 'تاريخ الاشتراك']],
+                    body: subsData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [108, 92, 231], textColor: 255, fontStyle: 'bold', halign: 'right' },
+                    styles: { font: 'helvetica', halign: 'right' },
+                    margin: { right: 20, left: 20 }
+                });
+            }
+
+            const examResults = currentStudentData.examResults || {};
+            if (Object.keys(examResults).length > 0) {
+                const finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 150;
+                
+                doc.setFontSize(16);
+                doc.setTextColor(108, 92, 231);
+                doc.text('📝 نتائج الامتحانات', 190, finalY, { align: 'right' });
+                
+                const examData = [];
+                Object.values(examResults).forEach(ex => {
+                    examData.push([ex.quizName || 'امتحان', `${ex.score}/${ex.total}`, `${ex.percentage}%`, ex.completedAt || '-']);
+                });
+                
+                doc.autoTable({
+                    startY: finalY + 5,
+                    head: [['الامتحان', 'الدرجة', 'النسبة', 'التاريخ']],
+                    body: examData,
+                    theme: 'striped',
+                    headStyles: { fillColor: [108, 92, 231], textColor: 255, halign: 'right' },
+                    styles: { halign: 'right' },
+                    margin: { right: 20, left: 20 }
+                });
+            }
+
+            const badges = currentStudentData.badges || [];
+            if (badges.length > 0) {
+                const badgeY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 150;
+                doc.setFontSize(16);
+                doc.setTextColor(108, 92, 231);
+                doc.text('🏅 الشارات', 190, badgeY, { align: 'right' });
+                doc.setFontSize(12);
+                doc.setTextColor(0,0,0);
+                doc.text(badges.join(' - '), 190, badgeY + 10, { align: 'right' });
+            }
+
+            const pageCount = doc.internal.getNumberOfPages();
+            for (let i = 1; i <= pageCount; i++) {
+                doc.setPage(i);
+                doc.setFontSize(10);
+                doc.setTextColor(150);
+                doc.text(`تم إنشاء التقرير: ${new Date().toLocaleString('ar-EG')}`, 190, 285, { align: 'right' });
+                doc.text(`Mona Academy - لوحة الإدارة`, 20, 285, { align: 'left' });
+            }
+
+            doc.save(`تقرير_${currentStudentData.shortId || currentStudentData.name}.pdf`);
+        };
+
+        // ================ DELETE DATA ================
+        window.delData = (path) => { 
+            if (confirm("هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, path)).then(() => alert("✅ تم الحذف بنجاح"));
+            }
+        };
+
+        // ================ CLOSE MODAL ================
+        window.closeModal = () => document.getElementById('editModal').style.display = 'none';
+
+        // ================ LOGOUT ================
+        window.logout = () => signOut(auth).then(() => window.location.href = "index.html");
+
+        // ================ ربط الدوال الإضافية بالنطاق العام ================
+        window.filterPerfectScores = filterPerfectScores;
+        window.performAdvancedSearch = performAdvancedSearch;
+        window.clearAdvancedSearch = clearAdvancedSearch;
+        window.exportStudentPDF = exportStudentPDF;
+        window.deletePerfectScore = deletePerfectScore;
+        window.addAdmin = addAdmin;
+        window.removeAdmin = removeAdmin;
+        window.addNewQuestion = addNewQuestion;
+        window.saveFinalExam = saveFinalExam;
+        window.delData = delData;
+        window.closeModal = closeModal;
+        window.logout = logout;
+        window.showSection = showSection;
+        window.addCourse = addCourse;
+        window.openEditModal = openEditModal;
+        window.playVideoAdmin = playVideoAdmin;
+        window.updateCourseBasic = updateCourseBasic;
+        window.addVideoToCourse = addVideoToCourse;
+        window.filterStudents = filterStudents;
+        window.filterResults = filterResults;
+        window.filterLogs = filterLogs;
+        window.filterNotifications = filterNotifications;
+        window.filterSubscriptionNotifications = filterSubscriptionNotifications;
+        window.loadAnalytics = loadAnalytics;
+        window.loadLeaderboard = loadLeaderboard;
+
+    </script>
+</body>
+</html>
