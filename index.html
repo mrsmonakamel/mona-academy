@@ -1,436 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-<meta name="description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات، متابعة مستمرة">
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
-    <title>Ms. Mona Kamal | English Academy</title>
-    
-    <!-- PWA -->
-    <link rel="manifest" href="/mona-academy/manifest.json">
-    <meta name="theme-color" content="#6c5ce7">
-    
-    <!-- Preload fonts and css -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" media="print" onload="this.media='all'">
-    
-    <!-- Main CSS -->
-    <link rel="stylesheet" href="style.css">
-    
-    <!-- Translations -->
-    <script src="translations.js"></script>
-    
-    <noscript>
-        <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    </noscript>
-    
-    <!-- Preload hero image -->
-    <link rel="preload" as="image" href="mona.jpg">
-</head>
-<body>
-    <header>
-        <div class="logo-text" onclick="goHome()">MS. MONA KAMAL</div>
-        <div class="header-controls">
-            <button class="lang-toggle" onclick="switchLanguage(currentLang === 'ar' ? 'en' : 'ar')">
-                <i class="fas fa-globe"></i> <span data-i18n="language">العربية</span>
-            </button>
-            <button class="dark-toggle" onclick="toggleTheme()">
-                <i class="fas fa-moon"></i> <span data-i18n="darkMode">الوضع الليلي</span>
-            </button>
-            <div id="authStatus"></div>
-        </div>
-    </header>
-    <!-- HAMBURGER DROPDOWN -->
-    <div id="menuDropdown" class="dropdown-menu">
-        <a onclick="openDashboard(); closeMenu()"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> <span data-i18n="dashboard">لوحة التحكم</span></a>
-        <a onclick="goHome(); closeMenu()"><i class="fas fa-home" style="margin-left: 10px;"></i> <span data-i18n="home">الرئيسية</span></a>
-        <a onclick="openDashboard(); closeMenu()"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> <span data-i18n="continueWatching">متابعة المشاهدة</span></a>
-        <hr>
-        <a onclick="logout(); closeMenu()" style="color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> <span data-i18n="logout">تسجيل الخروج</span></a>
-    </div>
-
-    <!-- SUBSCRIPTION MODAL -->
-    <div id="subscriptionModal" class="subscription-modal">
-        <div class="subscription-content">
-            <i class="fas fa-times-circle" style="position: absolute; left: 20px; top: 20px; font-size: 1.5rem; color: #ccc; cursor: pointer;" onclick="closeSubscriptionModal()"></i>
-            <h2 style="color: var(--main); margin-bottom: 20px;">🎯 اشترك في الكورس</h2>
-            <div id="subCourseInfo" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"></div>
-            <div class="sub-option">
-                <button id="previewBtn" class="sub-btn">👁️ <span data-i18n="preview">مشاهدة المحتوى</span></button>
-                <button id="subscribeBtn" class="sub-btn primary">✅ <span data-i18n="subscribe">اشتراك</span></button>
-            </div>
-            <div id="subscriptionIdSection" style="display: none;">
-                <p style="color: #666; margin-bottom: 10px;" data-i18n="enterStudentId">أدخل كود الطالب الخاص بك (ID) لتأكيد الاشتراك:</p>
-                <input type="text" id="subscriptionIdInput" class="id-input" placeholder="1234567890" maxlength="10">
-                <button id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;" onclick="confirmSubscription()"><span data-i18n="confirm">تأكيد الاشتراك</span></button>
-                <div id="subError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- HOME PAGE -->
-    <div id="homePage">
-        <section class="hero">
-            <div class="hero-content">
-                <h1><span data-i18n="heroTitle">Learn English with</span> <br> Ms. Mona Kamal</h1>
-                <p data-i18n="heroSubtitle">Welcome to your second home! Everything you need to excel is right here.</p><br>
-                <a href="#courses" class="btn-hero" style="background: #fff; color: var(--main); padding: 15px 35px; border-radius: 50px; text-decoration: none; font-weight: 900;" data-i18n="viewCourses">View Courses</a>
-            </div>
-            <div class="hero-image"><img src="mona.jpg" alt="Ms. Mona Kamal" width="300" height="300"></div>
-        </section>
-
-        <section class="about-section">
-            <span class="about-tag" data-i18n="aboutMe">About Me</span>
-            <div class="about-content">
-                <h2 data-i18n="whoIsMona">Who is Ms. Mona Kamal?</h2>
-                <p data-i18n="aboutText">Ms. Mona Kamal is a professional English language instructor dedicated to making English learning an enjoyable and rewarding experience.</p>
-            </div>
-        </section>
-        
-        <section class="features">
-            <h2 data-i18n="whyUs">لماذا تشترك معنا؟ ✨</h2>
-            <div class="features-grid">
-                <div class="feat-card"><div class="num-circle">1</div><h3 data-i18n="features.1">شرح مبسط</h3><p data-i18n="features.1.desc">بنحلل كل قاعدة وكل كلمة في المنهج بأسلوب ممتع.</p></div>
-                <div class="feat-card"><div class="num-circle">2</div><h3 data-i18n="features.2">تكنولوجيا تعليمية</h3><p data-i18n="features.2.desc">فيديوهات بجودة عالية ومنصة سهلة تنظم لك مذاكرتك.</p></div>
-                <div class="feat-card"><div class="num-circle">3</div><h3 data-i18n="features.3">متابعة مستمرة</h3><p data-i18n="features.3.desc">إحنا معاك خطوة بخطوة للرد على استفساراتك.</p></div>
-            </div>
-        </section>
-
-        <section class="courses" id="courses">
-            <h2 style="text-align: center; margin-bottom: 40px; font-weight: 900;" data-i18n="ourCourses">كورساتنا التعليمية</h2>
-            <div id="foldersGrid" class="course-grid"></div>
-        </section>
-
-        <!-- PERFECT SCORES SECTION -->
-        <section id="perfectScoresSection" class="perfect-section" style="display: none;">
-            <div class="perfect-header">
-                <i class="fas fa-trophy"></i>
-                <h2 data-i18n="perfectScores">طلاب الدرجة النهائية 🏅</h2>
-                <i class="fas fa-star"></i>
-            </div>
-            <div id="perfectScoresGrid" class="perfect-grid"></div>
-<audio id="successSound" class="sound-on-load" preload="none">
-    <source src="assets/success-bell.mp3" type="audio/mpeg">
-</audio>
-        </section>
-
-        <!-- LEADERBOARD SECTION -->
-        <section id="leaderboardSection" class="leaderboard-section" style="display: none;">
-            <h2 class="section-title">🏆 <span data-i18n="leaderboard">لوحة المتصدرين</span></h2>
-            <div id="leaderboardContainer" class="leaderboard-table"></div>
-        </section>
-
-        <section class="reviews">
-            <h2 style="margin-bottom: 40px; font-weight: 900;" data-i18n="reviews">قالوا عن Ms. Mona Kamal ✨</h2>
-            <div class="reviews-grid" id="testiGrid"></div>
-            <div id="reviewSectionContainer"></div>
-        </section>
-    </div>
-
-    <!-- COURSE CONTENT AREA -->
-    <div id="contentArea" style="display: none;">
-        <button onclick="goHome()" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; margin-bottom:25px; font-family:'Cairo';">
-            <i class="fas fa-arrow-right"></i> <span data-i18n="backHome">العودة للرئيسية</span>
-        </button>
-        <h2 id="folderTitleName" style="margin-bottom:30px; color:var(--dark); text-align:center; font-weight: 900;"></h2>
-        
-        <!-- Rating Section -->
-        <div id="courseRatingSection" class="rating-box" style="display: none;"></div>
-        
-        <div id="combinedGrid" class="content-grid"></div>
-    </div>
-
-    <!-- STUDENT DASHBOARD -->
-    <div id="studentDashboard" style="display: none;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-            <button onclick="goHome()" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; font-family:'Cairo';">
-                <i class="fas fa-arrow-right"></i> <span data-i18n="backHome">العودة للرئيسية</span>
-            </button>
-            <div class="student-id-badge" id="dashboardStudentId"></div>
-        </div>
-        
-        <div class="dashboard-header">
-            <div class="student-welcome">
-                <h1><span data-i18n="welcome">مرحباً</span> <span id="studentNameDashboard">...</span>! 👋</h1>
-                <p style="color: #666;" data-i18n="dashboardSubtitle">من هنا تشوف كل كورساتك وتقدمك ونتائجك</p>
-            </div>
-        </div>
-
-        <!-- Stats -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number" id="statCourses">0</div>
-                <div class="stat-label" data-i18n="stats.courses">الكورسات المشترك فيها</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statVideos">0</div>
-                <div class="stat-label" data-i18n="stats.videos">فيديو تمت مشاهدته</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statExams">0</div>
-                <div class="stat-label" data-i18n="stats.exams">امتحان تم حله</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statAvgScore">0%</div>
-                <div class="stat-label" data-i18n="stats.avgScore">متوسط الدرجات</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number" id="statPoints">0</div>
-                <div class="stat-label" data-i18n="points">نقاط</div>
-            </div>
-        </div>
-
-        <!-- Badges -->
-        <div id="badgesContainer" class="badges-container"></div>
-
-        <!-- Continue Watching -->
-        <h2 class="section-title" data-i18n="continueWatchingTitle">▶️ متابعة المشاهدة</h2>
-        <div id="continueWatchingGrid" class="content-grid"></div>
-
-        <h2 class="section-title" data-i18n="myCourses">📚 كورساتي المشترك فيها</h2>
-        <div id="myCoursesGrid" class="course-grid"></div>
-
-        <h2 class="section-title" data-i18n="recentExams">📝 آخر الامتحانات</h2>
-        <div id="recentExamsList"></div>
-
-        <h2 class="section-title" data-i18n="recentVideos">🎬 آخر الفيديوهات مشاهدة</h2>
-        <div id="recentVideosList"></div>
-    </div>
-
-    <!-- QUIZ / VIDEO OVERLAY -->
-    <div id="quizOverlay">
-        <div class="quiz-header">
-            <h2 id="quizTitle" style="font-weight: 900; color: var(--main);"></h2>
-            <button onclick="closeQuiz()" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';"><span data-i18n="close">إغلاق</span></button>
-        </div>
-        <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
-    </div>
-
-    <!-- ========== LOGIN & REGISTRATION MODAL (كامل ومتكامل) ========== -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close-modal" onclick="closeLogin()">&times;</span>
-            
-            <!-- شاشة اختيار تسجيل دخول / حساب جديد -->
-            <div id="authChoice">
-                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="welcomeTitle">مرحباً بك 🎓</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginChoice')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="login">تسجيل الدخول</span>
-                </button>
-                <button class="auth-btn" onclick="showAuthForm('register')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="register">إنشاء حساب جديد</span>
-                </button>
-            </div>
-            
-            <!-- شاشة اختيار طريقة تسجيل الدخول -->
-            <div id="loginChoice" style="display:none;">
-                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="chooseLoginMethod">اختر طريقة تسجيل الدخول</h2>
-                <button class="auth-btn" onclick="showAuthForm('loginEmail')" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="loginEmail">الدخول بالإيميل والباسورد</span>
-                </button>
-                <button class="auth-btn" onclick="showAuthForm('loginUsername')" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="loginUsername">الدخول باليوزر نيم والباسورد</span>
-                </button>
-                <button class="auth-btn" onclick="loginGoogle()" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
-                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> 
-                    <span data-i18n="loginGoogle">الدخول بواسطة جوجل</span>
-                </button>
-                <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
-            </div>
-            
-            <!-- نموذج تسجيل الدخول بالإيميل -->
-            <div id="loginEmail" style="display:none; text-align:right;">
-                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="loginEmail">الدخول بالإيميل والباسورد</h2>
-                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
-                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" onclick="loginEmailSubmit()" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="login">تسجيل الدخول</span>
-                </button>
-                <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
-            </div>
-            
-            <!-- نموذج تسجيل الدخول باليوزر نيم -->
-            <div id="loginUsername" style="display:none; text-align:right;">
-                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="loginUsername">الدخول باليوزر نيم والباسورد</h2>
-                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
-                <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" onclick="loginUsernameSubmit()" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                    <span data-i18n="login">تسجيل الدخول</span>
-                </button>
-                <p onclick="showAuthForm('loginChoice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);" data-i18n="back">العودة للخلف</p>
-            </div>
-            
-            <!-- ========== نموذج التسجيل (3 خطوات) ========== -->
-            <div id="registerForm" style="display:none; text-align:right;">
-                <h2 style="color:var(--main); margin-bottom:20px;" data-i18n="register">إنشاء حساب جديد</h2>
-                
-                <!-- شريط التقدم -->
-                <div class="progress-bar">
-                    <div class="progress-fill" id="regProgress" style="width:33%;"></div>
-                </div>
-                
-                <!-- الخطوة 1: البيانات الشخصية -->
-                <div id="step1" class="step-container active">
-                    <h3 style="color:var(--dark); margin-bottom:15px;">📋 الخطوة 1: البيانات الشخصية</h3>
-                    
-                    <label class="reg-label required-field" data-i18n="fullName">الاسم الرباعي</label>
-                    <div class="name-grid">
-                        <input type="text" id="n1" class="reg-input" placeholder="الأول" oninput="checkStep1Completion()">
-                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" oninput="checkStep1Completion()">
-                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" oninput="checkStep1Completion()">
-                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" oninput="checkStep1Completion()">
-                    </div>
-                    
-                    <label class="reg-label required-field" data-i18n="whatsapp">رقم الواتساب</label>
-                    <div class="phone-row">
-                        <select id="countryCode" class="country-select">
-                            <option value="+20">+20 (مصر)</option>
-                            <option value="+966">+966 (السعودية)</option>
-                            <option value="+971">+971 (الإمارات)</option>
-                            <option value="+974">+974 (قطر)</option>
-                            <option value="+965">+965 (الكويت)</option>
-                        </select>
-                        <input type="text" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" oninput="checkStep1Completion()" style="flex:1;">
-                    </div>
-                    <div class="hint-text" data-i18n="whatsappHint">أدخل الرقم بدون مفتاح الدولة</div>
-                    
-                    <label class="reg-label" data-i18n="parentPhone">رقم ولي الأمر (اختياري)</label>
-                    <div class="phone-row">
-                        <select id="parentCountryCode" class="country-select">
-                            <option value="+20">+20 (مصر)</option>
-                            <option value="+966">+966 (السعودية)</option>
-                            <option value="+971">+971 (الإمارات)</option>
-                        </select>
-                        <input type="text" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" oninput="checkStep1Completion()" style="flex:1;">
-                    </div>
-                    
-                    <div id="step1Error" class="error-message" style="display:none;"></div>
-                    
-                    <button id="step1NextBtn" class="btn btn-main" onclick="nextStep(2)" style="margin-top:20px; width:100%;" disabled>
-                        <span data-i18n="next">التالي</span> <i class="fas fa-arrow-left"></i>
-                    </button>
-                </div>
-                
-                <!-- الخطوة 2: المرحلة الدراسية -->
-                <div id="step2" class="step-container">
-                    <h3 style="color:var(--dark); margin-bottom:15px;">📚 الخطوة 2: المرحلة الدراسية</h3>
-                    
-                    <label class="reg-label required-field" data-i18n="level">المرحلة التعليمية</label>
-                    <select id="regLevel" class="reg-input" onchange="updateGrades(); checkStep2Completion()">
-                        <option value="">-- اختر المرحلة --</option>
-                        <option value="primary">المرحلة الابتدائية</option>
-                        <option value="middle">المرحلة الإعدادية</option>
-                    </select>
-                    
-                    <label class="reg-label required-field" data-i18n="grade">الصف الدراسي</label>
-                    <select id="regGrade" class="reg-input" onchange="checkStep2Completion()">
-                        <option value="">-- اختر الصف أولاً --</option>
-                    </select>
-                    
-                    <div id="step2Error" class="error-message" style="display:none;"></div>
-                    
-                    <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button onclick="nextStep(1)" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
-                            <i class="fas fa-arrow-right"></i> <span data-i18n="previous">السابق</span>
-                        </button>
-                        <button id="step2NextBtn" class="btn btn-main" onclick="nextStep(3)" style="flex:2;" disabled>
-                            <span data-i18n="next">التالي</span> <i class="fas fa-arrow-left"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- الخطوة 3: اختيار طريقة التسجيل -->
-                <div id="step3" class="step-container">
-                    <h3 style="color:var(--dark); margin-bottom:15px;">🔐 الخطوة 3: طريقة التسجيل</h3>
-                    
-                    <div style="display:flex; gap:10px; margin-bottom:20px;">
-                        <button onclick="showRegMethod('email')" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
-                            <i class="fas fa-envelope"></i> <span data-i18n="email">إيميل</span>
-                        </button>
-                        <button onclick="showRegMethod('username')" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
-                            <i class="fas fa-user"></i> <span data-i18n="username">يوزر نيم</span>
-                        </button>
-                    </div>
-                    
-                    <!-- التسجيل بالإيميل -->
-                    <div id="step3Email" class="step-container" style="display:none;">
-                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
-                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
-                        <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
-                        <button id="regBtn" class="btn btn-main" onclick="handleRegisterEmail()" style="width:100%; margin-top:15px;">
-                            <span data-i18n="register">تسجيل</span>
-                        </button>
-                    </div>
-                    
-                    <!-- التسجيل بيوزر نيم -->
-                    <div id="step3Username" class="step-container" style="display:none;">
-                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
-                        <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
-                        <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
-                        <button id="regBtnUser" class="btn btn-main" onclick="handleRegisterUsername()" style="width:100%; margin-top:15px;">
-                            <span data-i18n="register">تسجيل</span>
-                        </button>
-                    </div>
-                    
-                    <!-- التسجيل بجوجل -->
-                    <button onclick="registerWithGoogle()" class="auth-btn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:15px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
-                        <span data-i18n="registerGoogle">التسجيل بجوجل</span>
-                    </button>
-                    
-                    <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button onclick="nextStep(2)" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
-                            <i class="fas fa-arrow-right"></i> <span data-i18n="previous">السابق</span>
-                        </button>
-                        <button onclick="showAuthForm('choice')" class="btn" style="background:var(--danger); color:white; flex:1;">
-                            <span data-i18n="cancel">إلغاء</span>
-                        </button>
-                    </div>
-                </div>
-                
-                <p onclick="showAuthForm('choice')" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main); text-align:center;" data-i18n="back">العودة للخلف</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- WHATSAPP MODAL -->
-    <div id="waModal" class="modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 20px;" data-i18n="contactMsMona">تواصل مع Ms. Mona</h3>
-            <a href="https://wa.me/201018591244" class="social-btn wa" style="display:block; margin-bottom:10px;" target="_blank">01018591244</a>
-            <a href="https://wa.me/201128874885" class="social-btn wa" style="display:block;" target="_blank">01128874885</a>
-            <button onclick="document.getElementById('waModal').style.display='none'" style="margin-top: 15px; border: none; background: none; color: var(--danger); cursor: pointer; font-family:'Cairo';" data-i18n="close">إغلاق</button>
-        </div>
-    </div>
-
-    <footer>
-        <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamal</strong></p>
-        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-            <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">
-                <i class="fab fa-facebook-f" style="margin-left: 5px;"></i> فيسبوك
-            </a>
-            <div class="social-btn wa" onclick="document.getElementById('waModal').style.display='flex'">
-                <i class="fab fa-whatsapp" style="margin-left: 5px;"></i> واتساب
-            </div>
-            <a href="https://wa.me/201062306872" class="social-btn developer-btn" target="_blank">
-                <i class="fas fa-code" style="margin-left: 5px;"></i> Developed by Abdelrahman adawi
-            </a>
-        </div>
-    </footer>
-
-    <script type="module" src="script.js" defer></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                // ✅ تصحيح مسار Service Worker – استخدم الملف الصحيح
-                navigator.serviceWorker.register('/mona-academy/firebase-messaging-sw.js')
-                    .then(reg => console.log('✅ PWA Service Worker registered'))
-                    .catch(err => console.log('❌ SW registration failed:', err));
-            });
-        }
-    </script>
-</body>
-</html>
