@@ -1,9 +1,0 @@
-{
-  "name": "Ms. Mona Kamal | English Academy",
-  "short_name": "MonaAcademy",
-  "start_url": "/mona-academy/index.html",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#6c5ce7",
-  "orientation": "portrait"
-}
