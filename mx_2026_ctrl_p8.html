@@ -530,6 +530,16 @@
             display: inline-block;
         }
         
+        .badge-grade {
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            color: white;
+            padding: 4px 12px;
+            border-radius: 50px;
+            font-size: 0.75rem;
+            display: inline-block;
+            margin-right: 5px;
+        }
+        
         /* ========== LIST ITEMS محسنة ========== */
         .list-item {
             display: flex;
@@ -1025,7 +1035,7 @@
         </aside>
 
         <main class="main-content">
-            <!-- ========== إدارة الكورسات ========== -->
+            <!-- ========== إدارة الكورسات (محدث مع إضافة حقل المرحلة) ========== -->
             <section id="coursesSection" class="admin-section">
                 <div class="card">
                     <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
@@ -1035,6 +1045,23 @@
                     <div class="grid-system">
                         <input type="text" id="cName" placeholder="اسم الكورس">
                         <input type="url" id="cImgUrl" placeholder="https://... (رابط الصورة)" dir="ltr">
+                    </div>
+                    
+                    <!-- حقل اختيار المرحلة الدراسية -->
+                    <div style="margin-top: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">المرحلة الدراسية:</label>
+                        <select id="cGrade" class="reg-input">
+                            <option value="">-- اختر المرحلة --</option>
+                            <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                            <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                            <option value="السادس الابتدائي">السادس الابتدائي</option>
+                            <option value="الأول الإعدادي">الأول الإعدادي</option>
+                            <option value="الثاني الإعدادي">الثاني الإعدادي</option>
+                            <option value="الثالث الإعدادي">الثالث الإعدادي</option>
+                            <option value="الأول الثانوي">الأول الثانوي</option>
+                            <option value="الثاني الثانوي">الثاني الثانوي</option>
+                            <option value="الثالث الثانوي">الثالث الثانوي</option>
+                        </select>
                     </div>
                     
                     <!-- حقل رفع الصور من الجهاز -->
@@ -1289,7 +1316,7 @@
         </main>
     </div>
 
-    <!-- ========== مودال تعديل الكورس ========== -->
+    <!-- ========== مودال تعديل الكورس (مع إضافة حقل المرحلة) ========== -->
     <div id="editModal" class="modal">
         <div class="modal-content">
             <button class="close-modal-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
@@ -1303,6 +1330,21 @@
                 
                 <label style="font-weight: bold;">تعديل الصورة (رابط):</label>
                 <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr" style="margin-bottom: 15px;">
+                
+                <!-- حقل تعديل المرحلة الدراسية -->
+                <label style="font-weight: bold; margin-top: 15px;">المرحلة الدراسية:</label>
+                <select id="editGradeField" class="reg-input" style="margin-bottom: 15px;">
+                    <option value="">-- اختر المرحلة --</option>
+                    <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                    <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                    <option value="السادس الابتدائي">السادس الابتدائي</option>
+                    <option value="الأول الإعدادي">الأول الإعدادي</option>
+                    <option value="الثاني الإعدادي">الثاني الإعدادي</option>
+                    <option value="الثالث الإعدادي">الثالث الإعدادي</option>
+                    <option value="الأول الثانوي">الأول الثانوي</option>
+                    <option value="الثاني الثانوي">الثاني الثانوي</option>
+                    <option value="الثالث الثانوي">الثالث الثانوي</option>
+                </select>
                 
                 <!-- حقل رفع صورة جديدة من الجهاز -->
                 <div style="margin-top: 15px;">
@@ -1494,7 +1536,7 @@
         let currentStudentUid = null;
         let currentEditingExam = null;
 
-        // ================ دالة escapeHTML ================
+        // ================ دالة escapeHTML (للحماية من XSS) ================
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             if (typeof str !== 'string') str = String(str);
@@ -1668,7 +1710,7 @@
             if (sectionId === 'analyticsSection') loadAnalytics();
         };
 
-        // ================ COURSES MANAGEMENT ================
+        // ================ COURSES MANAGEMENT (محدث مع إضافة المرحلة) ================
         function renderCourses(folders) {
             let h = "";
             if (folders) {
@@ -1679,11 +1721,12 @@
                     h += `<div class="card" style="text-align:center;">
                         <img src="${escapeHTML(imgSrc)}" style="width:100px; height:100px; border-radius:20px; object-fit:cover; border: 4px solid var(--accent); margin-bottom: 15px;" onerror="this.src='mona.jpg'">
                         <h4 style="margin:15px 0 10px; font-size:1.3rem;">${escapeHTML(f.name)}</h4>
+                        <span class="badge-grade">${escapeHTML(f.grade || 'غير محدد')}</span>
                         <div style="margin-bottom:20px; color: var(--gold); font-size:1.2rem;">
                             ${'★'.repeat(Math.min(5, Math.round(f.avgRating || 0)))} (${escapeHTML(f.reviewCount || 0)})
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-main" style="flex: 1;" onclick='openEditModal("${id}", "${escapeHTML(f.name)}")'>
+                            <button class="btn btn-main" style="flex: 1;" onclick='openEditModal("${id}", ${JSON.stringify(f).replace(/</g, '\\u003c')})'>
                                 <i class="fas fa-edit"></i> تعديل
                             </button>
                             <button class="btn btn-danger" style="flex: 0.5;" onclick="delData('folders/${id}')">
@@ -1699,14 +1742,20 @@
             }
         }
 
-        // ================ إضافة كورس جديد مع صورة من الجهاز ================
+        // ================ إضافة كورس جديد مع صورة من الجهاز والمرحلة ================
         window.addCourse = async function() {
             const name = document.getElementById('cName')?.value.trim();
             const imgUrl = document.getElementById('cImgUrl')?.value.trim();
+            const grade = document.getElementById('cGrade')?.value;
             const imgFile = document.getElementById('cImageFile')?.files[0];
             
             if (!name) {
                 showToast("يرجى إدخال اسم الكورس", 'error');
+                return;
+            }
+            
+            if (!grade) {
+                showToast("يرجى اختيار المرحلة الدراسية", 'error');
                 return;
             }
             
@@ -1733,13 +1782,15 @@
             try {
                 await push(ref(db, 'folders'), { 
                     name, 
-                    img: imageData, 
+                    img: imageData,
+                    grade: grade,
                     avgRating: 0, 
                     reviewCount: 0 
                 });
                 
                 document.getElementById('cName').value = "";
                 document.getElementById('cImgUrl').value = "";
+                document.getElementById('cGrade').value = "";
                 document.getElementById('cImageFile').value = "";
                 document.getElementById('imagePreview').style.display = 'none';
                 showToast("✅ تم إنشاء الكورس بنجاح", 'success');
@@ -1778,14 +1829,16 @@
             }
         });
 
-        // ================ فتح مودال التعديل ================
-        window.openEditModal = async function(id, name) {
+        // ================ فتح مودال التعديل (محدث مع إضافة المرحلة) ================
+        window.openEditModal = async function(id, folderData) {
             activeCID = id;
             const editNameField = document.getElementById('editNameField');
             const editImgField = document.getElementById('editImgField');
+            const editGradeField = document.getElementById('editGradeField');
             
-            if (editNameField) editNameField.value = name;
+            if (editNameField) editNameField.value = folderData.name || '';
             if (editImgField) editImgField.value = "";
+            if (editGradeField) editGradeField.value = folderData.grade || '';
             
             // إخفاء معاينة الصورة
             document.getElementById('editImagePreview').style.display = 'none';
@@ -1877,9 +1930,10 @@
             if (editModal) editModal.style.display = 'flex';
         };
 
-        // ================ تحديث بيانات الكورس ================
+        // ================ تحديث بيانات الكورس (محدث مع إضافة المرحلة) ================
         window.updateCourseBasic = async function() {
             const name = document.getElementById('editNameField')?.value.trim();
+            const grade = document.getElementById('editGradeField')?.value;
             const imgUrl = document.getElementById('editImgField')?.value.trim();
             const imgFile = document.getElementById('editImageFile')?.files[0];
             const btn = document.getElementById('saveBasicBtn');
@@ -1900,6 +1954,11 @@
             
             try {
                 const updateData = { name };
+                
+                // إضافة المرحلة إذا تم اختيارها
+                if (grade) {
+                    updateData.grade = grade;
+                }
                 
                 // معالجة الصورة
                 if (imgFile) {
@@ -2009,7 +2068,11 @@
                 document.getElementById('vUrl').value = "";
                 document.getElementById('vOrder').value = "";
                 const editNameField = document.getElementById('editNameField');
-                openEditModal(activeCID, editNameField ? editNameField.value : '');
+                const editGradeField = document.getElementById('editGradeField');
+                openEditModal(activeCID, { 
+                    name: editNameField ? editNameField.value : '',
+                    grade: editGradeField ? editGradeField.value : ''
+                });
             }).catch(error => {
                 console.error('Error adding video:', error);
                 showToast('❌ حدث خطأ في إضافة الفيديو', 'error');
@@ -2057,8 +2120,8 @@
                 
                 showToast('✅ تم تعديل الفيديو بنجاح', 'success');
                 closeVideoModal();
-                const editNameField = document.getElementById('editNameField');
-                openEditModal(courseId, editNameField ? editNameField.value : '');
+                const folderSnap = await get(ref(db, `folders/${courseId}`));
+                openEditModal(courseId, folderSnap.val() || {});
             } catch (error) {
                 console.error(error);
                 showToast('❌ حدث خطأ أثناء التعديل', 'error');
@@ -2180,7 +2243,7 @@
             folderSelect.innerHTML = '<option value="">اختر الكورس</option>';
             if (folders) {
                 Object.keys(folders).forEach(id => {
-                    folderSelect.innerHTML += `<option value="${id}">${escapeHTML(folders[id].name)}</option>`;
+                    folderSelect.innerHTML += `<option value="${id}">${escapeHTML(folders[id].name)} (${escapeHTML(folders[id].grade || 'بدون مرحلة')})</option>`;
                 });
             }
         }
@@ -2940,8 +3003,8 @@
                 closeExamModal();
                 
                 if (activeCID === courseId) {
-                    const editNameField = document.getElementById('editNameField');
-                    openEditModal(courseId, editNameField ? editNameField.value : '');
+                    const folderSnap = await get(ref(db, `folders/${courseId}`));
+                    openEditModal(courseId, folderSnap.val() || {});
                 }
             } catch (error) {
                 console.error(error);
@@ -2963,8 +3026,8 @@
                 closeExamModal();
                 
                 if (activeCID === courseId) {
-                    const editNameField = document.getElementById('editNameField');
-                    openEditModal(courseId, editNameField ? editNameField.value : '');
+                    const folderSnap = await get(ref(db, `folders/${courseId}`));
+                    openEditModal(courseId, folderSnap.val() || {});
                 }
             } catch (error) {
                 console.error(error);

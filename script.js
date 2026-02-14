@@ -27,8 +27,8 @@ let currentFolderId = null;
 let currentFolderName = "";
 let currentStudentGrade = null;
 let messaging = null;
-let listeners = []; // لتتبع المستمعين وإلغائهم
-let selectedRating = null; // للتقييم
+let listeners = [];
+let selectedRating = null;
 
 const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
@@ -53,7 +53,7 @@ const BADGES = {
     PERFECT_SCORE: { name: '🏆 درجة نهائية', icon: 'fas fa-trophy' }
 };
 
-// ================ HELPER: ESCAPE HTML ================
+// ================ HELPER: ESCAPE HTML (الحماية من XSS) ================
 function escapeHTML(str) {
     if (!str) return '';
     if (typeof str !== 'string') str = String(str);
@@ -85,7 +85,6 @@ function createElementSafely(tag, properties = {}) {
 
 // ================ TOAST NOTIFICATION ================
 function showToast(message, type = 'success', duration = 3000) {
-    // إنشاء عنصر toast إذا لم يكن موجوداً
     let container = document.getElementById('toastContainer');
     if (!container) {
         container = document.createElement('div');
@@ -118,6 +117,42 @@ function showToast(message, type = 'success', duration = 3000) {
 window.showToast = showToast;
 window.escapeHTML = escapeHTML;
 window.createElementSafely = createElementSafely;
+
+// ================ دالة توليد كود طالب فريد (منع تكرار ID) ================
+async function generateUniqueStudentId() {
+    let isUnique = false;
+    let newId = '';
+    let attempts = 0;
+    const maxAttempts = 10;
+    
+    while (!isUnique && attempts < maxAttempts) {
+        newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+        
+        const studentsSnap = await get(child(dbRef, 'students'));
+        let idExists = false;
+        
+        if (studentsSnap.exists()) {
+            studentsSnap.forEach(studentSnapshot => {
+                const studentData = studentSnapshot.val();
+                if (studentData.shortId === newId) {
+                    idExists = true;
+                }
+            });
+        }
+        
+        if (!idExists) {
+            isUnique = true;
+        }
+        
+        attempts++;
+    }
+    
+    if (!isUnique) {
+        newId = Date.now().toString().slice(0, 10);
+    }
+    
+    return newId;
+}
 
 // ================ HAMBURGER MENU ================
 window.toggleMenu = function() {
@@ -171,7 +206,7 @@ window.checkStep1Completion = function() {
         nextBtn.style.opacity = '0.6';
         nextBtn.style.pointerEvents = 'none';
         errorDiv.style.display = 'block';
-        errorDiv.innerHTML = errorMessage;
+        errorDiv.innerHTML = escapeHTML(errorMessage);
         return false;
     }
 };
@@ -221,7 +256,8 @@ window.handleRegisterEmail = async function() {
     const pass = document.getElementById('regPass')?.value || '';
     const passConfirm = document.getElementById('regPassConfirm')?.value || '';
     
-    const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    // توليد كود طالب فريد
+    const sid = await generateUniqueStudentId();
     
     if (!email || !pass) {
         showToast('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
@@ -243,6 +279,26 @@ window.handleRegisterEmail = async function() {
     btn.innerText = "جاري التحميل...";
     
     try {
+        // التحقق من أن البريد الإلكتروني غير مستخدم
+        const studentsSnap = await get(child(dbRef, 'students'));
+        let emailExists = false;
+        
+        if (studentsSnap.exists()) {
+            studentsSnap.forEach(studentSnapshot => {
+                const studentData = studentSnapshot.val();
+                if (studentData.email && studentData.email.toLowerCase() === email.toLowerCase()) {
+                    emailExists = true;
+                }
+            });
+        }
+        
+        if (emailExists) {
+            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل. الرجاء استخدام بريد آخر أو تسجيل الدخول.', 'error');
+            btn.disabled = false;
+            btn.innerText = "تسجيل";
+            return;
+        }
+        
         const res = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(res.user, { displayName: fullName });
         await set(ref(db, 'students/' + res.user.uid), { 
@@ -261,7 +317,11 @@ window.handleRegisterEmail = async function() {
         showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
         window.closeLogin();
     } catch(err) {
-        showToast('❌ ' + (err.message || err.toString()), 'error');
+        if (err.code === 'auth/email-already-in-use') {
+            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل.', 'error');
+        } else {
+            showToast('❌ ' + (err.message || err.toString()), 'error');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -284,13 +344,19 @@ window.handleRegisterUsername = async function() {
     const parentCountryCode = document.getElementById('parentCountryCode')?.value || '';
     const parentPhone = parentCountryCode + (document.getElementById('regParentPhone')?.value.trim() || '');
     const grade = document.getElementById('regGrade')?.value || '';
-    const username = document.getElementById('regUsername')?.value.trim() || '';
+    const username = document.getElementById('regUsername')?.value.trim().toLowerCase() || '';
     const pass = document.getElementById('regPassUser')?.value || '';
     const passConfirm = document.getElementById('regPassUserConfirm')?.value || '';
-    const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    
+    // توليد كود طالب فريد
+    const sid = await generateUniqueStudentId();
     
     if (!username || !pass) {
         showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
+        return;
+    }
+    if (username.length < 3) {
+        showToast('❌ اسم المستخدم يجب أن يكون 3 أحرف على الأقل', 'error');
         return;
     }
     if (pass.length < 6) {
@@ -309,6 +375,29 @@ window.handleRegisterUsername = async function() {
     btn.innerText = "جاري التحميل...";
     
     try {
+        // التحقق من أن اسم المستخدم غير مستخدم
+        const studentsSnap = await get(child(dbRef, 'students'));
+        let usernameExists = false;
+        
+        if (studentsSnap.exists()) {
+            studentsSnap.forEach(studentSnapshot => {
+                const studentData = studentSnapshot.val();
+                if (studentData.username && studentData.username.toLowerCase() === username) {
+                    usernameExists = true;
+                }
+                if (!studentData.username && studentData.email && studentData.email === `${username}@monaacademy.local`) {
+                    usernameExists = true;
+                }
+            });
+        }
+        
+        if (usernameExists) {
+            showToast('❌ اسم المستخدم هذا مستخدم بالفعل. الرجاء اختيار اسم آخر.', 'error');
+            btn.disabled = false;
+            btn.innerText = "تسجيل";
+            return;
+        }
+        
         const fakeEmail = `${username}@monaacademy.local`;
         const res = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
         await updateProfile(res.user, { displayName: fullName });
@@ -328,7 +417,11 @@ window.handleRegisterUsername = async function() {
         showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
         window.closeLogin();
     } catch(err) {
-        showToast('❌ ' + (err.message || err.toString()), 'error');
+        if (err.code === 'auth/email-already-in-use') {
+            showToast('❌ اسم المستخدم هذا مستخدم بالفعل.', 'error');
+        } else {
+            showToast('❌ ' + (err.message || err.toString()), 'error');
+        }
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -351,7 +444,9 @@ window.registerWithGoogle = async function() {
     const parentCountryCode = document.getElementById('parentCountryCode')?.value || '';
     const parentPhone = parentCountryCode + (document.getElementById('regParentPhone')?.value.trim() || '');
     const grade = document.getElementById('regGrade')?.value || '';
-    const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+    
+    // توليد كود طالب فريد
+    const sid = await generateUniqueStudentId();
     
     try {
         const result = await signInWithPopup(auth, provider);
@@ -360,6 +455,25 @@ window.registerWithGoogle = async function() {
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         if(userSnap.exists()) {
             showToast('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
+            await signOut(auth);
+            return;
+        }
+        
+        // التحقق من أن البريد الإلكتروني غير مستخدم في حساب آخر
+        const studentsSnap = await get(child(dbRef, 'students'));
+        let emailExists = false;
+        
+        if (studentsSnap.exists()) {
+            studentsSnap.forEach(studentSnapshot => {
+                const studentData = studentSnapshot.val();
+                if (studentData.email && studentData.email.toLowerCase() === user.email.toLowerCase()) {
+                    emailExists = true;
+                }
+            });
+        }
+        
+        if (emailExists) {
+            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل في حساب آخر. الرجاء تسجيل الدخول.', 'error');
             await signOut(auth);
             return;
         }
@@ -405,7 +519,7 @@ window.loginEmailSubmit = async function() {
 };
 
 window.loginUsernameSubmit = async function() {
-    const username = document.getElementById('stUsername')?.value.trim() || '';
+    const username = document.getElementById('stUsername')?.value.trim().toLowerCase() || '';
     const pass = document.getElementById('stPassUsername')?.value || '';
     
     if(!username || !pass) {
@@ -420,7 +534,7 @@ window.loginUsernameSubmit = async function() {
         window.closeLogin();
         showToast('✅ تم تسجيل الدخول بنجاح', 'success');
     } catch(err) {
-        showToast('❌ فشل تسجيل الدخول', 'error');
+        showToast('❌ اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
     }
 };
 
@@ -486,7 +600,6 @@ onAuthStateChanged(auth, async user => {
             reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
         }
         
-        // تحديث عناصر القائمة
         updateMenuItems(true);
         
         window.loadFolders();
@@ -500,7 +613,6 @@ onAuthStateChanged(auth, async user => {
             reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
         }
         
-        // تحديث عناصر القائمة
         updateMenuItems(false);
         
         window.loadFolders();
@@ -558,7 +670,7 @@ function updateMenuItems(isLoggedIn) {
     }
 }
 
-// ================ COURSE LOADING ================
+// ================ COURSE LOADING (محدث لتصفية الكورسات حسب المرحلة) ================
 window.loadFolders = function() {
     const foldersRef = ref(db, 'folders');
     const listener = onValue(foldersRef, async (snapshot) => {
@@ -572,17 +684,38 @@ window.loadFolders = function() {
             return;
         }
         
+        // تجميع الكورسات في مصفوفة
+        const courses = [];
         snapshot.forEach(c => {
-            const course = c.val();
-            const courseId = c.key;
-            const courseName = course.name || '';
-            const avgRating = course.avgRating ? parseFloat(course.avgRating).toFixed(1) : '0.0';
+            courses.push({
+                id: c.key,
+                data: c.val()
+            });
+        });
+        
+        // إذا كان المستخدم مسجل دخوله، قم بتصفية الكورسات حسب مرحلته
+        let filteredCourses = courses;
+        if (currentUser && currentStudentGrade) {
+            filteredCourses = courses.filter(course => {
+                // إذا الكورس ليس له مرحلة محددة، يظهر للجميع
+                if (!course.data.grade) return true;
+                // إذا المرحلة تطابق مرحلة الطالب
+                return course.data.grade === currentStudentGrade;
+            });
+        }
+        
+        // عرض الكورسات المصفاة
+        filteredCourses.forEach(course => {
+            const courseData = course.data;
+            const courseId = course.id;
+            const courseName = courseData.name || '';
+            const avgRating = courseData.avgRating ? parseFloat(courseData.avgRating).toFixed(1) : '0.0';
             const stars = '★'.repeat(Math.round(parseFloat(avgRating))) + '☆'.repeat(5 - Math.round(parseFloat(avgRating)));
             
             const card = createElementSafely('div', { className: 'folder-card' });
             
             const img = createElementSafely('img', {
-                src: course.img && course.img.startsWith('data:image') ? course.img : (course.img || 'mona.jpg'),
+                src: courseData.img && courseData.img.startsWith('data:image') ? courseData.img : (courseData.img || 'mona.jpg'),
                 loading: 'lazy',
                 alt: courseName
             });
@@ -590,19 +723,35 @@ window.loadFolders = function() {
             
             const h3 = createElementSafely('h3', { textContent: courseName });
             
-            const ratingDiv = createElementSafely('div', { className: 'course-rating' });
-            ratingDiv.innerHTML = `<span style="color: #ffd700;">${stars}</span><span>(${course.reviewCount || 0})</span>`;
+            // إضافة شارة المرحلة إذا كانت موجودة
+            if (courseData.grade) {
+                const gradeBadge = createElementSafely('div', { 
+                    className: 'course-grade-badge',
+                    textContent: courseData.grade
+                });
+                card.appendChild(img);
+                card.appendChild(h3);
+                card.appendChild(gradeBadge);
+            } else {
+                card.appendChild(img);
+                card.appendChild(h3);
+            }
             
-            card.appendChild(img);
-            card.appendChild(h3);
+            const ratingDiv = createElementSafely('div', { className: 'course-rating' });
+            ratingDiv.innerHTML = `<span style="color: #ffd700;">${stars}</span><span>(${courseData.reviewCount || 0})</span>`;
+            
             card.appendChild(ratingDiv);
             card.addEventListener('click', () => window.openContent(courseId, courseName));
             
             grid.appendChild(card);
         });
+        
+        // إذا لم يكن هناك كورسات بعد التصفية
+        if (filteredCourses.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>لا توجد كورسات متاحة لمرحلتك الدراسية حالياً</p>";
+        }
     });
     
-    // تخزين المستمع لإلغائه لاحقاً
     listeners.push({ ref: foldersRef, listener });
 };
 
@@ -965,21 +1114,18 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
 
     // Videos - مع الترتيب الصحيح
     if (vSnap.exists()) {
-        // تحويل الفيديوهات إلى مصفوفة للترتيب
         const videosArray = [];
         vSnap.forEach(v => {
             const videoData = v.val();
             videosArray.push({
                 id: v.key,
                 ...videoData,
-                order: videoData.order || 999 // قيمة افتراضية كبيرة للفيديوهات بدون ترتيب
+                order: videoData.order || 999
             });
         });
         
-        // ترتيب الفيديوهات حسب رقم الترتيب
         videosArray.sort((a, b) => a.order - b.order);
         
-        // عرض الفيديوهات مرتبة
         videosArray.forEach(videoData => {
             const videoUrl = videoData.url || '';
             let vidId = "error";
@@ -1017,13 +1163,6 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 textContent: videoData.title || '' 
             });
             detailsDiv.appendChild(title);
-            
-            // عرض رقم الترتيب (اختياري)
-            const orderSpan = createElementSafely('span', {
-                style: 'color: #999; font-size:0.75rem; display:block;',
-                textContent: `الترتيب: ${videoData.order || 0}`
-            });
-            detailsDiv.appendChild(orderSpan);
             
             if (!hasAccess) {
                 const lockMsg = createElementSafely('span', {
@@ -1855,7 +1994,6 @@ window.goHome = function() {
     if (contentArea) contentArea.style.display = "none";
     if (studentDashboard) studentDashboard.style.display = "none";
     
-    // إعادة تحميل الصفحة الرئيسية
     window.loadFolders();
     window.loadPerfectScores();
     window.loadLeaderboard();
@@ -1939,8 +2077,9 @@ window.updateGrades = function() {
     gradeSelect.innerHTML = "";
     
     const grades = { 
-        primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"], 
-        middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"] 
+        primary: ["الرابع الابتدائي", "الخامس الابتدائي", "السادس الابتدائي"],
+        middle: ["الأول الإعدادي", "الثاني الإعدادي", "الثالث الإعدادي"],
+        secondary: ["الأول الثانوي", "الثاني الثانوي", "الثالث الثانوي"]
     };
     
     if (level && grades[level]) {
@@ -1957,6 +2096,39 @@ window.updateGrades = function() {
     }
     
     window.checkStep2Completion();
+};
+
+// ================ LOAD REVIEWS ================
+function loadReviews() {
+    const reviewsRef = ref(db, 'reviews');
+    const listener = onValue(reviewsRef, snapshot => {
+        let html = "";
+        if (snapshot.exists()) {
+            snapshot.forEach(c => {
+                const review = c.val();
+                html += `<div class="review-card">
+                    <p>"${escapeHTML(review.text || '')}"</p>
+                    <h4 style="color:var(--main);">- ${escapeHTML(review.student || '')}</h4>
+                    <span style="color: #999; font-size:0.75rem;">${escapeHTML(review.timestamp || '')}</span>
+                </div>`; 
+            });
+        } else {
+            html = "<p style='text-align:center;'>لا توجد آراء بعد</p>";
+        }
+        
+        const testiGrid = document.getElementById('testiGrid');
+        if (testiGrid) testiGrid.innerHTML = html;
+    });
+    
+    listeners.push({ ref: reviewsRef, listener });
+}
+
+// ================ CLEANUP LISTENERS ================
+window.cleanupListeners = function() {
+    listeners.forEach(item => {
+        off(item.ref, 'value', item.listener);
+    });
+    listeners = [];
 };
 
 // ================ ربط أحداث التسجيل ================
@@ -2053,39 +2225,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
-
-// ================ LOAD REVIEWS ================
-function loadReviews() {
-    const reviewsRef = ref(db, 'reviews');
-    const listener = onValue(reviewsRef, snapshot => {
-        let html = "";
-        if (snapshot.exists()) {
-            snapshot.forEach(c => {
-                const review = c.val();
-                html += `<div class="review-card">
-                    <p>"${escapeHTML(review.text || '')}"</p>
-                    <h4 style="color:var(--main);">- ${escapeHTML(review.student || '')}</h4>
-                    <span style="color: #999; font-size:0.75rem;">${escapeHTML(review.timestamp || '')}</span>
-                </div>`; 
-            });
-        } else {
-            html = "<p style='text-align:center;'>لا توجد آراء بعد</p>";
-        }
-        
-        const testiGrid = document.getElementById('testiGrid');
-        if (testiGrid) testiGrid.innerHTML = html;
-    });
-    
-    listeners.push({ ref: reviewsRef, listener });
-}
-
-// ================ CLEANUP LISTENERS ================
-window.cleanupListeners = function() {
-    listeners.forEach(item => {
-        off(item.ref, 'value', item.listener);
-    });
-    listeners = [];
-};
 
 // ================ INIT ================
 document.addEventListener('DOMContentLoaded', () => {
