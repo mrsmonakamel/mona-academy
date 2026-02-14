@@ -1305,3 +1305,254 @@ footer {
     .dropdown-menu { width: 90%; left: 5%; }
     .student-id-badge { font-size: 0.75rem; padding: 6px 12px; }
 }
+/* ========== TOAST NOTIFICATIONS ========== */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 10000;
+}
+
+.toast-message {
+    background: white;
+    color: var(--text-main);
+    padding: 15px 25px;
+    border-radius: 50px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    animation: slideInRight 0.3s, fadeOut 0.3s 2.7s;
+    border-right: 4px solid var(--success);
+    backdrop-filter: blur(10px);
+}
+
+.toast-message.error {
+    border-right-color: var(--danger);
+}
+
+.toast-message.warning {
+    border-right-color: var(--warning);
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateX(100%);
+    }
+}
+
+/* ========== EXAM EDIT STYLES ========== */
+.edit-question-card {
+    background: linear-gradient(145deg, #f8f9fa, #ffffff);
+    border-radius: 25px;
+    padding: 25px;
+    margin-bottom: 20px;
+    border: 2px solid rgba(108,92,231,0.1);
+    position: relative;
+    transition: 0.3s;
+}
+
+.edit-question-card:hover {
+    border-color: var(--main);
+    box-shadow: 0 10px 30px rgba(108,92,231,0.1);
+}
+
+.edit-question-card .question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px dashed rgba(108,92,231,0.2);
+}
+
+.edit-question-card .question-number {
+    background: linear-gradient(135deg, var(--main), var(--dark));
+    color: white;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 0.9rem;
+    font-weight: bold;
+}
+
+.edit-question-card .question-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.edit-question-card .question-actions i {
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+    transition: 0.3s;
+    font-size: 1rem;
+}
+
+.edit-question-card .question-actions .fa-copy {
+    background: rgba(108,92,231,0.1);
+    color: var(--main);
+}
+
+.edit-question-card .question-actions .fa-trash {
+    background: rgba(255,118,117,0.1);
+    color: var(--danger);
+}
+
+.edit-question-card .question-actions i:hover {
+    transform: scale(1.2);
+}
+
+.edit-question-card .question-actions .fa-copy:hover {
+    background: var(--main);
+    color: white;
+}
+
+.edit-question-card .question-actions .fa-trash:hover {
+    background: var(--danger);
+    color: white;
+}
+
+/* ========== PREVIEW EXAM STYLES ========== */
+.preview-exam {
+    background: white;
+    border-radius: 30px;
+    padding: 30px;
+    direction: rtl;
+}
+
+.preview-exam h2 {
+    color: var(--main);
+    margin-bottom: 30px;
+    text-align: center;
+    font-weight: 900;
+}
+
+.preview-question {
+    background: #f8f9fa;
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border-right: 6px solid var(--main);
+}
+
+.preview-question h4 {
+    color: var(--dark);
+    margin-bottom: 20px;
+    font-size: 1.2rem;
+}
+
+.preview-options {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.preview-option {
+    padding: 15px 20px;
+    background: white;
+    border-radius: 15px;
+    border: 2px solid #eee;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: 0.3s;
+}
+
+.preview-option.correct {
+    background: #d4edda;
+    border-color: var(--success);
+}
+
+.preview-option .correct-badge {
+    background: var(--success);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    margin-right: auto;
+}
+
+.preview-tf {
+    display: flex;
+    gap: 20px;
+    margin-top: 15px;
+}
+
+.preview-tf-option {
+    flex: 1;
+    padding: 20px;
+    text-align: center;
+    border-radius: 15px;
+    background: white;
+    border: 2px solid #eee;
+    font-weight: bold;
+    font-size: 1.1rem;
+}
+
+.preview-tf-option.correct {
+    background: #d4edda;
+    border-color: var(--success);
+}
+
+/* ========== LIST ITEMS ACTIONS ========== */
+.item-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.item-actions button {
+    padding: 8px 15px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+    transition: 0.3s;
+    font-family: 'Cairo';
+}
+
+.item-actions .btn-view {
+    background: var(--main);
+    color: white;
+}
+
+.item-actions .btn-edit {
+    background: var(--warning);
+    color: #2d3436;
+}
+
+.item-actions .btn-delete {
+    background: var(--danger);
+    color: white;
+}
+
+.item-actions button:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+/* ========== BADGES ========== */
+.badge-exam {
+    background: linear-gradient(135deg, var(--warning), #f39c12);
+    color: #2d3436;
+    padding: 4px 12px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+    display: inline-block;
+}

@@ -1,6 +1,6 @@
 // ================ FIREBASE IMPORTS ================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, child, push, onValue, set, update, query, orderByChild, limitToLast } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, child, push, onValue, set, update, query, orderByChild, limitToLast, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // ================ FIREBASE CONFIG ================
@@ -27,6 +27,7 @@ let currentFolderId = null;
 let currentFolderName = "";
 let currentStudentGrade = null;
 let messaging = null;
+let listeners = []; // لتتبع المستمعين وإلغائهم
 const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
 // ================ POINTS & BADGES SYSTEM ================
@@ -35,7 +36,9 @@ const POINTS = {
     PERFECT_QUIZ: 50,
     PASS_QUIZ: 20,
     SUBSCRIBE_COURSE: 30,
-    ADD_REVIEW: 15
+    ADD_REVIEW: 15,
+    FIRST_VIDEO: 50,
+    FIRST_EXAM: 50
 };
 
 const BADGES = {
@@ -49,15 +52,16 @@ const BADGES = {
 };
 
 // ================ HELPER: ESCAPE HTML ================
-function escapeHTML(str) {
+window.escapeHTML = function(str) {
     if (!str) return '';
+    if (typeof str !== 'string') str = String(str);
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
-}
+};
 
 // ================ HELPER: CREATE ELEMENT SAFELY ================
-function createElementSafely(tag, properties = {}) {
+window.createElementSafely = function(tag, properties = {}) {
     const element = document.createElement(tag);
     Object.entries(properties).forEach(([key, value]) => {
         if (key === 'textContent' || key === 'innerText') {
@@ -75,17 +79,48 @@ function createElementSafely(tag, properties = {}) {
         }
     });
     return element;
-}
+};
+
+// ================ TOAST NOTIFICATION ================
+window.showToast = function(message, type = 'success', duration = 3000) {
+    // إنشاء عنصر toast إذا لم يكن موجوداً
+    let container = document.getElementById('toastContainer');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toastContainer';
+        container.className = 'toast-container';
+        document.body.appendChild(container);
+    }
+    
+    const toast = document.createElement('div');
+    toast.className = `toast-message ${type}`;
+    
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                type === 'error' ? 'fa-exclamation-circle' : 
+                'fa-exclamation-triangle';
+    
+    toast.innerHTML = `
+        <i class="fas ${icon}"></i>
+        <span>${window.escapeHTML(message)}</span>
+    `;
+    
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'fadeOut 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+};
 
 // ================ HAMBURGER MENU ================
-window.toggleMenu = () => {
+window.toggleMenu = function() {
     const menu = document.getElementById('menuDropdown');
     if (menu) {
         menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
     }
 };
 
-window.closeMenu = () => {
+window.closeMenu = function() {
     const menu = document.getElementById('menuDropdown');
     if (menu) menu.style.display = 'none';
 };
@@ -99,7 +134,7 @@ document.addEventListener('click', (e) => {
 });
 
 // ================ STEP VALIDATION ================
-window.checkStep1Completion = () => {
+window.checkStep1Completion = function() {
     const n1 = document.getElementById('n1')?.value.trim() || '';
     const n4 = document.getElementById('n4')?.value.trim() || '';
     const whatsapp = document.getElementById('regWhatsapp')?.value.trim() || '';
@@ -134,7 +169,7 @@ window.checkStep1Completion = () => {
     }
 };
 
-window.checkStep2Completion = () => {
+window.checkStep2Completion = function() {
     const level = document.getElementById('regLevel')?.value || '';
     const grade = document.getElementById('regGrade')?.value || '';
     const nextBtn = document.getElementById('step2NextBtn');
@@ -159,9 +194,10 @@ window.checkStep2Completion = () => {
 };
 
 // ================ REGISTRATION FUNCTIONS ================
-window.handleRegisterEmail = async () => {
-    if (!checkStep1Completion() || !checkStep2Completion()) {
-        return alert('خطأ ❌ يرجى إكمال جميع البيانات المطلوبة أولاً');
+window.handleRegisterEmail = async function() {
+    if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
+        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        return;
     }
     
     const n1 = document.getElementById('n1')?.value.trim() || '';
@@ -180,9 +216,18 @@ window.handleRegisterEmail = async () => {
     
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
-    if (!email || !pass) return alert('خطأ ❌ يرجى إدخال البريد الإلكتروني وكلمة المرور');
-    if (pass.length < 6) return alert('خطأ ❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر');
-    if (pass !== passConfirm) return alert('خطأ ❌ كلمة المرور غير متطابقة!');
+    if (!email || !pass) {
+        window.showToast('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
+        return;
+    }
+    if (pass.length < 6) {
+        window.showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
+        return;
+    }
+    if (pass !== passConfirm) {
+        window.showToast('❌ كلمة المرور غير متطابقة!', 'error');
+        return;
+    }
 
     const btn = document.getElementById('regBtn');
     if (!btn) return;
@@ -206,19 +251,20 @@ window.handleRegisterEmail = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(`نجاح ✅ تم التسجيل بنجاح! كود الطالب: ${sid}`); 
-        closeLogin();
+        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        window.closeLogin();
     } catch(err) {
-        alert('خطأ ❌ ' + (err.message || err.toString()));
+        window.showToast('❌ ' + (err.message || err.toString()), 'error');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
     }
 };
 
-window.handleRegisterUsername = async () => {
-    if (!checkStep1Completion() || !checkStep2Completion()) {
-        return alert('خطأ ❌ يرجى إكمال جميع البيانات المطلوبة أولاً');
+window.handleRegisterUsername = async function() {
+    if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
+        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        return;
     }
     
     const n1 = document.getElementById('n1')?.value.trim() || '';
@@ -236,9 +282,18 @@ window.handleRegisterUsername = async () => {
     const passConfirm = document.getElementById('regPassUserConfirm')?.value || '';
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
-    if (!username || !pass) return alert('خطأ ❌ يرجى إدخال اسم المستخدم وكلمة المرور');
-    if (pass.length < 6) return alert('خطأ ❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر');
-    if (pass !== passConfirm) return alert('خطأ ❌ كلمة المرور غير متطابقة!');
+    if (!username || !pass) {
+        window.showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
+        return;
+    }
+    if (pass.length < 6) {
+        window.showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
+        return;
+    }
+    if (pass !== passConfirm) {
+        window.showToast('❌ كلمة المرور غير متطابقة!', 'error');
+        return;
+    }
     
     const btn = document.getElementById('regBtnUser');
     if (!btn) return;
@@ -263,19 +318,20 @@ window.handleRegisterUsername = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(`نجاح ✅ تم التسجيل بنجاح! كود الطالب: ${sid}\nاسم المستخدم: ${username}`); 
-        closeLogin();
+        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        window.closeLogin();
     } catch(err) {
-        alert('خطأ ❌ ' + (err.message || err.toString()));
+        window.showToast('❌ ' + (err.message || err.toString()), 'error');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
     }
 };
 
-window.registerWithGoogle = async () => {
-    if (!checkStep1Completion() || !checkStep2Completion()) {
-        return alert('خطأ ❌ يرجى إكمال جميع البيانات المطلوبة أولاً');
+window.registerWithGoogle = async function() {
+    if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
+        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        return;
     }
     
     const n1 = document.getElementById('n1')?.value.trim() || '';
@@ -296,7 +352,7 @@ window.registerWithGoogle = async () => {
         
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         if(userSnap.exists()) {
-            alert('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.');
+            window.showToast('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
             await signOut(auth);
             return;
         }
@@ -315,69 +371,84 @@ window.registerWithGoogle = async () => {
             watchedVideos: {},
             examResults: {}
         });
-        alert(`نجاح ✅ تم التسجيل بنجاح! كود الطالب: ${sid}`);
-        closeLogin();
+        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        window.closeLogin();
     } catch(err) {
-        alert('خطأ ❌ ' + (err.message || err.toString()));
+        window.showToast('❌ ' + (err.message || err.toString()), 'error');
     }
 };
 
 // ================ LOGIN FUNCTIONS ================
-window.loginEmailSubmit = async () => {
+window.loginEmailSubmit = async function() {
     const e = document.getElementById('stEmail')?.value.trim() || '';
     const p = document.getElementById('stPass')?.value || '';
     
-    if(!e || !p) return alert('خطأ ❌ يرجى إدخال البيانات');
+    if(!e || !p) {
+        window.showToast('❌ يرجى إدخال البيانات', 'error');
+        return;
+    }
     
     try {
         await signInWithEmailAndPassword(auth, e, p);
-        closeLogin();
+        window.closeLogin();
+        window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
     } catch(err) {
-        alert('خطأ ❌ فشل تسجيل الدخول');
+        window.showToast('❌ فشل تسجيل الدخول', 'error');
     }
 };
 
-window.loginUsernameSubmit = async () => {
+window.loginUsernameSubmit = async function() {
     const username = document.getElementById('stUsername')?.value.trim() || '';
     const pass = document.getElementById('stPassUsername')?.value || '';
     
-    if(!username || !pass) return alert('خطأ ❌ يرجى إدخال البيانات');
+    if(!username || !pass) {
+        window.showToast('❌ يرجى إدخال البيانات', 'error');
+        return;
+    }
     
     const fakeEmail = `${username}@monaacademy.local`;
     
     try {
         await signInWithEmailAndPassword(auth, fakeEmail, pass);
-        closeLogin();
+        window.closeLogin();
+        window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
     } catch(err) {
-        alert('خطأ ❌ فشل تسجيل الدخول');
+        window.showToast('❌ فشل تسجيل الدخول', 'error');
     }
 };
 
-window.loginGoogle = async () => {
+window.loginGoogle = async function() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         
         if(!userSnap.exists()) {
-            alert('❌ لم يتم العثور على حساب. يرجى التسجيل أولاً عبر نموذج إنشاء حساب.');
+            window.showToast('❌ لم يتم العثور على حساب. يرجى التسجيل أولاً.', 'error');
             await signOut(auth);
-            openLogin();
+            window.openLogin();
         } else {
-            closeLogin();
+            window.closeLogin();
+            window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
         }
     } catch(err) {
-        alert('خطأ ❌ ' + (err.message || err.toString()));
+        window.showToast('❌ ' + (err.message || err.toString()), 'error');
     }
 };
 
 // ================ COURSE LOADING ================
-function loadFolders() {
-    onValue(ref(db, 'folders'), async (snapshot) => {
+window.loadFolders = function() {
+    const foldersRef = ref(db, 'folders');
+    const listener = onValue(foldersRef, async (snapshot) => {
         const grid = document.getElementById('foldersGrid');
         if (!grid) return;
         
         grid.innerHTML = "";
+        
+        if (!snapshot.exists()) {
+            grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>لا توجد كورسات بعد</p>";
+            return;
+        }
         
         snapshot.forEach(c => {
             const course = c.val();
@@ -386,36 +457,35 @@ function loadFolders() {
             const avgRating = course.avgRating ? parseFloat(course.avgRating).toFixed(1) : '0.0';
             const stars = '★'.repeat(Math.round(parseFloat(avgRating))) + '☆'.repeat(5 - Math.round(parseFloat(avgRating)));
             
-            const card = createElementSafely('div', { className: 'folder-card' });
+            const card = window.createElementSafely('div', { className: 'folder-card' });
             
-            const img = createElementSafely('img', {
+            const img = window.createElementSafely('img', {
                 src: course.img || 'mona.jpg',
                 loading: 'lazy',
                 alt: courseName
             });
             img.onerror = () => img.src = 'mona.jpg';
             
-            const h3 = createElementSafely('h3', { textContent: courseName });
+            const h3 = window.createElementSafely('h3', { textContent: courseName });
             
-            const ratingDiv = createElementSafely('div', { className: 'course-rating' });
+            const ratingDiv = window.createElementSafely('div', { className: 'course-rating' });
             ratingDiv.innerHTML = `<span style="color: #ffd700;">${stars}</span><span>(${course.reviewCount || 0})</span>`;
             
             card.appendChild(img);
             card.appendChild(h3);
             card.appendChild(ratingDiv);
-            card.addEventListener('click', () => openContent(courseId, courseName));
+            card.addEventListener('click', () => window.openContent(courseId, courseName));
             
             grid.appendChild(card);
         });
-        
-        if (grid.children.length === 0) {
-            grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>لا توجد كورسات بعد</p>";
-        }
     });
-}
+    
+    // تخزين المستمع لإلغائه لاحقاً
+    listeners.push({ ref: foldersRef, listener });
+};
 
 // ================ PERFECT SCORES SECTION ================
-window.loadPerfectScores = async () => {
+window.loadPerfectScores = async function() {
     try {
         const resultsSnap = await get(child(dbRef, 'quiz_results'));
         const studentsSnap = await get(child(dbRef, 'students'));
@@ -472,15 +542,15 @@ window.loadPerfectScores = async () => {
                 html += `<div class="perfect-card">
                     <div class="perfect-name">
                         <i class="fas fa-user-graduate" style="color: var(--main);"></i>
-                        ${escapeHTML(ps.studentName)}
+                        ${window.escapeHTML(ps.studentName)}
                     </div>
                     <div class="perfect-exam">
                         <i class="fas fa-file-alt" style="margin-left: 5px; color: var(--main);"></i>
-                        ${escapeHTML(ps.examName)}
+                        ${window.escapeHTML(ps.examName)}
                     </div>
                     <div class="perfect-grade">
                         <i class="fas fa-graduation-cap" style="margin-left: 5px;"></i>
-                        الصف: ${escapeHTML(ps.grade)}
+                        الصف: ${window.escapeHTML(ps.grade)}
                     </div>
                     <div class="perfect-score">
                         <i class="fas fa-check-circle"></i> ممتاز - ${ps.score}/${ps.total}
@@ -499,7 +569,7 @@ window.loadPerfectScores = async () => {
 };
 
 // ================ LEADERBOARD ================
-window.loadLeaderboard = async () => {
+window.loadLeaderboard = async function() {
     try {
         const studentsRef = ref(db, 'students');
         const topStudentsQuery = query(studentsRef, orderByChild('points'), limitToLast(20));
@@ -532,7 +602,7 @@ window.loadLeaderboard = async () => {
         leaderboard.forEach((s, i) => {
             html += `<div class="leaderboard-row">
                 <span class="leaderboard-rank">#${i+1}</span>
-                <span>${escapeHTML(s.name)}</span>
+                <span>${window.escapeHTML(s.name)}</span>
                 <span>${s.points} <i class="fas fa-star" style="color: var(--gold);"></i></span>
             </div>`;
         });
@@ -544,7 +614,7 @@ window.loadLeaderboard = async () => {
 };
 
 // ================ POINTS & BADGES ================
-async function awardPoints(uid, action, metadata = {}) {
+window.awardPoints = async function(uid, action, metadata = {}) {
     try {
         const points = POINTS[action];
         if (!points) return;
@@ -565,14 +635,14 @@ async function awardPoints(uid, action, metadata = {}) {
             timestamp: new Date().toLocaleString('ar-EG')
         });
         
-        await checkBadges(uid, newPoints, student);
-        await loadLeaderboard();
+        await window.checkBadges(uid, newPoints, student);
+        await window.loadLeaderboard();
     } catch(error) {
         console.error("Error awarding points:", error);
     }
-}
+};
 
-async function checkBadges(uid, totalPoints, studentData) {
+window.checkBadges = async function(uid, totalPoints, studentData) {
     try {
         const earnedBadges = studentData.badges || [];
         const newBadges = [];
@@ -588,17 +658,17 @@ async function checkBadges(uid, totalPoints, studentData) {
         
         if (newBadges.length > 0) {
             await update(ref(db, `students/${uid}`), { badges: earnedBadges });
-            alert('🎉 تهانينا! حصلت على شارة: ' + newBadges.map(b => BADGES[b].name).join(', '));
+            window.showToast('🎉 تهانينا! حصلت على شارة: ' + newBadges.map(b => BADGES[b].name).join(', '), 'success');
         }
     } catch(error) {
         console.error("Error checking badges:", error);
     }
-}
+};
 
 // ================ SUBSCRIPTION SYSTEM ================
-window.openContent = async (folderId, folderName) => {
+window.openContent = async function(folderId, folderName) {
     if (!currentUser) { 
-        openLogin(); 
+        window.openLogin(); 
         return; 
     }
     
@@ -609,14 +679,14 @@ window.openContent = async (folderId, folderName) => {
     const isSubscribed = subSnap.exists();
     
     if (!isSubscribed) {
-        showSubscriptionModal(folderId, folderName);
+        window.showSubscriptionModal(folderId, folderName);
         return;
     }
     
-    await loadCourseContent(folderId, folderName, true);
+    await window.loadCourseContent(folderId, folderName, true);
 };
 
-window.showSubscriptionModal = (folderId, folderName) => {
+window.showSubscriptionModal = function(folderId, folderName) {
     currentFolderId = folderId;
     currentFolderName = folderName;
     
@@ -635,29 +705,31 @@ window.showSubscriptionModal = (folderId, folderName) => {
     if (subIdInput) subIdInput.value = '';
 };
 
-window.closeSubscriptionModal = () => {
+window.closeSubscriptionModal = function() {
     const modal = document.getElementById('subscriptionModal');
     if (modal) modal.style.display = 'none';
 };
 
 // ================ EVENT LISTENERS FOR SUBSCRIPTION ================
-const previewBtn = document.getElementById('previewBtn');
-if (previewBtn) {
-    previewBtn.addEventListener('click', async () => {
-        closeSubscriptionModal();
-        await loadCourseContent(currentFolderId, currentFolderName, false);
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    const previewBtn = document.getElementById('previewBtn');
+    if (previewBtn) {
+        previewBtn.addEventListener('click', async () => {
+            window.closeSubscriptionModal();
+            await window.loadCourseContent(currentFolderId, currentFolderName, false);
+        });
+    }
 
-const subscribeBtn = document.getElementById('subscribeBtn');
-if (subscribeBtn) {
-    subscribeBtn.addEventListener('click', () => {
-        const subIdSection = document.getElementById('subscriptionIdSection');
-        if (subIdSection) subIdSection.style.display = 'block';
-    });
-}
+    const subscribeBtn = document.getElementById('subscribeBtn');
+    if (subscribeBtn) {
+        subscribeBtn.addEventListener('click', () => {
+            const subIdSection = document.getElementById('subscriptionIdSection');
+            if (subIdSection) subIdSection.style.display = 'block';
+        });
+    }
+});
 
-window.confirmSubscription = async () => {
+window.confirmSubscription = async function() {
     const subIdInput = document.getElementById('subscriptionIdInput');
     const subError = document.getElementById('subError');
     
@@ -697,14 +769,14 @@ window.confirmSubscription = async () => {
         timestamp: new Date().toLocaleString('ar-EG')
     });
     
-    await awardPoints(currentUser.uid, 'SUBSCRIBE_COURSE', { courseId: currentFolderId, courseName: currentFolderName });
-    alert('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.');
-    closeSubscriptionModal();
-    await loadCourseContent(currentFolderId, currentFolderName, true);
+    await window.awardPoints(currentUser.uid, 'SUBSCRIBE_COURSE', { courseId: currentFolderId, courseName: currentFolderName });
+    window.showToast('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.', 'success');
+    window.closeSubscriptionModal();
+    await window.loadCourseContent(currentFolderId, currentFolderName, true);
 };
 
 // ================ LOAD COURSE CONTENT ================
-window.loadCourseContent = async (folderId, folderName, hasAccess) => {
+window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     const homePage = document.getElementById('homePage');
     const studentDashboard = document.getElementById('studentDashboard');
     const contentArea = document.getElementById('contentArea');
@@ -715,7 +787,7 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
     if (contentArea) contentArea.style.display = "block";
     if (folderTitleName) folderTitleName.innerText = folderName;
 
-    await loadCourseRatingUI(folderId);
+    await window.loadCourseRatingUI(folderId);
 
     const [vSnap, qSnap] = await Promise.all([
         get(child(dbRef, `folders/${folderId}/videos`)),
@@ -747,20 +819,20 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
             const videoUrl = videoData.url || '';
             let vidId = "error";
             const match = videoUrl.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-            if (match && match[2].length == 11) vidId = match[2];
+            if (match && match[2] && match[2].length == 11) vidId = match[2];
             
-            const card = createElementSafely('div', { 
+            const card = window.createElementSafely('div', { 
                 className: `item-card ${hasAccess ? '' : 'disabled'}` 
             });
             
             if (!hasAccess) {
-                const lockIcon = createElementSafely('i', { 
+                const lockIcon = window.createElementSafely('i', { 
                     className: 'fas fa-lock lock-icon' 
                 });
                 card.appendChild(lockIcon);
             }
             
-            const img = createElementSafely('img', {
+            const img = window.createElementSafely('img', {
                 src: `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`,
                 className: 'v-thumb',
                 loading: 'lazy'
@@ -768,21 +840,21 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
             img.onerror = () => img.src = 'mona.jpg';
             card.appendChild(img);
             
-            const detailsDiv = createElementSafely('div', { className: 'item-details' });
+            const detailsDiv = window.createElementSafely('div', { className: 'item-details' });
             
-            const badge = createElementSafely('span', {
+            const badge = window.createElementSafely('span', {
                 className: 'badge badge-video',
                 textContent: 'فيديو شرح'
             });
             detailsDiv.appendChild(badge);
             
-            const title = createElementSafely('h4', { 
+            const title = window.createElementSafely('h4', { 
                 textContent: videoData.title || '' 
             });
             detailsDiv.appendChild(title);
             
             if (!hasAccess) {
-                const lockMsg = createElementSafely('span', {
+                const lockMsg = window.createElementSafely('span', {
                     style: 'color:#ff7675; font-size:0.8rem;',
                     textContent: 'اشترك لتشاهد'
                 });
@@ -792,7 +864,7 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
             card.appendChild(detailsDiv);
             
             if (hasAccess) {
-                card.addEventListener('click', () => openVideo(videoData.url, videoData.title, v.key, folderId));
+                card.addEventListener('click', () => window.openVideo(videoData.url, videoData.title, v.key, folderId));
             }
             
             grid.appendChild(card);
@@ -807,30 +879,30 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
                 const quizId = q.key;
                 const isCompleted = examResultsMap[quizId] ? true : false;
                 
-                const card = createElementSafely('div', {
+                const card = window.createElementSafely('div', {
                     className: `item-card ${hasAccess ? '' : 'disabled'}`
                 });
                 
                 if (!hasAccess) {
-                    const lockIcon = createElementSafely('i', {
+                    const lockIcon = window.createElementSafely('i', {
                         className: 'fas fa-lock lock-icon'
                     });
                     card.appendChild(lockIcon);
                 }
                 
-                const iconDiv = createElementSafely('div', {
+                const iconDiv = window.createElementSafely('div', {
                     style: 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;'
                 });
-                const icon = createElementSafely('i', {
+                const icon = window.createElementSafely('i', {
                     className: 'fas fa-file-signature fa-3x',
                     style: 'color: var(--main);'
                 });
                 iconDiv.appendChild(icon);
                 card.appendChild(iconDiv);
                 
-                const detailsDiv = createElementSafely('div', { className: 'item-details' });
+                const detailsDiv = window.createElementSafely('div', { className: 'item-details' });
                 
-                const badge = createElementSafely('span', { className: 'badge' });
+                const badge = window.createElementSafely('span', { className: 'badge' });
                 if (isCompleted) {
                     badge.textContent = '✅ تم الحل - مراجعة';
                     badge.style.cssText = 'background: var(--success); color: white;';
@@ -839,13 +911,13 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
                 }
                 detailsDiv.appendChild(badge);
                 
-                const title = createElementSafely('h4', {
+                const title = window.createElementSafely('h4', {
                     textContent: quizData.name || ''
                 });
                 detailsDiv.appendChild(title);
                 
                 if (!hasAccess) {
-                    const lockMsg = createElementSafely('span', {
+                    const lockMsg = window.createElementSafely('span', {
                         style: 'color:#ff7675; font-size:0.8rem;',
                         textContent: 'اشترك لتؤدي الامتحان'
                     });
@@ -853,7 +925,7 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
                 }
                 
                 if (isCompleted) {
-                    const scoreSpan = createElementSafely('span', {
+                    const scoreSpan = window.createElementSafely('span', {
                         style: 'display:block; margin-top:8px; color: var(--success); font-size:0.85rem;'
                     });
                     scoreSpan.innerHTML = `<i class="fas fa-check-circle"></i> النتيجة: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)`;
@@ -864,9 +936,9 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
                 
                 if (hasAccess) {
                     if (isCompleted) {
-                        card.addEventListener('click', () => viewQuizResult(folderId, quizId));
+                        card.addEventListener('click', () => window.viewQuizResult(folderId, quizId));
                     } else {
-                        card.addEventListener('click', () => startQuiz(folderId, quizId));
+                        card.addEventListener('click', () => window.startQuiz(folderId, quizId));
                     }
                 }
                 
@@ -881,7 +953,7 @@ window.loadCourseContent = async (folderId, folderName, hasAccess) => {
 };
 
 // ================ COURSE RATING UI ================
-async function loadCourseRatingUI(courseId) {
+window.loadCourseRatingUI = async function(courseId) {
     const ratingDiv = document.getElementById('courseRatingSection');
     if (!ratingDiv) return;
     
@@ -924,17 +996,23 @@ async function loadCourseRatingUI(courseId) {
     
     ratingDiv.innerHTML = html;
     ratingDiv.style.display = 'block';
-}
+};
 
-window.setRating = (val) => { 
+window.setRating = function(val) { 
     window.selectedRating = val; 
 };
 
-window.submitCourseRating = async (courseId) => {
-    if (!currentUser) return openLogin();
+window.submitCourseRating = async function(courseId) {
+    if (!currentUser) {
+        window.openLogin();
+        return;
+    }
     
     const rating = window.selectedRating;
-    if (!rating) return alert('❌ يرجى اختيار تقييم');
+    if (!rating) {
+        window.showToast('❌ يرجى اختيار تقييم', 'error');
+        return;
+    }
     
     const reviewTextEl = document.getElementById('reviewText');
     const review = reviewTextEl ? reviewTextEl.value : '';
@@ -963,18 +1041,21 @@ window.submitCourseRating = async (courseId) => {
         reviewCount: count 
     });
     
-    await awardPoints(currentUser.uid, 'ADD_REVIEW', { courseId });
-    alert('✅ تم إرسال تقييمك، شكراً لك!');
-    loadCourseRatingUI(courseId);
+    await window.awardPoints(currentUser.uid, 'ADD_REVIEW', { courseId });
+    window.showToast('✅ تم إرسال تقييمك، شكراً لك!', 'success');
+    window.loadCourseRatingUI(courseId);
 };
 
 // ================ VIDEO WATCHING & PROGRESS ================
-window.openVideo = async (url, title, videoId, folderId) => {
-    if (!currentUser) return openLogin();
+window.openVideo = async function(url, title, videoId, folderId) {
+    if (!currentUser) {
+        window.openLogin();
+        return;
+    }
 
     const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
-    if (!match || match[2].length !== 11) {
-        alert("❌ رابط الفيديو غير صالح");
+    if (!match || !match[2] || match[2].length !== 11) {
+        window.showToast("❌ رابط الفيديو غير صالح", 'error');
         return;
     }
     const videoIdentifier = match[2];
@@ -986,22 +1067,22 @@ window.openVideo = async (url, title, videoId, folderId) => {
         watchedAt: new Date().toLocaleString('ar-EG')
     });
     
-    await updateCourseProgress(currentUser.uid, folderId);
+    await window.updateCourseProgress(currentUser.uid, folderId);
     
     const studentSnap = await get(child(dbRef, `students/${currentUser.uid}/watchedVideos`));
     const watchedCount = Object.keys(studentSnap.val() || {}).length;
     
     if (watchedCount === 1) {
-        await awardPoints(currentUser.uid, 'FIRST_VIDEO', { videoId, title });
+        await window.awardPoints(currentUser.uid, 'FIRST_VIDEO', { videoId, title });
         const student = (await get(ref(db, `students/${currentUser.uid}`))).val();
         const badges = student.badges || [];
         if (!badges.includes('FIRST_VIDEO')) {
             badges.push('FIRST_VIDEO');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            alert('🎬 حصلت على شارة: أول فيديو!');
+            window.showToast('🎬 حصلت على شارة: أول فيديو!', 'success');
         }
     } else {
-        await awardPoints(currentUser.uid, 'WATCH_VIDEO', { videoId, title });
+        await window.awardPoints(currentUser.uid, 'WATCH_VIDEO', { videoId, title });
     }
     
     const quizTitle = document.getElementById('quizTitle');
@@ -1015,7 +1096,7 @@ window.openVideo = async (url, title, videoId, folderId) => {
     }
 };
 
-async function updateCourseProgress(uid, courseId) {
+window.updateCourseProgress = async function(uid, courseId) {
     try {
         const watchedSnap = await get(child(dbRef, `students/${uid}/watchedVideos`));
         const videosSnap = await get(child(dbRef, `folders/${courseId}/videos`));
@@ -1033,21 +1114,27 @@ async function updateCourseProgress(uid, courseId) {
     } catch(error) {
         console.error("Error updating course progress:", error);
     }
-}
+};
 
 // ================ QUIZ FUNCTIONS ================
-window.startQuiz = async (folderId, quizId) => {
-    if (!currentUser) return openLogin();
+window.startQuiz = async function(folderId, quizId) {
+    if (!currentUser) {
+        window.openLogin();
+        return;
+    }
     
     const resultSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults/${quizId}`));
     if (resultSnap.exists()) {
-        alert('❌ لقد قمت بحل هذا الامتحان من قبل. يمكنك مراجعة إجاباتك فقط.');
-        viewQuizResult(folderId, quizId);
+        window.showToast('❌ لقد قمت بحل هذا الامتحان من قبل. يمكنك مراجعة إجاباتك فقط.', 'error');
+        window.viewQuizResult(folderId, quizId);
         return;
     }
     
     const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
-    if(!quizSnap.exists()) return alert('❌ خطأ في تحميل الامتحان');
+    if(!quizSnap.exists()) {
+        window.showToast('❌ خطأ في تحميل الامتحان', 'error');
+        return;
+    }
     
     const quizData = quizSnap.val();
     
@@ -1066,14 +1153,14 @@ window.startQuiz = async (folderId, quizId) => {
     Object.keys(questions).forEach((qKey, idx) => {
         const q = questions[qKey];
         html += `<div class="q-form-card">
-            <span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>
+            <span class="q-text">س${idx + 1}: ${window.escapeHTML(q.text || '')}</span>
             <div class="opt-container">`;
         
         ['a', 'b', 'c', 'd'].forEach(opt => {
             if(q[opt]) {
                 html += `<label class="opt-label" onclick="window.selectOption(this)">
                     <input type="radio" name="q${idx}" value="${opt}">
-                    <span>${escapeHTML(q[opt])}</span>
+                    <span>${window.escapeHTML(q[opt])}</span>
                 </label>`;
             }
         });
@@ -1085,7 +1172,7 @@ window.startQuiz = async (folderId, quizId) => {
     quizContainer.innerHTML = html;
 };
 
-window.selectOption = (label) => {
+window.selectOption = function(label) {
     const container = label.closest('.opt-container');
     if (!container) return;
     
@@ -1095,8 +1182,13 @@ window.selectOption = (label) => {
     if (input) input.checked = true;
 };
 
-window.submitQuiz = async (folderId, quizId) => {
+window.submitQuiz = async function(folderId, quizId) {
     const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
+    if (!quizSnap.exists()) {
+        window.showToast('❌ حدث خطأ في تحميل الامتحان', 'error');
+        return;
+    }
+    
     const quizData = quizSnap.val();
     const questions = quizData.questions || {};
     let score = 0, total = Object.keys(questions).length;
@@ -1112,7 +1204,7 @@ window.submitQuiz = async (folderId, quizId) => {
     });
 
     const percentage = Math.round((score / total) * 100);
-    alert(`✅ النتيجة: ${score}/${total} (${percentage}%)`);
+    window.showToast(`✅ النتيجة: ${score}/${total} (${percentage}%)`, 'success');
     
     const folderTitleName = document.getElementById('folderTitleName');
     const courseName = folderTitleName ? folderTitleName.innerText : '';
@@ -1131,7 +1223,7 @@ window.submitQuiz = async (folderId, quizId) => {
         )
     });
 
-    push(ref(db, 'quiz_results'), {
+    await push(ref(db, 'quiz_results'), {
         student: currentUser.displayName || '',
         studentId: myShortId,
         uid: currentUser.uid,
@@ -1145,16 +1237,16 @@ window.submitQuiz = async (folderId, quizId) => {
 
     const isPerfect = (score === total);
     if (isPerfect) {
-        await awardPoints(currentUser.uid, 'PERFECT_QUIZ', { quizId, quizName: quizData.name });
+        await window.awardPoints(currentUser.uid, 'PERFECT_QUIZ', { quizId, quizName: quizData.name });
         const student = (await get(ref(db, `students/${currentUser.uid}`))).val();
         const badges = student.badges || [];
         if (!badges.includes('PERFECT_SCORE')) {
             badges.push('PERFECT_SCORE');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            alert('🏆 تهانينا! حصلت على شارة الدرجة النهائية!');
+            window.showToast('🏆 تهانينا! حصلت على شارة الدرجة النهائية!', 'success');
         }
     } else {
-        await awardPoints(currentUser.uid, 'PASS_QUIZ', { quizId, quizName: quizData.name, score, total });
+        await window.awardPoints(currentUser.uid, 'PASS_QUIZ', { quizId, quizName: quizData.name, score, total });
     }
     
     const examResultsSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults`));
@@ -1165,25 +1257,34 @@ window.submitQuiz = async (folderId, quizId) => {
         if (!badges.includes('FIRST_EXAM')) {
             badges.push('FIRST_EXAM');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            alert('📝 حصلت على شارة: أول امتحان!');
+            window.showToast('📝 حصلت على شارة: أول امتحان!', 'success');
         }
     }
 
-    await loadPerfectScores();
-    await loadLeaderboard();
-    closeQuiz();
+    await window.loadPerfectScores();
+    await window.loadLeaderboard();
+    window.closeQuiz();
 };
 
-window.viewQuizResult = async (folderId, quizId) => {
-    if (!currentUser) return openLogin();
+window.viewQuizResult = async function(folderId, quizId) {
+    if (!currentUser) {
+        window.openLogin();
+        return;
+    }
     
     const [quizSnap, resultSnap] = await Promise.all([
         get(child(dbRef, `quizzes/${folderId}/${quizId}`)),
         get(child(dbRef, `students/${currentUser.uid}/examResults/${quizId}`))
     ]);
 
-    if (!quizSnap.exists()) return alert('❌ الامتحان غير موجود');
-    if (!resultSnap.exists()) return alert('❌ لا يوجد نتيجة لهذا الامتحان');
+    if (!quizSnap.exists()) {
+        window.showToast('❌ الامتحان غير موجود', 'error');
+        return;
+    }
+    if (!resultSnap.exists()) {
+        window.showToast('❌ لا يوجد نتيجة لهذا الامتحان', 'error');
+        return;
+    }
 
     const quizData = quizSnap.val();
     const resultData = resultSnap.val();
@@ -1211,7 +1312,7 @@ window.viewQuizResult = async (folderId, quizId) => {
         const isCorrect = userAnswer === correctAnswer;
 
         html += `<div class="q-form-card" style="border-right-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">`;
-        html += `<span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>`;
+        html += `<span class="q-text">س${idx + 1}: ${window.escapeHTML(q.text || '')}</span>`;
         html += `<div class="opt-container">`;
 
         ['a', 'b', 'c', 'd'].forEach(opt => {
@@ -1225,7 +1326,7 @@ window.viewQuizResult = async (folderId, quizId) => {
                 }
                 html += `<label class="opt-label" style="${style}">`;
                 html += `<input type="radio" name="q${idx}" value="${opt}" ${userAnswer === opt ? 'checked' : ''} disabled>`;
-                html += `<span>${escapeHTML(q[opt])}</span>`;
+                html += `<span>${window.escapeHTML(q[opt])}</span>`;
                 if (correctAnswer === opt) {
                     html += ` <span style="color: var(--success); font-size: 0.85rem;">(الإجابة الصحيحة)</span>`;
                 }
@@ -1238,7 +1339,7 @@ window.viewQuizResult = async (folderId, quizId) => {
         if (isCorrect) {
             html += `<span style="color: var(--success);"><i class="fas fa-check-circle"></i> إجابة صحيحة</span>`;
         } else {
-            const userAnswerText = userAnswer && q[userAnswer] ? escapeHTML(q[userAnswer]) : '—';
+            const userAnswerText = userAnswer && q[userAnswer] ? window.escapeHTML(q[userAnswer]) : '—';
             html += `<span style="color: var(--danger);"><i class="fas fa-times-circle"></i> إجابة خاطئة (إجابتك: ${userAnswerText})</span>`;
         }
         html += `</div>`;
@@ -1249,7 +1350,7 @@ window.viewQuizResult = async (folderId, quizId) => {
     quizContainer.innerHTML = html;
 };
 
-window.closeQuiz = () => { 
+window.closeQuiz = function() { 
     const quizOverlay = document.getElementById('quizOverlay');
     const quizContainer = document.getElementById('quizContainer');
     
@@ -1258,9 +1359,9 @@ window.closeQuiz = () => {
 };
 
 // ================ DASHBOARD ================
-window.openDashboard = async () => {
+window.openDashboard = async function() {
     if (!currentUser) { 
-        openLogin(); 
+        window.openLogin(); 
         return; 
     }
     
@@ -1288,7 +1389,7 @@ window.openDashboard = async () => {
     
     if (studentNameDashboard) studentNameDashboard.innerText = student.name || currentUser.displayName || '';
     if (dashboardStudentId) {
-        dashboardStudentId.innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${escapeHTML(myShortId)}`;
+        dashboardStudentId.innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${window.escapeHTML(myShortId)}`;
     }
 
     const subscriptions = student.subscriptions || {};
@@ -1331,19 +1432,19 @@ window.openDashboard = async () => {
             const course = courseSnap.val();
             const progress = subData.progress || 0;
             
-            const card = createElementSafely('div', { className: 'folder-card' });
+            const card = window.createElementSafely('div', { className: 'folder-card' });
             
-            const img = createElementSafely('img', {
+            const img = window.createElementSafely('img', {
                 src: course.img || 'mona.jpg',
                 loading: 'lazy'
             });
             img.onerror = () => img.src = 'mona.jpg';
             card.appendChild(img);
             
-            const h3 = createElementSafely('h3', { textContent: course.name || '' });
+            const h3 = window.createElementSafely('h3', { textContent: course.name || '' });
             card.appendChild(h3);
             
-            const progressDiv = createElementSafely('div', {
+            const progressDiv = window.createElementSafely('div', {
                 style: 'padding: 0 20px 20px'
             });
             progressDiv.innerHTML = `
@@ -1352,7 +1453,7 @@ window.openDashboard = async () => {
             `;
             card.appendChild(progressDiv);
             
-            card.addEventListener('click', () => openContent(courseId, course.name));
+            card.addEventListener('click', () => window.openContent(courseId, course.name));
             
             coursesHtml += card.outerHTML;
         }
@@ -1369,7 +1470,7 @@ window.openDashboard = async () => {
         .slice(0,5)
         .forEach(([id, exam]) => {
             examsHtml += `<div class="exam-item">
-                <div><strong style="color: var(--main);">${escapeHTML(exam.quizName || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(exam.courseName || '')}</div></div>
+                <div><strong style="color: var(--main);">${window.escapeHTML(exam.quizName || '')}</strong><div style="color: #666; font-size: 0.85rem;">${window.escapeHTML(exam.courseName || '')}</div></div>
                 <div><span class="exam-score">${exam.score}/${exam.total}</span><span style="color: #666; margin-right: 10px;">${exam.completedAt || ''}</span></div>
             </div>`;
         });
@@ -1385,7 +1486,7 @@ window.openDashboard = async () => {
         .slice(0,5)
         .forEach(([id, video]) => {
             videosHtml += `<div class="video-item">
-                <div><strong>${escapeHTML(video.videoTitle || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(video.courseName || '')}</div></div>
+                <div><strong>${window.escapeHTML(video.videoTitle || '')}</strong><div style="color: #666; font-size: 0.85rem;">${window.escapeHTML(video.courseName || '')}</div></div>
                 <span style="color: #f1c40f;">${video.watchedAt || ''}</span>
             </div>`;
         });
@@ -1395,11 +1496,11 @@ window.openDashboard = async () => {
         recentVideosList.innerHTML = videosHtml || `<p style="text-align:center; color:#999;">لم تشاهد أي فيديو بعد</p>`;
     }
 
-    await loadContinueWatching();
+    await window.loadContinueWatching();
 };
 
 // ================ CONTINUE WATCHING ================
-window.loadContinueWatching = async () => {
+window.loadContinueWatching = async function() {
     if (!currentUser) return;
     
     const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
@@ -1435,11 +1536,11 @@ window.loadContinueWatching = async () => {
                 .sort((a,b) => (b.watchedAt || '').localeCompare(a.watchedAt || ''))[0];
             
             if (lastWatched) {
-                const card = createElementSafely('div', { className: 'continue-card' });
+                const card = window.createElementSafely('div', { className: 'continue-card' });
                 
-                const div1 = createElementSafely('div');
-                const h4 = createElementSafely('h4', { textContent: course.name || '' });
-                const p = createElementSafely('p', {
+                const div1 = window.createElementSafely('div');
+                const h4 = window.createElementSafely('h4', { textContent: course.name || '' });
+                const p = window.createElementSafely('p', {
                     style: 'color: #666;',
                     textContent: '✨ أكملت كل الفيديوهات! راجع الامتحانات'
                 });
@@ -1447,14 +1548,14 @@ window.loadContinueWatching = async () => {
                 div1.appendChild(p);
                 card.appendChild(div1);
                 
-                const btn = createElementSafely('a', {
+                const btn = window.createElementSafely('a', {
                     href: '#',
                     className: 'btn-continue',
                     textContent: 'عرض الكورس'
                 });
                 btn.addEventListener('click', (e) => {
                     e.preventDefault();
-                    openContent(courseId, course.name);
+                    window.openContent(courseId, course.name);
                 });
                 card.appendChild(btn);
                 
@@ -1463,11 +1564,11 @@ window.loadContinueWatching = async () => {
             continue;
         }
 
-        const card = createElementSafely('div', { className: 'continue-card' });
+        const card = window.createElementSafely('div', { className: 'continue-card' });
         
-        const div1 = createElementSafely('div');
-        const h4 = createElementSafely('h4', { textContent: course.name || '' });
-        const p = createElementSafely('p', {
+        const div1 = window.createElementSafely('div');
+        const h4 = window.createElementSafely('h4', { textContent: course.name || '' });
+        const p = window.createElementSafely('p', {
             style: 'color: var(--main);',
             textContent: '▶️ تابع: ' + (nextVideo.title || '')
         });
@@ -1475,14 +1576,14 @@ window.loadContinueWatching = async () => {
         div1.appendChild(p);
         card.appendChild(div1);
         
-        const btn = createElementSafely('a', {
+        const btn = window.createElementSafely('a', {
             href: '#',
             className: 'btn-continue',
             textContent: 'مشاهدة'
         });
         btn.addEventListener('click', (e) => {
             e.preventDefault();
-            openVideo(nextVideo.url, nextVideo.title, nextVideo.id, courseId);
+            window.openVideo(nextVideo.url, nextVideo.title, nextVideo.id, courseId);
         });
         card.appendChild(btn);
         
@@ -1499,8 +1600,66 @@ window.loadContinueWatching = async () => {
     }
 };
 
+// ================ AUTH STATE ================
+onAuthStateChanged(auth, async user => {
+    currentUser = user;
+    const statusDiv = document.getElementById('authStatus');
+    const reviewContainer = document.getElementById('reviewSectionContainer');
+    
+    if (!statusDiv) return;
+    
+    if (user) {
+        const isAdmin = user.email === ADMIN_EMAIL;
+        const adminsSnap = await get(ref(db, 'admins'));
+        const admins = adminsSnap.val() || {};
+        const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+        isAdminUser = isAdmin || isAddedAdmin;
+        
+        const userSnap = await get(child(dbRef, `students/${user.uid}`));
+        let displayName = user.displayName || '';
+        
+        if (userSnap.exists()) {
+            const data = userSnap.val();
+            myShortId = data.shortId || '';
+            displayName = data.name || user.displayName || '';
+            if (data.name && data.name !== user.displayName) {
+                await updateProfile(user, { displayName: data.name });
+                displayName = data.name;
+            }
+            currentStudentGrade = data.grade;
+        }
+        
+        statusDiv.innerHTML = `
+            <div class="hamburger-menu" onclick="window.toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        `;
+        
+        if (isAdminUser) {
+            statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
+        }
+        
+        if (reviewContainer) {
+            reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
+        }
+        
+        window.loadFolders();
+        await window.loadLeaderboard();
+        window.initializeMessaging();
+    } else {
+        isAdminUser = false;
+        statusDiv.innerHTML = `<button class="auth-btn" onclick="window.openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
+        
+        if (reviewContainer) {
+            reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+        }
+        
+        window.loadFolders();
+    }
+});
+
 // ================ NOTIFICATIONS (FCM) ================
-async function initializeMessaging() {
+window.initializeMessaging = async function() {
     try {
         if (!('Notification' in window)) {
             console.log('هذا المتصفح لا يدعم الإشعارات');
@@ -1510,7 +1669,7 @@ async function initializeMessaging() {
         if ('Notification' in window && 'serviceWorker' in navigator) {
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
-                const registration = await navigator.serviceWorker.register('/mona-academy/firebase-messaging-sw.js');
+                const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
                 console.log('FCM SW registered:', registration);
                 
                 const { getMessaging, getToken, onMessage } = await import("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging.js");
@@ -1533,99 +1692,44 @@ async function initializeMessaging() {
                     console.log('Foreground message:', payload);
                     const title = payload.notification?.title || 'Mona Academy';
                     const body = payload.notification?.body || '';
-                    showNotification(title, body);
+                    window.showNotification(title, body);
                 });
             }
         }
     } catch (error) {
         console.error('Messaging init error:', error);
     }
-}
+};
 
-function showNotification(title, body) {
-    const toast = createElementSafely('div', {
+window.showNotification = function(title, body) {
+    const toast = window.createElementSafely('div', {
         style: `position: fixed; top: 80px; left: 20px; background: var(--main); color: white;
                 padding: 15px 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
                 z-index: 10000; max-width: 300px; animation: slideIn 0.3s ease; direction: rtl;`
     });
-    toast.innerHTML = `<strong>${escapeHTML(title)}</strong><br>${escapeHTML(body)}`;
+    toast.innerHTML = `<strong>${window.escapeHTML(title)}</strong><br>${window.escapeHTML(body)}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
-}
-
-// ================ AUTH STATE ================
-onAuthStateChanged(auth, async user => {
-    currentUser = user;
-    const statusDiv = document.getElementById('authStatus');
-    const reviewContainer = document.getElementById('reviewSectionContainer');
-    
-    if (!statusDiv) return;
-    
-    if (user) {
-        const isAdmin = user.email === ADMIN_EMAIL;
-        const adminsSnap = await get(ref(db, 'admins'));
-        const admins = adminsSnap.val() || {};
-        const isAddedAdmin = admins && admins[user.email];
-        isAdminUser = isAdmin || isAddedAdmin;
-        
-        const userSnap = await get(child(dbRef, `students/${user.uid}`));
-        let displayName = user.displayName || '';
-        
-        if (userSnap.exists()) {
-            const data = userSnap.val();
-            myShortId = data.shortId || '';
-            displayName = data.name || user.displayName || '';
-            if (data.name && data.name !== user.displayName) {
-                await updateProfile(user, { displayName: data.name });
-                displayName = data.name;
-            }
-            currentStudentGrade = data.grade;
-        }
-        
-        statusDiv.innerHTML = `
-            <div class="hamburger-menu" onclick="toggleMenu()">
-                <i class="fas fa-bars"></i>
-            </div>
-        `;
-        
-        if (isAdminUser) {
-            statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
-        }
-        
-        if (reviewContainer) {
-            reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
-        }
-        
-        loadFolders();
-        await loadLeaderboard();
-        initializeMessaging();
-    } else {
-        isAdminUser = false;
-        statusDiv.innerHTML = `<button class="auth-btn" onclick="window.openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
-        
-        if (reviewContainer) {
-            reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
-        }
-        
-        loadFolders();
-    }
-});
+};
 
 // ================ UTILITY FUNCTIONS ================
-window.logout = () => signOut(auth);
+window.logout = function() { 
+    signOut(auth);
+    window.showToast('👋 تم تسجيل الخروج', 'success');
+};
 
-window.openLogin = () => { 
+window.openLogin = function() { 
     window.showAuthForm('choice'); 
     const loginModal = document.getElementById('loginModal');
     if (loginModal) loginModal.style.display = 'flex'; 
 };
 
-window.closeLogin = () => { 
+window.closeLogin = function() { 
     const loginModal = document.getElementById('loginModal');
     if (loginModal) loginModal.style.display = 'none'; 
 };
 
-window.goHome = () => { 
+window.goHome = function() { 
     const homePage = document.getElementById('homePage');
     const contentArea = document.getElementById('contentArea');
     const studentDashboard = document.getElementById('studentDashboard');
@@ -1635,7 +1739,7 @@ window.goHome = () => {
     if (studentDashboard) studentDashboard.style.display = "none";
 };
 
-window.sendStuReview = async () => {
+window.sendStuReview = async function() {
     const stuText = document.getElementById('stuText');
     if (!stuText) return;
     
@@ -1647,11 +1751,11 @@ window.sendStuReview = async () => {
             timestamp: new Date().toLocaleString('ar-EG')
         });
         stuText.value = "";
-        alert('✅ شكراً لك! تم إرسال تقييمك.');
+        window.showToast('✅ شكراً لك! تم إرسال تقييمك.', 'success');
     }
 };
 
-window.showAuthForm = (type) => {
+window.showAuthForm = function(type) {
     const forms = {
         'authChoice': document.getElementById('authChoice'),
         'loginChoice': document.getElementById('loginChoice'),
@@ -1671,13 +1775,13 @@ window.showAuthForm = (type) => {
     else if (type === 'register' && forms.registerForm) {
         forms.registerForm.style.display = 'block';
         setTimeout(() => { 
-            checkStep1Completion(); 
-            checkStep2Completion(); 
+            window.checkStep1Completion(); 
+            window.checkStep2Completion(); 
         }, 200);
     }
 };
 
-window.showRegMethod = (method) => {
+window.showRegMethod = function(method) {
     document.querySelectorAll('.step-container').forEach(sc => sc.classList.remove('active'));
     
     if(method === 'email') {
@@ -1689,7 +1793,7 @@ window.showRegMethod = (method) => {
     }
 };
 
-window.nextStep = (s) => {
+window.nextStep = function(s) {
     document.querySelectorAll('.step-container').forEach(sc => sc.classList.remove('active'));
     
     const stepEl = document.getElementById('step' + s);
@@ -1700,11 +1804,11 @@ window.nextStep = (s) => {
         regProgress.style.width = (s === 1 ? '33%' : s === 2 ? '66%' : '100%');
     }
     
-    if (s === 1) setTimeout(checkStep1Completion, 100);
-    else if (s === 2) setTimeout(checkStep2Completion, 100);
+    if (s === 1) setTimeout(window.checkStep1Completion, 100);
+    else if (s === 2) setTimeout(window.checkStep2Completion, 100);
 };
 
-window.updateGrades = () => {
+window.updateGrades = function() {
     const level = document.getElementById('regLevel')?.value || '';
     const gradeSelect = document.getElementById('regGrade');
     
@@ -1719,7 +1823,7 @@ window.updateGrades = () => {
     
     if (level && grades[level]) {
         grades[level].forEach(g => {
-            const option = createElementSafely('option', {
+            const option = window.createElementSafely('option', {
                 value: g,
                 textContent: g
             });
@@ -1730,36 +1834,52 @@ window.updateGrades = () => {
         gradeSelect.innerHTML = `<option value="">-- اختر المرحلة أولاً --</option>`;
     }
     
-    checkStep2Completion();
+    window.checkStep2Completion();
 };
 
+// ================ LOAD REVIEWS ================
 function loadReviews() {
-    onValue(ref(db, 'reviews'), snapshot => {
+    const reviewsRef = ref(db, 'reviews');
+    const listener = onValue(reviewsRef, snapshot => {
         let html = "";
-        snapshot.forEach(c => {
-            const review = c.val();
-            html += `<div class="review-card">
-                <p>"${escapeHTML(review.text || '')}"</p>
-                <h4 style="color:var(--main);">- ${escapeHTML(review.student || '')}</h4>
-                <span style="color: #999; font-size:0.75rem;">${escapeHTML(review.timestamp || '')}</span>
-            </div>`; 
-        });
+        if (snapshot.exists()) {
+            snapshot.forEach(c => {
+                const review = c.val();
+                html += `<div class="review-card">
+                    <p>"${window.escapeHTML(review.text || '')}"</p>
+                    <h4 style="color:var(--main);">- ${window.escapeHTML(review.student || '')}</h4>
+                    <span style="color: #999; font-size:0.75rem;">${window.escapeHTML(review.timestamp || '')}</span>
+                </div>`; 
+            });
+        } else {
+            html = "<p style='text-align:center;'>لا توجد آراء بعد</p>";
+        }
         
         const testiGrid = document.getElementById('testiGrid');
         if (testiGrid) testiGrid.innerHTML = html;
     });
+    
+    listeners.push({ ref: reviewsRef, listener });
 }
+
+// ================ CLEANUP LISTENERS ================
+window.cleanupListeners = function() {
+    listeners.forEach(item => {
+        off(item.ref, 'value', item.listener);
+    });
+    listeners = [];
+};
 
 // ================ INIT ================
 window.addEventListener('DOMContentLoaded', () => {
-    loadFolders();
+    window.loadFolders();
     loadReviews();
-    loadPerfectScores();
-    loadLeaderboard();
+    window.loadPerfectScores();
+    window.loadLeaderboard();
     
     onValue(ref(db, 'quiz_results'), () => {
-        loadPerfectScores();
-        loadLeaderboard();
+        window.loadPerfectScores();
+        window.loadLeaderboard();
     });
     
     const phoneInputs = ['regWhatsapp', 'regParentPhone'];
@@ -1774,9 +1894,14 @@ window.addEventListener('DOMContentLoaded', () => {
                 const text = (e.clipboardData || window.clipboardData).getData('text');
                 if (/^\d+$/.test(text)) { 
                     input.value = text; 
-                    checkStep1Completion(); 
+                    window.checkStep1Completion(); 
                 }
             });
         }
     });
+});
+
+// تنظيف المستمعين عند إغلاق الصفحة
+window.addEventListener('beforeunload', () => {
+    window.cleanupListeners();
 });
