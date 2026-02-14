@@ -28,6 +28,8 @@ let currentFolderName = "";
 let currentStudentGrade = null;
 let messaging = null;
 let listeners = []; // لتتبع المستمعين وإلغائهم
+let selectedRating = null; // للتقييم
+
 const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
 // ================ POINTS & BADGES SYSTEM ================
@@ -52,16 +54,16 @@ const BADGES = {
 };
 
 // ================ HELPER: ESCAPE HTML ================
-window.escapeHTML = function(str) {
+function escapeHTML(str) {
     if (!str) return '';
     if (typeof str !== 'string') str = String(str);
     const div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
-};
+}
 
 // ================ HELPER: CREATE ELEMENT SAFELY ================
-window.createElementSafely = function(tag, properties = {}) {
+function createElementSafely(tag, properties = {}) {
     const element = document.createElement(tag);
     Object.entries(properties).forEach(([key, value]) => {
         if (key === 'textContent' || key === 'innerText') {
@@ -79,10 +81,10 @@ window.createElementSafely = function(tag, properties = {}) {
         }
     });
     return element;
-};
+}
 
 // ================ TOAST NOTIFICATION ================
-window.showToast = function(message, type = 'success', duration = 3000) {
+function showToast(message, type = 'success', duration = 3000) {
     // إنشاء عنصر toast إذا لم يكن موجوداً
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -101,7 +103,7 @@ window.showToast = function(message, type = 'success', duration = 3000) {
     
     toast.innerHTML = `
         <i class="fas ${icon}"></i>
-        <span>${window.escapeHTML(message)}</span>
+        <span>${escapeHTML(message)}</span>
     `;
     
     container.appendChild(toast);
@@ -110,7 +112,12 @@ window.showToast = function(message, type = 'success', duration = 3000) {
         toast.style.animation = 'fadeOut 0.3s';
         setTimeout(() => toast.remove(), 300);
     }, duration);
-};
+}
+
+// تعريف الدوال في النطاق العام
+window.showToast = showToast;
+window.escapeHTML = escapeHTML;
+window.createElementSafely = createElementSafely;
 
 // ================ HAMBURGER MENU ================
 window.toggleMenu = function() {
@@ -196,7 +203,7 @@ window.checkStep2Completion = function() {
 // ================ REGISTRATION FUNCTIONS ================
 window.handleRegisterEmail = async function() {
     if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
-        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
         return;
     }
     
@@ -217,15 +224,15 @@ window.handleRegisterEmail = async function() {
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
     if (!email || !pass) {
-        window.showToast('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
+        showToast('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
         return;
     }
     if (pass.length < 6) {
-        window.showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
+        showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
         return;
     }
     if (pass !== passConfirm) {
-        window.showToast('❌ كلمة المرور غير متطابقة!', 'error');
+        showToast('❌ كلمة المرور غير متطابقة!', 'error');
         return;
     }
 
@@ -251,10 +258,10 @@ window.handleRegisterEmail = async function() {
             watchedVideos: {},
             examResults: {}
         });
-        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
         window.closeLogin();
     } catch(err) {
-        window.showToast('❌ ' + (err.message || err.toString()), 'error');
+        showToast('❌ ' + (err.message || err.toString()), 'error');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -263,7 +270,7 @@ window.handleRegisterEmail = async function() {
 
 window.handleRegisterUsername = async function() {
     if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
-        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
         return;
     }
     
@@ -283,15 +290,15 @@ window.handleRegisterUsername = async function() {
     const sid = Math.floor(1000000000 + Math.random() * 9000000000).toString();
     
     if (!username || !pass) {
-        window.showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
+        showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
         return;
     }
     if (pass.length < 6) {
-        window.showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
+        showToast('❌ يجب أن تكون كلمة المرور مكونة من 6 أحرف أو أكثر', 'error');
         return;
     }
     if (pass !== passConfirm) {
-        window.showToast('❌ كلمة المرور غير متطابقة!', 'error');
+        showToast('❌ كلمة المرور غير متطابقة!', 'error');
         return;
     }
     
@@ -318,10 +325,10 @@ window.handleRegisterUsername = async function() {
             watchedVideos: {},
             examResults: {}
         });
-        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
         window.closeLogin();
     } catch(err) {
-        window.showToast('❌ ' + (err.message || err.toString()), 'error');
+        showToast('❌ ' + (err.message || err.toString()), 'error');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -330,7 +337,7 @@ window.handleRegisterUsername = async function() {
 
 window.registerWithGoogle = async function() {
     if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
-        window.showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
+        showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
         return;
     }
     
@@ -352,7 +359,7 @@ window.registerWithGoogle = async function() {
         
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         if(userSnap.exists()) {
-            window.showToast('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
+            showToast('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
             await signOut(auth);
             return;
         }
@@ -371,10 +378,10 @@ window.registerWithGoogle = async function() {
             watchedVideos: {},
             examResults: {}
         });
-        window.showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
         window.closeLogin();
     } catch(err) {
-        window.showToast('❌ ' + (err.message || err.toString()), 'error');
+        showToast('❌ ' + (err.message || err.toString()), 'error');
     }
 };
 
@@ -384,16 +391,16 @@ window.loginEmailSubmit = async function() {
     const p = document.getElementById('stPass')?.value || '';
     
     if(!e || !p) {
-        window.showToast('❌ يرجى إدخال البيانات', 'error');
+        showToast('❌ يرجى إدخال البيانات', 'error');
         return;
     }
     
     try {
         await signInWithEmailAndPassword(auth, e, p);
         window.closeLogin();
-        window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+        showToast('✅ تم تسجيل الدخول بنجاح', 'success');
     } catch(err) {
-        window.showToast('❌ فشل تسجيل الدخول', 'error');
+        showToast('❌ فشل تسجيل الدخول', 'error');
     }
 };
 
@@ -402,7 +409,7 @@ window.loginUsernameSubmit = async function() {
     const pass = document.getElementById('stPassUsername')?.value || '';
     
     if(!username || !pass) {
-        window.showToast('❌ يرجى إدخال البيانات', 'error');
+        showToast('❌ يرجى إدخال البيانات', 'error');
         return;
     }
     
@@ -411,9 +418,9 @@ window.loginUsernameSubmit = async function() {
     try {
         await signInWithEmailAndPassword(auth, fakeEmail, pass);
         window.closeLogin();
-        window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+        showToast('✅ تم تسجيل الدخول بنجاح', 'success');
     } catch(err) {
-        window.showToast('❌ فشل تسجيل الدخول', 'error');
+        showToast('❌ فشل تسجيل الدخول', 'error');
     }
 };
 
@@ -424,17 +431,132 @@ window.loginGoogle = async function() {
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         
         if(!userSnap.exists()) {
-            window.showToast('❌ لم يتم العثور على حساب. يرجى التسجيل أولاً.', 'error');
+            showToast('❌ لم يتم العثور على حساب. يرجى التسجيل أولاً.', 'error');
             await signOut(auth);
             window.openLogin();
         } else {
             window.closeLogin();
-            window.showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+            showToast('✅ تم تسجيل الدخول بنجاح', 'success');
         }
     } catch(err) {
-        window.showToast('❌ ' + (err.message || err.toString()), 'error');
+        showToast('❌ ' + (err.message || err.toString()), 'error');
     }
 };
+
+// ================ AUTH STATE ================
+onAuthStateChanged(auth, async user => {
+    currentUser = user;
+    const statusDiv = document.getElementById('authStatus');
+    const reviewContainer = document.getElementById('reviewSectionContainer');
+    
+    if (!statusDiv) return;
+    
+    if (user) {
+        const isAdmin = user.email === ADMIN_EMAIL;
+        const adminsSnap = await get(ref(db, 'admins'));
+        const admins = adminsSnap.val() || {};
+        const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+        isAdminUser = isAdmin || isAddedAdmin;
+        
+        const userSnap = await get(child(dbRef, `students/${user.uid}`));
+        let displayName = user.displayName || '';
+        
+        if (userSnap.exists()) {
+            const data = userSnap.val();
+            myShortId = data.shortId || '';
+            displayName = data.name || user.displayName || '';
+            if (data.name && data.name !== user.displayName) {
+                await updateProfile(user, { displayName: data.name });
+                displayName = data.name;
+            }
+            currentStudentGrade = data.grade;
+        }
+        
+        statusDiv.innerHTML = `
+            <div class="hamburger-menu" onclick="window.toggleMenu()">
+                <i class="fas fa-bars"></i>
+            </div>
+        `;
+        
+        if (isAdminUser) {
+            statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
+        }
+        
+        if (reviewContainer) {
+            reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
+        }
+        
+        // تحديث عناصر القائمة
+        updateMenuItems(true);
+        
+        window.loadFolders();
+        await window.loadLeaderboard();
+        window.initializeMessaging();
+    } else {
+        isAdminUser = false;
+        statusDiv.innerHTML = `<button class="auth-btn" onclick="window.openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
+        
+        if (reviewContainer) {
+            reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+        }
+        
+        // تحديث عناصر القائمة
+        updateMenuItems(false);
+        
+        window.loadFolders();
+    }
+});
+
+// ================ تحديث عناصر القائمة ================
+function updateMenuItems(isLoggedIn) {
+    const dashboardItem = document.getElementById('dashboardMenuItem');
+    const homeItem = document.getElementById('homeMenuItem');
+    const continueItem = document.getElementById('continueWatchingMenuItem');
+    const divider = document.getElementById('menuDivider');
+    const logoutItem = document.getElementById('logoutMenuItem');
+    
+    if (isLoggedIn) {
+        if (dashboardItem) {
+            dashboardItem.style.display = 'block';
+            dashboardItem.onclick = function(e) {
+                e.preventDefault();
+                window.openDashboard();
+                window.closeMenu();
+            };
+        }
+        if (homeItem) {
+            homeItem.style.display = 'block';
+            homeItem.onclick = function(e) {
+                e.preventDefault();
+                window.goHome();
+                window.closeMenu();
+            };
+        }
+        if (continueItem) {
+            continueItem.style.display = 'block';
+            continueItem.onclick = function(e) {
+                e.preventDefault();
+                window.openDashboard();
+                window.closeMenu();
+            };
+        }
+        if (divider) divider.style.display = 'block';
+        if (logoutItem) {
+            logoutItem.style.display = 'block';
+            logoutItem.onclick = function(e) {
+                e.preventDefault();
+                window.logout();
+                window.closeMenu();
+            };
+        }
+    } else {
+        if (dashboardItem) dashboardItem.style.display = 'none';
+        if (homeItem) homeItem.style.display = 'none';
+        if (continueItem) continueItem.style.display = 'none';
+        if (divider) divider.style.display = 'none';
+        if (logoutItem) logoutItem.style.display = 'none';
+    }
+}
 
 // ================ COURSE LOADING ================
 window.loadFolders = function() {
@@ -457,18 +579,18 @@ window.loadFolders = function() {
             const avgRating = course.avgRating ? parseFloat(course.avgRating).toFixed(1) : '0.0';
             const stars = '★'.repeat(Math.round(parseFloat(avgRating))) + '☆'.repeat(5 - Math.round(parseFloat(avgRating)));
             
-            const card = window.createElementSafely('div', { className: 'folder-card' });
+            const card = createElementSafely('div', { className: 'folder-card' });
             
-            const img = window.createElementSafely('img', {
-                src: course.img || 'mona.jpg',
+            const img = createElementSafely('img', {
+                src: course.img && course.img.startsWith('data:image') ? course.img : (course.img || 'mona.jpg'),
                 loading: 'lazy',
                 alt: courseName
             });
             img.onerror = () => img.src = 'mona.jpg';
             
-            const h3 = window.createElementSafely('h3', { textContent: courseName });
+            const h3 = createElementSafely('h3', { textContent: courseName });
             
-            const ratingDiv = window.createElementSafely('div', { className: 'course-rating' });
+            const ratingDiv = createElementSafely('div', { className: 'course-rating' });
             ratingDiv.innerHTML = `<span style="color: #ffd700;">${stars}</span><span>(${course.reviewCount || 0})</span>`;
             
             card.appendChild(img);
@@ -542,15 +664,15 @@ window.loadPerfectScores = async function() {
                 html += `<div class="perfect-card">
                     <div class="perfect-name">
                         <i class="fas fa-user-graduate" style="color: var(--main);"></i>
-                        ${window.escapeHTML(ps.studentName)}
+                        ${escapeHTML(ps.studentName)}
                     </div>
                     <div class="perfect-exam">
                         <i class="fas fa-file-alt" style="margin-left: 5px; color: var(--main);"></i>
-                        ${window.escapeHTML(ps.examName)}
+                        ${escapeHTML(ps.examName)}
                     </div>
                     <div class="perfect-grade">
                         <i class="fas fa-graduation-cap" style="margin-left: 5px;"></i>
-                        الصف: ${window.escapeHTML(ps.grade)}
+                        الصف: ${escapeHTML(ps.grade)}
                     </div>
                     <div class="perfect-score">
                         <i class="fas fa-check-circle"></i> ممتاز - ${ps.score}/${ps.total}
@@ -577,8 +699,9 @@ window.loadLeaderboard = async function() {
         
         const leaderboardSection = document.getElementById('leaderboardSection');
         const leaderboardContainer = document.getElementById('leaderboardContainer');
+        const topThreeContainer = document.getElementById('topThreeContainer');
         
-        if (!leaderboardSection || !leaderboardContainer) return;
+        if (!leaderboardSection || !leaderboardContainer || !topThreeContainer) return;
         
         if (!snapshot.exists()) {
             leaderboardSection.style.display = 'none';
@@ -598,15 +721,38 @@ window.loadLeaderboard = async function() {
         
         leaderboard.sort((a, b) => b.points - a.points);
         
-        let html = '<div class="leaderboard-row"><span class="leaderboard-rank">#</span><span>الطالب</span><span>النقاط</span></div>';
-        leaderboard.forEach((s, i) => {
-            html += `<div class="leaderboard-row">
-                <span class="leaderboard-rank">#${i+1}</span>
-                <span>${window.escapeHTML(s.name)}</span>
-                <span>${s.points} <i class="fas fa-star" style="color: var(--gold);"></i></span>
+        // عرض أول 3 بشكل مميز
+        let top3Html = '';
+        const top3 = leaderboard.slice(0, 3);
+        const medals = ['🥇', '🥈', '🥉'];
+        const classes = ['first', 'second', 'third'];
+        
+        top3.forEach((student, index) => {
+            top3Html += `
+                <div class="top-card ${classes[index]}">
+                    <div class="top-crown">${medals[index]}</div>
+                    <div class="top-avatar">${student.name.charAt(0)}</div>
+                    <div class="top-name">${escapeHTML(student.name)}</div>
+                    <div class="top-points">${student.points} <i class="fas fa-star"></i></div>
+                    <div class="top-badge">#${index + 1} في النقاط</div>
+                </div>
+            `;
+        });
+        topThreeContainer.innerHTML = top3Html;
+        
+        // عرض الباقي
+        let html = '';
+        leaderboard.slice(3, 10).forEach((student, index) => {
+            html += `<div class="leaderboard-item">
+                <div class="leaderboard-rank-circle">#${index + 4}</div>
+                <div class="leaderboard-info">
+                    <h4>${escapeHTML(student.name)}</h4>
+                    <div class="leaderboard-points"><i class="fas fa-star" style="color: var(--gold);"></i> ${student.points} نقطة</div>
+                </div>
             </div>`;
         });
-        leaderboardContainer.innerHTML = html;
+        
+        leaderboardContainer.innerHTML = html || '<p style="text-align:center;">لا يوجد طلاب آخرين</p>';
         leaderboardSection.style.display = leaderboard.length ? 'block' : 'none';
     } catch(error) {
         console.error("Error loading leaderboard:", error);
@@ -658,7 +804,7 @@ window.checkBadges = async function(uid, totalPoints, studentData) {
         
         if (newBadges.length > 0) {
             await update(ref(db, `students/${uid}`), { badges: earnedBadges });
-            window.showToast('🎉 تهانينا! حصلت على شارة: ' + newBadges.map(b => BADGES[b].name).join(', '), 'success');
+            showToast('🎉 تهانينا! حصلت على شارة: ' + newBadges.map(b => BADGES[b].name).join(', '), 'success');
         }
     } catch(error) {
         console.error("Error checking badges:", error);
@@ -727,6 +873,11 @@ document.addEventListener('DOMContentLoaded', () => {
             if (subIdSection) subIdSection.style.display = 'block';
         });
     }
+    
+    const confirmSubscribeBtn = document.getElementById('confirmSubscribeBtn');
+    if (confirmSubscribeBtn) {
+        confirmSubscribeBtn.addEventListener('click', window.confirmSubscription);
+    }
 });
 
 window.confirmSubscription = async function() {
@@ -770,7 +921,7 @@ window.confirmSubscription = async function() {
     });
     
     await window.awardPoints(currentUser.uid, 'SUBSCRIBE_COURSE', { courseId: currentFolderId, courseName: currentFolderName });
-    window.showToast('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.', 'success');
+    showToast('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.', 'success');
     window.closeSubscriptionModal();
     await window.loadCourseContent(currentFolderId, currentFolderName, true);
 };
@@ -812,27 +963,41 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     
     grid.innerHTML = "";
 
-    // Videos
+    // Videos - مع الترتيب الصحيح
     if (vSnap.exists()) {
+        // تحويل الفيديوهات إلى مصفوفة للترتيب
+        const videosArray = [];
         vSnap.forEach(v => {
             const videoData = v.val();
+            videosArray.push({
+                id: v.key,
+                ...videoData,
+                order: videoData.order || 999 // قيمة افتراضية كبيرة للفيديوهات بدون ترتيب
+            });
+        });
+        
+        // ترتيب الفيديوهات حسب رقم الترتيب
+        videosArray.sort((a, b) => a.order - b.order);
+        
+        // عرض الفيديوهات مرتبة
+        videosArray.forEach(videoData => {
             const videoUrl = videoData.url || '';
             let vidId = "error";
             const match = videoUrl.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
             if (match && match[2] && match[2].length == 11) vidId = match[2];
             
-            const card = window.createElementSafely('div', { 
+            const card = createElementSafely('div', { 
                 className: `item-card ${hasAccess ? '' : 'disabled'}` 
             });
             
             if (!hasAccess) {
-                const lockIcon = window.createElementSafely('i', { 
+                const lockIcon = createElementSafely('i', { 
                     className: 'fas fa-lock lock-icon' 
                 });
                 card.appendChild(lockIcon);
             }
             
-            const img = window.createElementSafely('img', {
+            const img = createElementSafely('img', {
                 src: `https://img.youtube.com/vi/${vidId}/mqdefault.jpg`,
                 className: 'v-thumb',
                 loading: 'lazy'
@@ -840,21 +1005,28 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             img.onerror = () => img.src = 'mona.jpg';
             card.appendChild(img);
             
-            const detailsDiv = window.createElementSafely('div', { className: 'item-details' });
+            const detailsDiv = createElementSafely('div', { className: 'item-details' });
             
-            const badge = window.createElementSafely('span', {
+            const badge = createElementSafely('span', {
                 className: 'badge badge-video',
                 textContent: 'فيديو شرح'
             });
             detailsDiv.appendChild(badge);
             
-            const title = window.createElementSafely('h4', { 
+            const title = createElementSafely('h4', { 
                 textContent: videoData.title || '' 
             });
             detailsDiv.appendChild(title);
             
+            // عرض رقم الترتيب (اختياري)
+            const orderSpan = createElementSafely('span', {
+                style: 'color: #999; font-size:0.75rem; display:block;',
+                textContent: `الترتيب: ${videoData.order || 0}`
+            });
+            detailsDiv.appendChild(orderSpan);
+            
             if (!hasAccess) {
-                const lockMsg = window.createElementSafely('span', {
+                const lockMsg = createElementSafely('span', {
                     style: 'color:#ff7675; font-size:0.8rem;',
                     textContent: 'اشترك لتشاهد'
                 });
@@ -864,7 +1036,7 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             card.appendChild(detailsDiv);
             
             if (hasAccess) {
-                card.addEventListener('click', () => window.openVideo(videoData.url, videoData.title, v.key, folderId));
+                card.addEventListener('click', () => window.openVideo(videoData.url, videoData.title, videoData.id, folderId));
             }
             
             grid.appendChild(card);
@@ -879,30 +1051,30 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 const quizId = q.key;
                 const isCompleted = examResultsMap[quizId] ? true : false;
                 
-                const card = window.createElementSafely('div', {
+                const card = createElementSafely('div', {
                     className: `item-card ${hasAccess ? '' : 'disabled'}`
                 });
                 
                 if (!hasAccess) {
-                    const lockIcon = window.createElementSafely('i', {
+                    const lockIcon = createElementSafely('i', {
                         className: 'fas fa-lock lock-icon'
                     });
                     card.appendChild(lockIcon);
                 }
                 
-                const iconDiv = window.createElementSafely('div', {
+                const iconDiv = createElementSafely('div', {
                     style: 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;'
                 });
-                const icon = window.createElementSafely('i', {
+                const icon = createElementSafely('i', {
                     className: 'fas fa-file-signature fa-3x',
                     style: 'color: var(--main);'
                 });
                 iconDiv.appendChild(icon);
                 card.appendChild(iconDiv);
                 
-                const detailsDiv = window.createElementSafely('div', { className: 'item-details' });
+                const detailsDiv = createElementSafely('div', { className: 'item-details' });
                 
-                const badge = window.createElementSafely('span', { className: 'badge' });
+                const badge = createElementSafely('span', { className: 'badge' });
                 if (isCompleted) {
                     badge.textContent = '✅ تم الحل - مراجعة';
                     badge.style.cssText = 'background: var(--success); color: white;';
@@ -911,13 +1083,13 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 }
                 detailsDiv.appendChild(badge);
                 
-                const title = window.createElementSafely('h4', {
+                const title = createElementSafely('h4', {
                     textContent: quizData.name || ''
                 });
                 detailsDiv.appendChild(title);
                 
                 if (!hasAccess) {
-                    const lockMsg = window.createElementSafely('span', {
+                    const lockMsg = createElementSafely('span', {
                         style: 'color:#ff7675; font-size:0.8rem;',
                         textContent: 'اشترك لتؤدي الامتحان'
                     });
@@ -925,7 +1097,7 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 }
                 
                 if (isCompleted) {
-                    const scoreSpan = window.createElementSafely('span', {
+                    const scoreSpan = createElementSafely('span', {
                         style: 'display:block; margin-top:8px; color: var(--success); font-size:0.85rem;'
                     });
                     scoreSpan.innerHTML = `<i class="fas fa-check-circle"></i> النتيجة: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)`;
@@ -999,7 +1171,7 @@ window.loadCourseRatingUI = async function(courseId) {
 };
 
 window.setRating = function(val) { 
-    window.selectedRating = val; 
+    selectedRating = val; 
 };
 
 window.submitCourseRating = async function(courseId) {
@@ -1008,9 +1180,9 @@ window.submitCourseRating = async function(courseId) {
         return;
     }
     
-    const rating = window.selectedRating;
+    const rating = selectedRating;
     if (!rating) {
-        window.showToast('❌ يرجى اختيار تقييم', 'error');
+        showToast('❌ يرجى اختيار تقييم', 'error');
         return;
     }
     
@@ -1042,7 +1214,7 @@ window.submitCourseRating = async function(courseId) {
     });
     
     await window.awardPoints(currentUser.uid, 'ADD_REVIEW', { courseId });
-    window.showToast('✅ تم إرسال تقييمك، شكراً لك!', 'success');
+    showToast('✅ تم إرسال تقييمك، شكراً لك!', 'success');
     window.loadCourseRatingUI(courseId);
 };
 
@@ -1055,7 +1227,7 @@ window.openVideo = async function(url, title, videoId, folderId) {
 
     const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
     if (!match || !match[2] || match[2].length !== 11) {
-        window.showToast("❌ رابط الفيديو غير صالح", 'error');
+        showToast("❌ رابط الفيديو غير صالح", 'error');
         return;
     }
     const videoIdentifier = match[2];
@@ -1079,7 +1251,7 @@ window.openVideo = async function(url, title, videoId, folderId) {
         if (!badges.includes('FIRST_VIDEO')) {
             badges.push('FIRST_VIDEO');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            window.showToast('🎬 حصلت على شارة: أول فيديو!', 'success');
+            showToast('🎬 حصلت على شارة: أول فيديو!', 'success');
         }
     } else {
         await window.awardPoints(currentUser.uid, 'WATCH_VIDEO', { videoId, title });
@@ -1125,14 +1297,14 @@ window.startQuiz = async function(folderId, quizId) {
     
     const resultSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults/${quizId}`));
     if (resultSnap.exists()) {
-        window.showToast('❌ لقد قمت بحل هذا الامتحان من قبل. يمكنك مراجعة إجاباتك فقط.', 'error');
+        showToast('❌ لقد قمت بحل هذا الامتحان من قبل. يمكنك مراجعة إجاباتك فقط.', 'error');
         window.viewQuizResult(folderId, quizId);
         return;
     }
     
     const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
     if(!quizSnap.exists()) {
-        window.showToast('❌ خطأ في تحميل الامتحان', 'error');
+        showToast('❌ خطأ في تحميل الامتحان', 'error');
         return;
     }
     
@@ -1153,14 +1325,14 @@ window.startQuiz = async function(folderId, quizId) {
     Object.keys(questions).forEach((qKey, idx) => {
         const q = questions[qKey];
         html += `<div class="q-form-card">
-            <span class="q-text">س${idx + 1}: ${window.escapeHTML(q.text || '')}</span>
+            <span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>
             <div class="opt-container">`;
         
         ['a', 'b', 'c', 'd'].forEach(opt => {
             if(q[opt]) {
                 html += `<label class="opt-label" onclick="window.selectOption(this)">
                     <input type="radio" name="q${idx}" value="${opt}">
-                    <span>${window.escapeHTML(q[opt])}</span>
+                    <span>${escapeHTML(q[opt])}</span>
                 </label>`;
             }
         });
@@ -1185,7 +1357,7 @@ window.selectOption = function(label) {
 window.submitQuiz = async function(folderId, quizId) {
     const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
     if (!quizSnap.exists()) {
-        window.showToast('❌ حدث خطأ في تحميل الامتحان', 'error');
+        showToast('❌ حدث خطأ في تحميل الامتحان', 'error');
         return;
     }
     
@@ -1204,7 +1376,7 @@ window.submitQuiz = async function(folderId, quizId) {
     });
 
     const percentage = Math.round((score / total) * 100);
-    window.showToast(`✅ النتيجة: ${score}/${total} (${percentage}%)`, 'success');
+    showToast(`✅ النتيجة: ${score}/${total} (${percentage}%)`, 'success');
     
     const folderTitleName = document.getElementById('folderTitleName');
     const courseName = folderTitleName ? folderTitleName.innerText : '';
@@ -1243,7 +1415,7 @@ window.submitQuiz = async function(folderId, quizId) {
         if (!badges.includes('PERFECT_SCORE')) {
             badges.push('PERFECT_SCORE');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            window.showToast('🏆 تهانينا! حصلت على شارة الدرجة النهائية!', 'success');
+            showToast('🏆 تهانينا! حصلت على شارة الدرجة النهائية!', 'success');
         }
     } else {
         await window.awardPoints(currentUser.uid, 'PASS_QUIZ', { quizId, quizName: quizData.name, score, total });
@@ -1257,7 +1429,7 @@ window.submitQuiz = async function(folderId, quizId) {
         if (!badges.includes('FIRST_EXAM')) {
             badges.push('FIRST_EXAM');
             await update(ref(db, `students/${currentUser.uid}`), { badges });
-            window.showToast('📝 حصلت على شارة: أول امتحان!', 'success');
+            showToast('📝 حصلت على شارة: أول امتحان!', 'success');
         }
     }
 
@@ -1278,11 +1450,11 @@ window.viewQuizResult = async function(folderId, quizId) {
     ]);
 
     if (!quizSnap.exists()) {
-        window.showToast('❌ الامتحان غير موجود', 'error');
+        showToast('❌ الامتحان غير موجود', 'error');
         return;
     }
     if (!resultSnap.exists()) {
-        window.showToast('❌ لا يوجد نتيجة لهذا الامتحان', 'error');
+        showToast('❌ لا يوجد نتيجة لهذا الامتحان', 'error');
         return;
     }
 
@@ -1312,7 +1484,7 @@ window.viewQuizResult = async function(folderId, quizId) {
         const isCorrect = userAnswer === correctAnswer;
 
         html += `<div class="q-form-card" style="border-right-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">`;
-        html += `<span class="q-text">س${idx + 1}: ${window.escapeHTML(q.text || '')}</span>`;
+        html += `<span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>`;
         html += `<div class="opt-container">`;
 
         ['a', 'b', 'c', 'd'].forEach(opt => {
@@ -1326,7 +1498,7 @@ window.viewQuizResult = async function(folderId, quizId) {
                 }
                 html += `<label class="opt-label" style="${style}">`;
                 html += `<input type="radio" name="q${idx}" value="${opt}" ${userAnswer === opt ? 'checked' : ''} disabled>`;
-                html += `<span>${window.escapeHTML(q[opt])}</span>`;
+                html += `<span>${escapeHTML(q[opt])}</span>`;
                 if (correctAnswer === opt) {
                     html += ` <span style="color: var(--success); font-size: 0.85rem;">(الإجابة الصحيحة)</span>`;
                 }
@@ -1339,7 +1511,7 @@ window.viewQuizResult = async function(folderId, quizId) {
         if (isCorrect) {
             html += `<span style="color: var(--success);"><i class="fas fa-check-circle"></i> إجابة صحيحة</span>`;
         } else {
-            const userAnswerText = userAnswer && q[userAnswer] ? window.escapeHTML(q[userAnswer]) : '—';
+            const userAnswerText = userAnswer && q[userAnswer] ? escapeHTML(q[userAnswer]) : '—';
             html += `<span style="color: var(--danger);"><i class="fas fa-times-circle"></i> إجابة خاطئة (إجابتك: ${userAnswerText})</span>`;
         }
         html += `</div>`;
@@ -1389,7 +1561,7 @@ window.openDashboard = async function() {
     
     if (studentNameDashboard) studentNameDashboard.innerText = student.name || currentUser.displayName || '';
     if (dashboardStudentId) {
-        dashboardStudentId.innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${window.escapeHTML(myShortId)}`;
+        dashboardStudentId.innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${escapeHTML(myShortId)}`;
     }
 
     const subscriptions = student.subscriptions || {};
@@ -1432,19 +1604,19 @@ window.openDashboard = async function() {
             const course = courseSnap.val();
             const progress = subData.progress || 0;
             
-            const card = window.createElementSafely('div', { className: 'folder-card' });
+            const card = createElementSafely('div', { className: 'folder-card' });
             
-            const img = window.createElementSafely('img', {
-                src: course.img || 'mona.jpg',
+            const img = createElementSafely('img', {
+                src: course.img && course.img.startsWith('data:image') ? course.img : (course.img || 'mona.jpg'),
                 loading: 'lazy'
             });
             img.onerror = () => img.src = 'mona.jpg';
             card.appendChild(img);
             
-            const h3 = window.createElementSafely('h3', { textContent: course.name || '' });
+            const h3 = createElementSafely('h3', { textContent: course.name || '' });
             card.appendChild(h3);
             
-            const progressDiv = window.createElementSafely('div', {
+            const progressDiv = createElementSafely('div', {
                 style: 'padding: 0 20px 20px'
             });
             progressDiv.innerHTML = `
@@ -1470,7 +1642,7 @@ window.openDashboard = async function() {
         .slice(0,5)
         .forEach(([id, exam]) => {
             examsHtml += `<div class="exam-item">
-                <div><strong style="color: var(--main);">${window.escapeHTML(exam.quizName || '')}</strong><div style="color: #666; font-size: 0.85rem;">${window.escapeHTML(exam.courseName || '')}</div></div>
+                <div><strong style="color: var(--main);">${escapeHTML(exam.quizName || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(exam.courseName || '')}</div></div>
                 <div><span class="exam-score">${exam.score}/${exam.total}</span><span style="color: #666; margin-right: 10px;">${exam.completedAt || ''}</span></div>
             </div>`;
         });
@@ -1486,7 +1658,7 @@ window.openDashboard = async function() {
         .slice(0,5)
         .forEach(([id, video]) => {
             videosHtml += `<div class="video-item">
-                <div><strong>${window.escapeHTML(video.videoTitle || '')}</strong><div style="color: #666; font-size: 0.85rem;">${window.escapeHTML(video.courseName || '')}</div></div>
+                <div><strong>${escapeHTML(video.videoTitle || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(video.courseName || '')}</div></div>
                 <span style="color: #f1c40f;">${video.watchedAt || ''}</span>
             </div>`;
         });
@@ -1519,13 +1691,16 @@ window.loadContinueWatching = async function() {
         const course = courseSnap.val();
         const videos = course.videos || {};
 
-        const videoList = Object.entries(videos).sort((a,b) => (a[1].order||0) - (b[1].order||0));
+        const videoList = Object.entries(videos)
+            .map(([id, data]) => ({ id, ...data, order: data.order || 999 }))
+            .sort((a, b) => a.order - b.order);
+
         if (videoList.length === 0) continue;
 
         let nextVideo = null;
-        for (let [vidId, vidData] of videoList) {
-            if (!watchedVideos[vidId]) {
-                nextVideo = { id: vidId, ...vidData };
+        for (let video of videoList) {
+            if (!watchedVideos[video.id]) {
+                nextVideo = video;
                 break;
             }
         }
@@ -1536,11 +1711,11 @@ window.loadContinueWatching = async function() {
                 .sort((a,b) => (b.watchedAt || '').localeCompare(a.watchedAt || ''))[0];
             
             if (lastWatched) {
-                const card = window.createElementSafely('div', { className: 'continue-card' });
+                const card = createElementSafely('div', { className: 'continue-card' });
                 
-                const div1 = window.createElementSafely('div');
-                const h4 = window.createElementSafely('h4', { textContent: course.name || '' });
-                const p = window.createElementSafely('p', {
+                const div1 = createElementSafely('div');
+                const h4 = createElementSafely('h4', { textContent: course.name || '' });
+                const p = createElementSafely('p', {
                     style: 'color: #666;',
                     textContent: '✨ أكملت كل الفيديوهات! راجع الامتحانات'
                 });
@@ -1548,7 +1723,7 @@ window.loadContinueWatching = async function() {
                 div1.appendChild(p);
                 card.appendChild(div1);
                 
-                const btn = window.createElementSafely('a', {
+                const btn = createElementSafely('a', {
                     href: '#',
                     className: 'btn-continue',
                     textContent: 'عرض الكورس'
@@ -1564,11 +1739,11 @@ window.loadContinueWatching = async function() {
             continue;
         }
 
-        const card = window.createElementSafely('div', { className: 'continue-card' });
+        const card = createElementSafely('div', { className: 'continue-card' });
         
-        const div1 = window.createElementSafely('div');
-        const h4 = window.createElementSafely('h4', { textContent: course.name || '' });
-        const p = window.createElementSafely('p', {
+        const div1 = createElementSafely('div');
+        const h4 = createElementSafely('h4', { textContent: course.name || '' });
+        const p = createElementSafely('p', {
             style: 'color: var(--main);',
             textContent: '▶️ تابع: ' + (nextVideo.title || '')
         });
@@ -1576,7 +1751,7 @@ window.loadContinueWatching = async function() {
         div1.appendChild(p);
         card.appendChild(div1);
         
-        const btn = window.createElementSafely('a', {
+        const btn = createElementSafely('a', {
             href: '#',
             className: 'btn-continue',
             textContent: 'مشاهدة'
@@ -1599,64 +1774,6 @@ window.loadContinueWatching = async function() {
         continueWatchingGrid.innerHTML = continueHtml;
     }
 };
-
-// ================ AUTH STATE ================
-onAuthStateChanged(auth, async user => {
-    currentUser = user;
-    const statusDiv = document.getElementById('authStatus');
-    const reviewContainer = document.getElementById('reviewSectionContainer');
-    
-    if (!statusDiv) return;
-    
-    if (user) {
-        const isAdmin = user.email === ADMIN_EMAIL;
-        const adminsSnap = await get(ref(db, 'admins'));
-        const admins = adminsSnap.val() || {};
-        const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
-        isAdminUser = isAdmin || isAddedAdmin;
-        
-        const userSnap = await get(child(dbRef, `students/${user.uid}`));
-        let displayName = user.displayName || '';
-        
-        if (userSnap.exists()) {
-            const data = userSnap.val();
-            myShortId = data.shortId || '';
-            displayName = data.name || user.displayName || '';
-            if (data.name && data.name !== user.displayName) {
-                await updateProfile(user, { displayName: data.name });
-                displayName = data.name;
-            }
-            currentStudentGrade = data.grade;
-        }
-        
-        statusDiv.innerHTML = `
-            <div class="hamburger-menu" onclick="window.toggleMenu()">
-                <i class="fas fa-bars"></i>
-            </div>
-        `;
-        
-        if (isAdminUser) {
-            statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
-        }
-        
-        if (reviewContainer) {
-            reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
-        }
-        
-        window.loadFolders();
-        await window.loadLeaderboard();
-        window.initializeMessaging();
-    } else {
-        isAdminUser = false;
-        statusDiv.innerHTML = `<button class="auth-btn" onclick="window.openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
-        
-        if (reviewContainer) {
-            reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
-        }
-        
-        window.loadFolders();
-    }
-});
 
 // ================ NOTIFICATIONS (FCM) ================
 window.initializeMessaging = async function() {
@@ -1702,12 +1819,12 @@ window.initializeMessaging = async function() {
 };
 
 window.showNotification = function(title, body) {
-    const toast = window.createElementSafely('div', {
+    const toast = createElementSafely('div', {
         style: `position: fixed; top: 80px; left: 20px; background: var(--main); color: white;
                 padding: 15px 25px; border-radius: 12px; box-shadow: 0 5px 20px rgba(0,0,0,0.2);
                 z-index: 10000; max-width: 300px; animation: slideIn 0.3s ease; direction: rtl;`
     });
-    toast.innerHTML = `<strong>${window.escapeHTML(title)}</strong><br>${window.escapeHTML(body)}`;
+    toast.innerHTML = `<strong>${escapeHTML(title)}</strong><br>${escapeHTML(body)}`;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 5000);
 };
@@ -1715,7 +1832,7 @@ window.showNotification = function(title, body) {
 // ================ UTILITY FUNCTIONS ================
 window.logout = function() { 
     signOut(auth);
-    window.showToast('👋 تم تسجيل الخروج', 'success');
+    showToast('👋 تم تسجيل الخروج', 'success');
 };
 
 window.openLogin = function() { 
@@ -1737,6 +1854,11 @@ window.goHome = function() {
     if (homePage) homePage.style.display = "block";
     if (contentArea) contentArea.style.display = "none";
     if (studentDashboard) studentDashboard.style.display = "none";
+    
+    // إعادة تحميل الصفحة الرئيسية
+    window.loadFolders();
+    window.loadPerfectScores();
+    window.loadLeaderboard();
 };
 
 window.sendStuReview = async function() {
@@ -1751,7 +1873,7 @@ window.sendStuReview = async function() {
             timestamp: new Date().toLocaleString('ar-EG')
         });
         stuText.value = "";
-        window.showToast('✅ شكراً لك! تم إرسال تقييمك.', 'success');
+        showToast('✅ شكراً لك! تم إرسال تقييمك.', 'success');
     }
 };
 
@@ -1823,7 +1945,7 @@ window.updateGrades = function() {
     
     if (level && grades[level]) {
         grades[level].forEach(g => {
-            const option = window.createElementSafely('option', {
+            const option = createElementSafely('option', {
                 value: g,
                 textContent: g
             });
@@ -1837,6 +1959,101 @@ window.updateGrades = function() {
     window.checkStep2Completion();
 };
 
+// ================ ربط أحداث التسجيل ================
+document.addEventListener('DOMContentLoaded', function() {
+    // ربط أزرار التسجيل والدخول
+    const showLoginChoiceBtn = document.getElementById('showLoginChoiceBtn');
+    const showRegisterBtn = document.getElementById('showRegisterBtn');
+    const showLoginEmailBtn = document.getElementById('showLoginEmailBtn');
+    const showLoginUsernameBtn = document.getElementById('showLoginUsernameBtn');
+    const loginGoogleBtn = document.getElementById('loginGoogleBtn');
+    const loginEmailSubmitBtn = document.getElementById('loginEmailSubmitBtn');
+    const loginUsernameSubmitBtn = document.getElementById('loginUsernameSubmitBtn');
+    const registerGoogleBtn = document.getElementById('registerGoogleBtn');
+    const showRegEmailBtn = document.getElementById('showRegEmailBtn');
+    const showRegUsernameBtn = document.getElementById('showRegUsernameBtn');
+    const regBtn = document.getElementById('regBtn');
+    const regBtnUser = document.getElementById('regBtnUser');
+    
+    // أزرار العودة
+    const backToChoiceFromLogin = document.getElementById('backToChoiceFromLogin');
+    const backToLoginChoiceFromEmail = document.getElementById('backToLoginChoiceFromEmail');
+    const backToLoginChoiceFromUsername = document.getElementById('backToLoginChoiceFromUsername');
+    const backToChoiceFromRegister = document.getElementById('backToChoiceFromRegister');
+    
+    // أزرار التنقل بين الخطوات
+    const step1NextBtn = document.getElementById('step1NextBtn');
+    const step2PrevBtn = document.getElementById('step2PrevBtn');
+    const step2NextBtn = document.getElementById('step2NextBtn');
+    const step3PrevBtn = document.getElementById('step3PrevBtn');
+    const step3CancelBtn = document.getElementById('step3CancelBtn');
+    
+    // حقول الإدخال للتحقق
+    const n1 = document.getElementById('n1');
+    const n4 = document.getElementById('n4');
+    const regWhatsapp = document.getElementById('regWhatsapp');
+    const regParentPhone = document.getElementById('regParentPhone');
+    const regLevel = document.getElementById('regLevel');
+    const regGrade = document.getElementById('regGrade');
+    
+    // ربط الأحداث
+    if (showLoginChoiceBtn) showLoginChoiceBtn.addEventListener('click', () => window.showAuthForm('loginChoice'));
+    if (showRegisterBtn) showRegisterBtn.addEventListener('click', () => window.showAuthForm('register'));
+    if (showLoginEmailBtn) showLoginEmailBtn.addEventListener('click', () => window.showAuthForm('loginEmail'));
+    if (showLoginUsernameBtn) showLoginUsernameBtn.addEventListener('click', () => window.showAuthForm('loginUsername'));
+    if (loginGoogleBtn) loginGoogleBtn.addEventListener('click', window.loginGoogle);
+    if (loginEmailSubmitBtn) loginEmailSubmitBtn.addEventListener('click', window.loginEmailSubmit);
+    if (loginUsernameSubmitBtn) loginUsernameSubmitBtn.addEventListener('click', window.loginUsernameSubmit);
+    if (registerGoogleBtn) registerGoogleBtn.addEventListener('click', window.registerWithGoogle);
+    if (showRegEmailBtn) showRegEmailBtn.addEventListener('click', () => window.showRegMethod('email'));
+    if (showRegUsernameBtn) showRegUsernameBtn.addEventListener('click', () => window.showRegMethod('username'));
+    if (regBtn) regBtn.addEventListener('click', window.handleRegisterEmail);
+    if (regBtnUser) regBtnUser.addEventListener('click', window.handleRegisterUsername);
+    
+    // أزرار العودة
+    if (backToChoiceFromLogin) backToChoiceFromLogin.addEventListener('click', () => window.showAuthForm('choice'));
+    if (backToLoginChoiceFromEmail) backToLoginChoiceFromEmail.addEventListener('click', () => window.showAuthForm('loginChoice'));
+    if (backToLoginChoiceFromUsername) backToLoginChoiceFromUsername.addEventListener('click', () => window.showAuthForm('loginChoice'));
+    if (backToChoiceFromRegister) backToChoiceFromRegister.addEventListener('click', () => window.showAuthForm('choice'));
+    
+    // أزرار التنقل بين الخطوات
+    if (step1NextBtn) step1NextBtn.addEventListener('click', () => window.nextStep(2));
+    if (step2PrevBtn) step2PrevBtn.addEventListener('click', () => window.nextStep(1));
+    if (step2NextBtn) step2NextBtn.addEventListener('click', () => window.nextStep(3));
+    if (step3PrevBtn) step3PrevBtn.addEventListener('click', () => window.nextStep(2));
+    if (step3CancelBtn) step3CancelBtn.addEventListener('click', () => window.showAuthForm('choice'));
+    
+    // التحقق من المدخلات
+    if (n1) n1.addEventListener('input', window.checkStep1Completion);
+    if (n4) n4.addEventListener('input', window.checkStep1Completion);
+    if (regWhatsapp) regWhatsapp.addEventListener('input', window.checkStep1Completion);
+    if (regParentPhone) regParentPhone.addEventListener('input', window.checkStep1Completion);
+    if (regLevel) regLevel.addEventListener('change', () => {
+        window.updateGrades();
+        window.checkStep2Completion();
+    });
+    if (regGrade) regGrade.addEventListener('change', window.checkStep2Completion);
+    
+    // منع إدخال غير الأرقام في حقول الهاتف
+    const phoneInputs = ['regWhatsapp', 'regParentPhone'];
+    phoneInputs.forEach(id => {
+        const input = document.getElementById(id);
+        if (input) {
+            input.addEventListener('keypress', (e) => { 
+                if (!/[0-9]/.test(e.key)) e.preventDefault(); 
+            });
+            input.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const text = (e.clipboardData || window.clipboardData).getData('text');
+                if (/^\d+$/.test(text)) { 
+                    input.value = text; 
+                    window.checkStep1Completion(); 
+                }
+            });
+        }
+    });
+});
+
 // ================ LOAD REVIEWS ================
 function loadReviews() {
     const reviewsRef = ref(db, 'reviews');
@@ -1846,9 +2063,9 @@ function loadReviews() {
             snapshot.forEach(c => {
                 const review = c.val();
                 html += `<div class="review-card">
-                    <p>"${window.escapeHTML(review.text || '')}"</p>
-                    <h4 style="color:var(--main);">- ${window.escapeHTML(review.student || '')}</h4>
-                    <span style="color: #999; font-size:0.75rem;">${window.escapeHTML(review.timestamp || '')}</span>
+                    <p>"${escapeHTML(review.text || '')}"</p>
+                    <h4 style="color:var(--main);">- ${escapeHTML(review.student || '')}</h4>
+                    <span style="color: #999; font-size:0.75rem;">${escapeHTML(review.timestamp || '')}</span>
                 </div>`; 
             });
         } else {
@@ -1871,7 +2088,7 @@ window.cleanupListeners = function() {
 };
 
 // ================ INIT ================
-window.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     window.loadFolders();
     loadReviews();
     window.loadPerfectScores();
@@ -1880,24 +2097,6 @@ window.addEventListener('DOMContentLoaded', () => {
     onValue(ref(db, 'quiz_results'), () => {
         window.loadPerfectScores();
         window.loadLeaderboard();
-    });
-    
-    const phoneInputs = ['regWhatsapp', 'regParentPhone'];
-    phoneInputs.forEach(id => {
-        const input = document.getElementById(id);
-        if (input) {
-            input.addEventListener('keypress', (e) => { 
-                if (!/[0-9]/.test(e.key)) e.preventDefault(); 
-            });
-            input.addEventListener('paste', (e) => {
-                e.preventDefault();
-                const text = (e.clipboardData || window.clipboardData).getData('text');
-                if (/^\d+$/.test(text)) { 
-                    input.value = text; 
-                    window.checkStep1Completion(); 
-                }
-            });
-        }
     });
 });
 
