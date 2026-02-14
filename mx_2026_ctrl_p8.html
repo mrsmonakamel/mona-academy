@@ -915,6 +915,34 @@
             animation: float 3s ease-in-out infinite;
         }
         
+        /* ========== IMAGE UPLOAD ========== */
+        .image-preview {
+            display: none;
+            margin: 15px 0;
+            text-align: center;
+        }
+        
+        .image-preview img {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 15px;
+            border: 4px solid var(--accent);
+            box-shadow: 0 5px 15px rgba(108,92,231,0.3);
+        }
+        
+        .file-input {
+            padding: 10px;
+            background: white;
+            border-radius: 10px;
+            border: 2px dashed var(--accent);
+            cursor: pointer;
+            margin: 10px 0;
+        }
+        
+        .file-input:hover {
+            background: #f0eeff;
+        }
+        
         /* ========== RESPONSIVE ========== */
         @media (max-width: 768px) {
             .main-content {
@@ -936,10 +964,10 @@
     <div class="mobile-header">
         <span>لوحة إدارة مـنى</span>
         <div style="display: flex; gap: 10px;">
-            <i class="fas fa-bars fa-lg" onclick="window.toggleSidebar()"></i>
+            <i class="fas fa-bars fa-lg" onclick="toggleSidebar()"></i>
         </div>
     </div>
-    <div class="overlay" id="overlay" onclick="window.toggleSidebar()"></div>
+    <div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
 
     <div id="guard-loader">
         <i class="fas fa-user-shield"></i>
@@ -950,47 +978,47 @@
     <div class="wrapper" id="adminApp" style="display: none;">
         <aside class="sidebar" id="sidebar">
             <div class="logo">Mona Academy</div>
-            <div class="nav-link active" onclick="window.showSection('coursesSection', this)">
+            <div class="nav-link active" onclick="showSection('coursesSection', this)">
                 <i class="fas fa-th-large"></i> إدارة الكورسات
             </div>
-            <div class="nav-link" onclick="window.showSection('examsSection', this)">
+            <div class="nav-link" onclick="showSection('examsSection', this)">
                 <i class="fas fa-edit"></i> مصنع الاختبارات
             </div>
-            <div class="nav-link" onclick="window.showSection('studentSearchSection', this)">
+            <div class="nav-link" onclick="showSection('studentSearchSection', this)">
                 <i class="fas fa-search"></i> بحث متقدم عن الطلاب
             </div>
-            <div class="nav-link" onclick="window.showSection('studentsSection', this)">
+            <div class="nav-link" onclick="showSection('studentsSection', this)">
                 <i class="fas fa-user-graduate"></i> الطلاب المسجلين
             </div>
-            <div class="nav-link" onclick="window.showSection('resultsSection', this)">
+            <div class="nav-link" onclick="showSection('resultsSection', this)">
                 <i class="fas fa-poll-h"></i> درجات الطلاب
             </div>
-            <div class="nav-link" onclick="window.showSection('accessLogsSection', this)">
+            <div class="nav-link" onclick="showSection('accessLogsSection', this)">
                 <i class="fas fa-history"></i> سجل الدخول للكورسات
             </div>
-            <div class="nav-link" onclick="window.showSection('notificationsSection', this)">
+            <div class="nav-link" onclick="showSection('notificationsSection', this)">
                 <i class="fas fa-bell"></i> إشعارات دخول الكورسات
             </div>
-            <div class="nav-link" onclick="window.showSection('subscriptionNotificationsSection', this)">
+            <div class="nav-link" onclick="showSection('subscriptionNotificationsSection', this)">
                 <i class="fas fa-user-plus"></i> إشعارات الاشتراكات
             </div>
-            <div class="nav-link" onclick="window.showSection('reviewsSection', this)">
+            <div class="nav-link" onclick="showSection('reviewsSection', this)">
                 <i class="fas fa-comments"></i> آراء الطلاب
             </div>
-            <div class="nav-link" onclick="window.showSection('adminsSection', this)">
+            <div class="nav-link" onclick="showSection('adminsSection', this)">
                 <i class="fas fa-user-shield"></i> إدارة الأدمنز
             </div>
-            <div class="nav-link" onclick="window.showSection('perfectScoresSection', this)">
+            <div class="nav-link" onclick="showSection('perfectScoresSection', this)">
                 <i class="fas fa-trophy"></i> الدرجات النهائية
             </div>
-            <div class="nav-link" onclick="window.showSection('analyticsSection', this)">
+            <div class="nav-link" onclick="showSection('analyticsSection', this)">
                 <i class="fas fa-chart-line"></i> التحليلات
             </div>
             <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
                 <a href="index.html" class="nav-link" style="color: var(--success);">
                     <i class="fas fa-home"></i> العودة للموقع
                 </a>
-                <div class="nav-link" onclick="window.logout()" style="color: var(--danger);">
+                <div class="nav-link" onclick="logout()" style="color: var(--danger);">
                     <i class="fas fa-power-off"></i> خروج
                 </div>
             </div>
@@ -1008,7 +1036,17 @@
                         <input type="text" id="cName" placeholder="اسم الكورس">
                         <input type="url" id="cImgUrl" placeholder="https://... (رابط الصورة)" dir="ltr">
                     </div>
-                    <button class="btn btn-main" style="margin-top:20px;" onclick="window.addCourse()">
+                    
+                    <!-- حقل رفع الصور من الجهاز -->
+                    <div style="margin-top: 20px;">
+                        <label style="display: block; margin-bottom: 10px; font-weight: bold;">أو ارفع صورة من جهازك:</label>
+                        <input type="file" id="cImageFile" accept="image/*" class="file-input" style="width: 100%;">
+                        <div id="imagePreview" class="image-preview">
+                            <img id="previewImg" src="" alt="معاينة الصورة">
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-main" style="margin-top:20px;" onclick="addCourse()">
                         <i class="fas fa-save"></i> حفظ الكورس
                     </button>
                 </div>
@@ -1030,14 +1068,14 @@
                     </select>
                     <div id="questionsArea" style="margin-top: 20px;"></div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="btn btn-success" onclick="window.addNewQuestion('mcq')" style="flex:1;">
+                        <button class="btn btn-success" onclick="addNewQuestion('mcq')" style="flex:1;">
                             <i class="fas fa-list"></i> + اختيارات
                         </button>
-                        <button class="btn btn-warning" onclick="window.addNewQuestion('tf')" style="flex:1;">
+                        <button class="btn btn-warning" onclick="addNewQuestion('tf')" style="flex:1;">
                             <i class="fas fa-check-circle"></i> + صح/خطأ
                         </button>
                     </div>
-                    <button class="btn btn-main" style="margin-top: 25px;" onclick="window.saveFinalExam()">
+                    <button class="btn btn-main" style="margin-top: 25px;" onclick="saveFinalExam()">
                         <i class="fas fa-cloud-upload-alt"></i> نشر الامتحان
                     </button>
                 </div>
@@ -1050,10 +1088,10 @@
                     <p style="color: #666; margin-bottom: 20px;">ابحث بالاسم أو كود الطالب للحصول على جميع المعلومات والنشاطات</p>
                     <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="font-size: 1.1rem;">
                     <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="btn btn-main" style="flex: 2;" onclick="window.performAdvancedSearch()">
+                        <button class="btn btn-main" style="flex: 2;" onclick="performAdvancedSearch()">
                             <i class="fas fa-search"></i> بحث
                         </button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="window.clearAdvancedSearch()">
+                        <button class="btn btn-danger" style="flex: 1;" onclick="clearAdvancedSearch()">
                             <i class="fas fa-times"></i> إلغاء
                         </button>
                     </div>
@@ -1062,7 +1100,7 @@
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
                             <h3><i class="fas fa-user-graduate"></i> معلومات الطالب</h3>
-                            <button class="btn btn-pdf btn-sm" onclick="window.exportStudentPDF()">
+                            <button class="btn btn-pdf btn-sm" onclick="exportStudentPDF()">
                                 <i class="fas fa-file-pdf"></i> تصدير PDF
                             </button>
                         </div>
@@ -1090,7 +1128,7 @@
             <section id="studentsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-users"></i> قائمة الطلاب <span style="color: var(--accent);" id="studentCount"></span></h3>
-                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="window.filterStudents()">
+                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="filterStudents()">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الاسم</th><th>كود الطالب</th><th>المرحلة</th><th>واتساب</th><th>ولي الأمر</th><th>طريقة التسجيل</th><th>الاشتراكات</th><th>النقاط</th><th>حذف</th></tr></thead>
@@ -1104,7 +1142,7 @@
             <section id="resultsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-chart-bar"></i> النتائج <span style="color: var(--accent);" id="resultsCount"></span></h3>
-                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="window.filterResults()">
+                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="filterResults()">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th><th>حذف</th></tr></thead>
@@ -1118,7 +1156,7 @@
             <section id="accessLogsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-history"></i> سجل الدخول للكورسات <span style="color: var(--accent);" id="logsCount"></span></h3>
-                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="window.filterLogs()">
+                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="filterLogs()">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الكورس</th><th>التوقيت</th><th>حذف</th></tr></thead>
@@ -1133,7 +1171,7 @@
                 <div class="card">
                     <h3><i class="fas fa-bell"></i> إشعارات دخول الطلاب للكورسات <span style="color: var(--accent);" id="notificationsCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين دخلوا الكورسات لأول مرة</p>
-                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="window.filterNotifications()">
+                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterNotifications()">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>وقت أول دخول</th><th>حذف</th></tr></thead>
@@ -1148,7 +1186,7 @@
                 <div class="card">
                     <h3><i class="fas fa-user-plus"></i> إشعارات اشتراكات الطلاب في الكورسات <span style="color: var(--accent);" id="subscriptionNotificationsCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين اشتركوا في الكورسات</p>
-                    <input type="text" id="subscriptionNotificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="window.filterSubscriptionNotifications()">
+                    <input type="text" id="subscriptionNotificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterSubscriptionNotifications()">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>تاريخ الاشتراك</th><th>حذف</th></tr></thead>
@@ -1178,7 +1216,7 @@
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                         <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني للأدمن" style="flex: 2;">
                         <input type="text" id="newAdminName" placeholder="اسم الأدمن" style="flex: 1;">
-                        <button class="btn btn-success" style="flex: 0.5;" onclick="window.addAdmin()">
+                        <button class="btn btn-success" style="flex: 0.5;" onclick="addAdmin()">
                             <i class="fas fa-user-plus"></i> إضافة
                         </button>
                     </div>
@@ -1195,7 +1233,7 @@
                 <div class="card">
                     <h3><i class="fas fa-trophy" style="color: var(--gold);"></i> طلاب الدرجة النهائية <span style="color: var(--accent);" id="perfectScoresCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بجميع الطلاب الذين حصلوا على الدرجة الكاملة في الامتحانات. يمكنك حذف أي نتيجة لإعادة فتح الامتحان للطالب.</p>
-                    <input type="text" id="perfectScoreSearch" placeholder="🔍 ابحث باسم الطالب أو الكود أو الامتحان..." style="margin-bottom: 15px;" onkeyup="window.filterPerfectScores()">
+                    <input type="text" id="perfectScoreSearch" placeholder="🔍 ابحث باسم الطالب أو الكود أو الامتحان..." style="margin-bottom: 15px;" onkeyup="filterPerfectScores()">
                     <div class="table-container">
                         <table>
                             <thead>
@@ -1254,7 +1292,7 @@
     <!-- ========== مودال تعديل الكورس ========== -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <button class="close-modal-btn" onclick="window.closeModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
             <h3 style="color: var(--accent); margin-bottom: 25px;">
                 <i class="fas fa-edit"></i> إدارة الكورس
             </h3>
@@ -1266,7 +1304,16 @@
                 <label style="font-weight: bold;">تعديل الصورة (رابط):</label>
                 <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr" style="margin-bottom: 15px;">
                 
-                <button class="btn btn-main" id="saveBasicBtn" onclick="window.updateCourseBasic()">
+                <!-- حقل رفع صورة جديدة من الجهاز -->
+                <div style="margin-top: 15px;">
+                    <label style="font-weight: bold;">أو ارفع صورة جديدة:</label>
+                    <input type="file" id="editImageFile" accept="image/*" class="file-input" style="width: 100%; margin-top: 10px;">
+                    <div id="editImagePreview" class="image-preview">
+                        <img id="editPreviewImg" src="" alt="معاينة الصورة">
+                    </div>
+                </div>
+                
+                <button class="btn btn-main" id="saveBasicBtn" onclick="updateCourseBasic()" style="margin-top: 15px;">
                     <i class="fas fa-save"></i> حفظ البيانات الجديدة
                 </button>
             </div>
@@ -1280,7 +1327,7 @@
                 <input type="text" id="vUrl" placeholder="رابط اليوتيوب" dir="ltr">
             </div>
             <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)" style="margin-top: 15px;">
-            <button class="btn btn-success" style="margin-top:15px; width:100%;" onclick="window.addVideoToCourse()">
+            <button class="btn btn-success" style="margin-top:15px; width:100%;" onclick="addVideoToCourse()">
                 <i class="fas fa-video"></i> إضافة الفيديو
             </button>
             
@@ -1305,7 +1352,7 @@
     <!-- ========== مودال تعديل الفيديو ========== -->
     <div id="editVideoModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
-            <button class="close-modal-btn" onclick="window.closeVideoModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn" onclick="closeVideoModal()"><i class="fas fa-times"></i></button>
             <h3 style="color: var(--accent); margin-bottom: 25px;">
                 <i class="fas fa-video"></i> تعديل الفيديو
             </h3>
@@ -1323,10 +1370,10 @@
             <input type="number" id="editVideoOrder" placeholder="رقم الترتيب" style="margin-bottom: 25px;">
             
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-main" onclick="window.saveVideoChanges()" style="flex: 2;">
+                <button class="btn btn-main" onclick="saveVideoChanges()" style="flex: 2;">
                     <i class="fas fa-save"></i> حفظ التغييرات
                 </button>
-                <button class="btn btn-danger" onclick="window.closeVideoModal()" style="flex: 1;">
+                <button class="btn btn-danger" onclick="closeVideoModal()" style="flex: 1;">
                     <i class="fas fa-times"></i> إلغاء
                 </button>
             </div>
@@ -1336,14 +1383,14 @@
     <!-- ========== مودال تعديل الامتحان ========== -->
     <div id="editExamModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 1000px;">
-            <button class="close-modal-btn" onclick="window.closeExamModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn" onclick="closeExamModal()"><i class="fas fa-times"></i></button>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
                 <h3 style="color: var(--accent);">
                     <i class="fas fa-edit"></i> تعديل الامتحان
                 </h3>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-success btn-sm" onclick="window.previewExam()">
+                    <button class="btn btn-success btn-sm" onclick="previewExam()">
                         <i class="fas fa-eye"></i> معاينة الامتحان
                     </button>
                 </div>
@@ -1365,10 +1412,10 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
                 <h4><i class="fas fa-question-circle"></i> الأسئلة</h4>
                 <div>
-                    <button class="btn btn-success btn-sm" onclick="window.addEditQuestion('mcq')">
+                    <button class="btn btn-success btn-sm" onclick="addEditQuestion('mcq')">
                         <i class="fas fa-plus"></i> سؤال اختيارات
                     </button>
-                    <button class="btn btn-warning btn-sm" onclick="window.addEditQuestion('tf')" style="margin-right: 10px;">
+                    <button class="btn btn-warning btn-sm" onclick="addEditQuestion('tf')" style="margin-right: 10px;">
                         <i class="fas fa-plus"></i> سؤال صح/خطأ
                     </button>
                 </div>
@@ -1377,10 +1424,10 @@
             <div id="editQuestionsArea" style="max-height: 400px; overflow-y: auto; padding: 10px;"></div>
             
             <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn btn-main" onclick="window.saveExamChanges()" style="flex: 2;">
+                <button class="btn btn-main" onclick="saveExamChanges()" style="flex: 2;">
                     <i class="fas fa-save"></i> حفظ التغييرات
                 </button>
-                <button class="btn btn-danger" onclick="window.deleteExam()" style="flex: 1;">
+                <button class="btn btn-danger" onclick="deleteExam()" style="flex: 1;">
                     <i class="fas fa-trash"></i> حذف الامتحان
                 </button>
             </div>
@@ -1390,7 +1437,7 @@
     <!-- ========== مودال معاينة الامتحان ========== -->
     <div id="previewExamModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 700px;">
-            <button class="close-modal-btn" onclick="window.closePreviewModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn" onclick="closePreviewModal()"><i class="fas fa-times"></i></button>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="color: var(--accent);">
@@ -1447,61 +1494,23 @@
         let currentStudentUid = null;
         let currentEditingExam = null;
 
-        // ================ تعريف الدوال في النطاق العام ================
-        window.toggleSidebar = toggleSidebar;
-        window.showSection = showSection;
-        window.addCourse = addCourse;
-        window.openEditModal = openEditModal;
-        window.playVideoAdmin = playVideoAdmin;
-        window.previewExamFromList = previewExamFromList;
-        window.updateCourseBasic = updateCourseBasic;
-        window.addVideoToCourse = addVideoToCourse;
-        window.openEditVideoModal = openEditVideoModal;
-        window.closeVideoModal = closeVideoModal;
-        window.saveVideoChanges = saveVideoChanges;
-        window.addNewQuestion = addNewQuestion;
-        window.saveFinalExam = saveFinalExam;
-        window.renderStudents = renderStudents;
-        window.filterStudents = filterStudents;
-        window.renderResults = renderResults;
-        window.filterResults = filterResults;
-        window.renderAccessLogs = renderAccessLogs;
-        window.filterLogs = filterLogs;
-        window.renderNotifications = renderNotifications;
-        window.filterNotifications = filterNotifications;
-        window.renderSubscriptionNotifications = renderSubscriptionNotifications;
-        window.filterSubscriptionNotifications = filterSubscriptionNotifications;
-        window.renderReviews = renderReviews;
-        window.renderAdmins = renderAdmins;
-        window.addAdmin = addAdmin;
-        window.removeAdmin = removeAdmin;
-        window.renderPerfectScores = renderPerfectScores;
-        window.filterPerfectScores = filterPerfectScores;
-        window.deletePerfectScore = deletePerfectScore;
-        window.performAdvancedSearch = performAdvancedSearch;
-        window.clearAdvancedSearch = clearAdvancedSearch;
-        window.exportStudentPDF = exportStudentPDF;
-        window.delData = delData;
-        window.closeModal = closeModal;
-        window.logout = logout;
-        window.openEditExamModal = openEditExamModal;
-        window.closeExamModal = closeExamModal;
-        window.addEditQuestion = addEditQuestion;
-        window.changeQuestionType = changeQuestionType;
-        window.removeEditQuestion = removeEditQuestion;
-        window.duplicateQuestion = duplicateQuestion;
-        window.previewExam = previewExam;
-        window.closePreviewModal = closePreviewModal;
-        window.saveExamChanges = saveExamChanges;
-        window.deleteExam = deleteExam;
-
-        // ================ FUNCIÓN ESCAPE HTML محسنة ================
+        // ================ دالة escapeHTML ================
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
             if (typeof str !== 'string') str = String(str);
             const div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
+        }
+
+        // ================ دالة convertImageToBase64 ================
+        function convertImageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
         }
 
         // ================ TOAST NOTIFICATION ================
@@ -1536,12 +1545,12 @@
         }
 
         // ================ SIDEBAR ================
-        function toggleSidebar() {
+        window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('overlay');
             if (sidebar) sidebar.classList.toggle('open');
             if (overlay) overlay.classList.toggle('active');
-        }
+        };
 
         // ================ AUTH STATE ================
         onAuthStateChanged(auth, async user => {
@@ -1648,7 +1657,7 @@
         }
 
         // ================ SHOW SECTION ================
-        function showSection(sectionId, element) {
+        window.showSection = function(sectionId, element) {
             document.querySelectorAll('.admin-section').forEach(s => s.style.display = 'none');
             const section = document.getElementById(sectionId);
             if (section) section.style.display = 'block';
@@ -1657,25 +1666,27 @@
             if (element) element.classList.add('active');
             
             if (sectionId === 'analyticsSection') loadAnalytics();
-        }
+        };
 
-        // ================ COURSES MANAGEMENT محسنة ================
+        // ================ COURSES MANAGEMENT ================
         function renderCourses(folders) {
             let h = "";
             if (folders) {
                 Object.keys(folders).forEach(id => {
                     const f = folders[id];
+                    const imgSrc = f.img && f.img.startsWith('data:image') ? f.img : (f.img || 'mona.jpg');
+                    
                     h += `<div class="card" style="text-align:center;">
-                        <img src="${escapeHTML(f.img || 'mona.jpg')}" style="width:100px; height:100px; border-radius:20px; object-fit:cover; border: 4px solid var(--accent); margin-bottom: 15px;" onerror="this.src='mona.jpg'">
+                        <img src="${escapeHTML(imgSrc)}" style="width:100px; height:100px; border-radius:20px; object-fit:cover; border: 4px solid var(--accent); margin-bottom: 15px;" onerror="this.src='mona.jpg'">
                         <h4 style="margin:15px 0 10px; font-size:1.3rem;">${escapeHTML(f.name)}</h4>
                         <div style="margin-bottom:20px; color: var(--gold); font-size:1.2rem;">
                             ${'★'.repeat(Math.min(5, Math.round(f.avgRating || 0)))} (${escapeHTML(f.reviewCount || 0)})
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-main" style="flex: 1;" onclick='window.openEditModal("${id}", "${escapeHTML(f.name)}")'>
+                            <button class="btn btn-main" style="flex: 1;" onclick='openEditModal("${id}", "${escapeHTML(f.name)}")'>
                                 <i class="fas fa-edit"></i> تعديل
                             </button>
-                            <button class="btn btn-danger" style="flex: 0.5;" onclick="window.delData('folders/${id}')">
+                            <button class="btn btn-danger" style="flex: 0.5;" onclick="delData('folders/${id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1688,16 +1699,29 @@
             }
         }
 
-        async function addCourse() {
+        // ================ إضافة كورس جديد مع صورة من الجهاز ================
+        window.addCourse = async function() {
             const name = document.getElementById('cName')?.value.trim();
             const imgUrl = document.getElementById('cImgUrl')?.value.trim();
+            const imgFile = document.getElementById('cImageFile')?.files[0];
             
             if (!name) {
                 showToast("يرجى إدخال اسم الكورس", 'error');
                 return;
             }
             
-            if (imgUrl) {
+            let imageData = imgUrl || 'mona.jpg';
+            
+            // إذا تم اختيار صورة من الجهاز
+            if (imgFile) {
+                try {
+                    imageData = await convertImageToBase64(imgFile);
+                } catch (error) {
+                    console.error('Error converting image:', error);
+                    showToast("❌ حدث خطأ في معالجة الصورة", 'error');
+                    return;
+                }
+            } else if (imgUrl) {
                 try {
                     new URL(imgUrl);
                 } catch {
@@ -1709,29 +1733,63 @@
             try {
                 await push(ref(db, 'folders'), { 
                     name, 
-                    img: imgUrl || 'mona.jpg', 
+                    img: imageData, 
                     avgRating: 0, 
                     reviewCount: 0 
                 });
                 
-                const cNameInput = document.getElementById('cName');
-                const cImgUrlInput = document.getElementById('cImgUrl');
-                if (cNameInput) cNameInput.value = "";
-                if (cImgUrlInput) cImgUrlInput.value = "";
+                document.getElementById('cName').value = "";
+                document.getElementById('cImgUrl').value = "";
+                document.getElementById('cImageFile').value = "";
+                document.getElementById('imagePreview').style.display = 'none';
                 showToast("✅ تم إنشاء الكورس بنجاح", 'success');
             } catch (error) {
                 console.error('Error adding course:', error);
                 showToast("❌ حدث خطأ أثناء إضافة الكورس", 'error');
             }
-        }
+        };
 
-        async function openEditModal(id, name) {
+        // ================ معاينة الصورة قبل الرفع ================
+        document.addEventListener('DOMContentLoaded', function() {
+            const cImageFile = document.getElementById('cImageFile');
+            if (cImageFile) {
+                cImageFile.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const preview = document.getElementById('imagePreview');
+                        const previewImg = document.getElementById('previewImg');
+                        previewImg.src = await convertImageToBase64(file);
+                        preview.style.display = 'block';
+                    }
+                });
+            }
+            
+            const editImageFile = document.getElementById('editImageFile');
+            if (editImageFile) {
+                editImageFile.addEventListener('change', async function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        const preview = document.getElementById('editImagePreview');
+                        const previewImg = document.getElementById('editPreviewImg');
+                        previewImg.src = await convertImageToBase64(file);
+                        preview.style.display = 'block';
+                    }
+                });
+            }
+        });
+
+        // ================ فتح مودال التعديل ================
+        window.openEditModal = async function(id, name) {
             activeCID = id;
             const editNameField = document.getElementById('editNameField');
             const editImgField = document.getElementById('editImgField');
             
             if (editNameField) editNameField.value = name;
             if (editImgField) editImgField.value = "";
+            
+            // إخفاء معاينة الصورة
+            document.getElementById('editImagePreview').style.display = 'none';
+            document.getElementById('editImageFile').value = '';
             
             try {
                 const [folderSnap, quizzesSnap] = await Promise.all([
@@ -1743,27 +1801,37 @@
                 let vH = "<h5 style='margin-top:15px;'>الفيديوهات:</h5>";
                 
                 if (f.videos) {
-                    Object.entries(f.videos)
-                        .sort((a,b)=>(a[1].order||0)-(b[1].order||0))
-                        .forEach(([vId, v]) => {
-                            vH += `<div class="list-item">
-                                <div>
-                                    <span style="font-weight: bold;">${escapeHTML(v.order || 0)}. ${escapeHTML(v.title)}</span>
-                                    <div style="font-size:0.8rem; color: #666; margin-top:5px;">${escapeHTML(v.url)}</div>
-                                </div>
-                                <div class="item-actions">
-                                    <button class="btn-view" onclick='window.playVideoAdmin("${escapeHTML(v.url)}", "${escapeHTML(v.title)}")' title="مشاهدة">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button class="btn-edit" onclick='window.openEditVideoModal("${id}", "${vId}", ${JSON.stringify(v).replace(/</g, '\\u003c')})' title="تعديل">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn-delete" onclick="window.delData('folders/${id}/videos/${vId}')" title="حذف">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>`;
+                    // ترتيب الفيديوهات حسب رقم الترتيب
+                    const videosArray = [];
+                    Object.entries(f.videos).forEach(([vId, v]) => {
+                        videosArray.push({
+                            id: vId,
+                            ...v,
+                            order: v.order || 999
                         });
+                    });
+                    
+                    videosArray.sort((a, b) => a.order - b.order);
+                    
+                    videosArray.forEach(v => {
+                        vH += `<div class="list-item">
+                            <div>
+                                <span style="font-weight: bold;">${escapeHTML(v.order || 0)}. ${escapeHTML(v.title)}</span>
+                                <div style="font-size:0.8rem; color: #666; margin-top:5px;">${escapeHTML(v.url)}</div>
+                            </div>
+                            <div class="item-actions">
+                                <button class="btn-view" onclick='playVideoAdmin("${escapeHTML(v.url)}", "${escapeHTML(v.title)}")' title="مشاهدة">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="btn-edit" onclick='openEditVideoModal("${id}", "${v.id}", ${JSON.stringify(v).replace(/</g, '\\u003c')})' title="تعديل">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button class="btn-delete" onclick="delData('folders/${id}/videos/${v.id}')" title="حذف">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>`;
+                    });
                 } else {
                     vH += "<p style='color:#888; font-size:0.85rem;'>لا توجد فيديوهات بعد</p>";
                 }
@@ -1782,13 +1850,13 @@
                                 <span class="badge-exam" style="margin-right: 10px;">${escapeHTML(qCount)} سؤال</span>
                             </div>
                             <div class="item-actions">
-                                <button class="btn-view" onclick='window.previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="معاينة">
+                                <button class="btn-view" onclick='previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="معاينة">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn-edit" onclick='window.openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="تعديل">
+                                <button class="btn-edit" onclick='openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-delete" onclick="window.delData('quizzes/${id}/${q.key}')" title="حذف">
+                                <button class="btn-delete" onclick="delData('quizzes/${id}/${q.key}')" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -1807,9 +1875,68 @@
             
             const editModal = document.getElementById('editModal');
             if (editModal) editModal.style.display = 'flex';
-        }
+        };
 
-        function playVideoAdmin(url, title) {
+        // ================ تحديث بيانات الكورس ================
+        window.updateCourseBasic = async function() {
+            const name = document.getElementById('editNameField')?.value.trim();
+            const imgUrl = document.getElementById('editImgField')?.value.trim();
+            const imgFile = document.getElementById('editImageFile')?.files[0];
+            const btn = document.getElementById('saveBasicBtn');
+            
+            if (!activeCID) {
+                showToast("خطأ: لم يتم تحديد الكورس", 'error');
+                return;
+            }
+            if (!name) {
+                showToast("يرجى إدخال اسم الكورس", 'error');
+                return;
+            }
+            
+            if (btn) {
+                btn.innerText = "جاري الحفظ..."; 
+                btn.disabled = true;
+            }
+            
+            try {
+                const updateData = { name };
+                
+                // معالجة الصورة
+                if (imgFile) {
+                    updateData.img = await convertImageToBase64(imgFile);
+                } else if (imgUrl) {
+                    try {
+                        new URL(imgUrl);
+                        updateData.img = imgUrl;
+                    } catch {
+                        showToast("❌ رابط الصورة غير صحيح", 'error');
+                        if (btn) {
+                            btn.innerText = "حفظ البيانات الجديدة"; 
+                            btn.disabled = false;
+                        }
+                        return;
+                    }
+                }
+                
+                await update(ref(db, `folders/${activeCID}`), updateData);
+                showToast("✅ تم التحديث بنجاح", 'success');
+                
+                document.getElementById('editImgField').value = "";
+                document.getElementById('editImageFile').value = "";
+                document.getElementById('editImagePreview').style.display = 'none';
+            } catch (error) {
+                console.error('Error updating course:', error);
+                showToast('❌ حدث خطأ في التحديث', 'error');
+            } finally {
+                if (btn) {
+                    btn.innerText = "حفظ البيانات الجديدة"; 
+                    btn.disabled = false;
+                }
+            }
+        };
+
+        // ================ تشغيل الفيديو ================
+        window.playVideoAdmin = function(url, title) {
             try {
                 const match = url.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
                 if (!match || !match[2] || match[2].length !== 11) {
@@ -1836,9 +1963,10 @@
                 console.error('Error playing video:', error);
                 showToast('❌ حدث خطأ في تشغيل الفيديو', 'error');
             }
-        }
+        };
 
-        function previewExamFromList(courseId, examId, examData) {
+        // ================ معاينة الامتحان من القائمة ================
+        window.previewExamFromList = function(courseId, examId, examData) {
             try {
                 currentEditingExam = { courseId, examId, examData };
                 const editExamName = document.getElementById('editExamName');
@@ -1849,58 +1977,10 @@
                 console.error('Error previewing exam:', error);
                 showToast('❌ حدث خطأ في معاينة الامتحان', 'error');
             }
-        }
+        };
 
-        async function updateCourseBasic() {
-            const name = document.getElementById('editNameField')?.value.trim();
-            const imgUrl = document.getElementById('editImgField')?.value.trim();
-            const btn = document.getElementById('saveBasicBtn');
-            
-            if (!activeCID) {
-                showToast("خطأ: لم يتم تحديد الكورس", 'error');
-                return;
-            }
-            if (!name) {
-                showToast("يرجى إدخال اسم الكورس", 'error');
-                return;
-            }
-            
-            if (btn) {
-                btn.innerText = "جاري الحفظ..."; 
-                btn.disabled = true;
-            }
-            
-            try {
-                const updateData = { name };
-                if (imgUrl) {
-                    try {
-                        new URL(imgUrl);
-                        updateData.img = imgUrl;
-                    } catch {
-                        showToast("❌ رابط الصورة غير صحيح", 'error');
-                        if (btn) {
-                            btn.innerText = "حفظ البيانات الجديدة"; 
-                            btn.disabled = false;
-                        }
-                        return;
-                    }
-                }
-                await update(ref(db, `folders/${activeCID}`), updateData);
-                showToast("✅ تم التحديث بنجاح", 'success');
-                const editImgField = document.getElementById('editImgField');
-                if (editImgField) editImgField.value = "";
-            } catch (error) {
-                console.error('Error updating course:', error);
-                showToast('❌ حدث خطأ في التحديث', 'error');
-            } finally {
-                if (btn) {
-                    btn.innerText = "حفظ البيانات الجديدة"; 
-                    btn.disabled = false;
-                }
-            }
-        }
-
-        function addVideoToCourse() {
+        // ================ إضافة فيديو للكورس ================
+        window.addVideoToCourse = function() {
             const t = document.getElementById('vTitle')?.value.trim();
             const u = document.getElementById('vUrl')?.value.trim();
             const o = document.getElementById('vOrder')?.value;
@@ -1925,44 +2005,33 @@
                 order: parseInt(o) || 0 
             }).then(() => {
                 showToast("✅ تم إضافة الفيديو", 'success');
-                const vTitle = document.getElementById('vTitle');
-                const vUrl = document.getElementById('vUrl');
-                const vOrder = document.getElementById('vOrder');
-                if (vTitle) vTitle.value = "";
-                if (vUrl) vUrl.value = "";
-                if (vOrder) vOrder.value = "";
+                document.getElementById('vTitle').value = "";
+                document.getElementById('vUrl').value = "";
+                document.getElementById('vOrder').value = "";
                 const editNameField = document.getElementById('editNameField');
                 openEditModal(activeCID, editNameField ? editNameField.value : '');
             }).catch(error => {
                 console.error('Error adding video:', error);
                 showToast('❌ حدث خطأ في إضافة الفيديو', 'error');
             });
-        }
+        };
 
-        // ================ VIDEO EDIT FUNCTIONS ================
-        function openEditVideoModal(courseId, videoId, videoData) {
-            const editVideoCourseId = document.getElementById('editVideoCourseId');
-            const editVideoId = document.getElementById('editVideoId');
-            const editVideoTitle = document.getElementById('editVideoTitle');
-            const editVideoUrl = document.getElementById('editVideoUrl');
-            const editVideoOrder = document.getElementById('editVideoOrder');
+        // ================ تعديل الفيديو ================
+        window.openEditVideoModal = function(courseId, videoId, videoData) {
+            document.getElementById('editVideoCourseId').value = courseId;
+            document.getElementById('editVideoId').value = videoId;
+            document.getElementById('editVideoTitle').value = videoData.title || '';
+            document.getElementById('editVideoUrl').value = videoData.url || '';
+            document.getElementById('editVideoOrder').value = videoData.order || 0;
             
-            if (editVideoCourseId) editVideoCourseId.value = courseId;
-            if (editVideoId) editVideoId.value = videoId;
-            if (editVideoTitle) editVideoTitle.value = videoData.title || '';
-            if (editVideoUrl) editVideoUrl.value = videoData.url || '';
-            if (editVideoOrder) editVideoOrder.value = videoData.order || 0;
-            
-            const editVideoModal = document.getElementById('editVideoModal');
-            if (editVideoModal) editVideoModal.style.display = 'flex';
-        }
+            document.getElementById('editVideoModal').style.display = 'flex';
+        };
 
-        function closeVideoModal() {
-            const editVideoModal = document.getElementById('editVideoModal');
-            if (editVideoModal) editVideoModal.style.display = 'none';
-        }
+        window.closeVideoModal = function() {
+            document.getElementById('editVideoModal').style.display = 'none';
+        };
 
-        async function saveVideoChanges() {
+        window.saveVideoChanges = async function() {
             const courseId = document.getElementById('editVideoCourseId')?.value;
             const videoId = document.getElementById('editVideoId')?.value;
             const title = document.getElementById('editVideoTitle')?.value.trim();
@@ -1994,10 +2063,10 @@
                 console.error(error);
                 showToast('❌ حدث خطأ أثناء التعديل', 'error');
             }
-        }
+        };
 
-        // ================ EXAMS MANAGEMENT محسنة ================
-        function addNewQuestion(type) {
+        // ================ إضافة سؤال جديد في مصنع الاختبارات ================
+        window.addNewQuestion = function(type) {
             const questionsArea = document.getElementById('questionsArea');
             if (!questionsArea) return;
             
@@ -2005,27 +2074,28 @@
             q.className = "card"; 
             q.style = "background:#f8f9fa; position:relative; margin-top:10px;";
             q.innerHTML = `<i class="fas fa-trash" style="position:absolute; left:10px; top:10px; color:red; cursor:pointer;" onclick="this.parentElement.remove()"></i>
-                <input type="text" class="q-text" placeholder="نص السؤال" maxlength="500">
+                <input type="text" class="q-text" placeholder="نص السؤال" maxlength="500" style="width:100%; padding:10px; margin-bottom:10px;">
                 ${type==='mcq' ? `<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
                     <input type="text" class="oA" placeholder="الاختيار A" maxlength="200">
                     <input type="text" class="oB" placeholder="الاختيار B" maxlength="200">
                     <input type="text" class="oC" placeholder="الاختيار C" maxlength="200">
-                    <input type="text" class="oD" placeholder="الالاختيار D" maxlength="200">
+                    <input type="text" class="oD" placeholder="الاختيار D" maxlength="200">
                 </div>
-                <select class="q-correct" style="margin-top:5px;">
+                <select class="q-correct" style="margin-top:5px; width:100%; padding:8px;">
                     <option value="a">الإجابة الصحيحة: A</option>
                     <option value="b">الإجابة الصحيحة: B</option>
                     <option value="c">الإجابة الصحيحة: C</option>
                     <option value="d">الإجابة الصحيحة: D</option>
                 </select>` : `
-                <select class="q-correct" style="margin-top:5px;">
+                <select class="q-correct" style="margin-top:5px; width:100%; padding:8px;">
                     <option value="a">الإجابة الصحيحة: صح</option>
                     <option value="b">الإجابة الصحيحة: خطأ</option>
                 </select>`}`;
             questionsArea.appendChild(q);
-        }
+        };
 
-        function saveFinalExam() {
+        // ================ حفظ الامتحان النهائي ================
+        window.saveFinalExam = function() {
             const fId = document.getElementById('exFolderSelect')?.value;
             const title = document.getElementById('exTitle')?.value.trim();
             const videoRel = document.getElementById('exVideoRel')?.value;
@@ -2094,16 +2164,15 @@
                 createdAt: new Date().toISOString()
             }).then(() => { 
                 showToast("✅ تم نشر الامتحان بنجاح", 'success');
-                const questionsArea = document.getElementById('questionsArea');
-                const exTitle = document.getElementById('exTitle');
-                if (questionsArea) questionsArea.innerHTML = "";
-                if (exTitle) exTitle.value = "";
+                document.getElementById('questionsArea').innerHTML = "";
+                document.getElementById('exTitle').value = "";
             }).catch(error => {
                 console.error('Error saving exam:', error);
                 showToast('❌ حدث خطأ في حفظ الامتحان', 'error');
             });
-        }
+        };
 
+        // ================ تعبئة القوائم المنسدلة ================
         function fillDropdowns(folders) {
             const folderSelect = document.getElementById('exFolderSelect');
             if (!folderSelect) return;
@@ -2116,7 +2185,7 @@
             }
         }
 
-        // ================ STUDENTS MANAGEMENT محسنة ================
+        // ================ عرض الطلاب ================
         function renderStudents(students) {
             let html = "";
             if (students) {
@@ -2132,7 +2201,7 @@
                         <td>${escapeHTML(regMethod)}</td>
                         <td>${escapeHTML(subCount)}</td>
                         <td>${escapeHTML(s.points || 0)}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('students/${uid}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('students/${uid}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2142,20 +2211,20 @@
             }
         }
 
-        function filterStudents() {
+        window.filterStudents = function() {
             const search = document.getElementById('studentSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#studentList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        // ================ RESULTS MANAGEMENT محسنة ================
+        // ================ عرض النتائج ================
         function renderResults(results) {
             let html = "";
             if (results) {
-                Object.values(results).forEach(r => {
+                Object.entries(results).forEach(([key, r]) => {
                     html += `<tr>
                         <td>${escapeHTML(r.student || '')}</td>
                         <td><span class="student-id-display">${escapeHTML(r.studentId || '')}</span></td>
@@ -2163,7 +2232,7 @@
                         <td>${escapeHTML(r.score)}/${escapeHTML(r.total)}</td>
                         <td><span class="progress-badge">${escapeHTML(r.percentage)}%</span></td>
                         <td>${escapeHTML(r.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('quiz_results/${r.key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('quiz_results/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2173,26 +2242,26 @@
             }
         }
 
-        function filterResults() {
+        window.filterResults = function() {
             const search = document.getElementById('resultSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#resultsList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        // ================ ACCESS LOGS MANAGEMENT ================
+        // ================ عرض سجلات الدخول ================
         function renderAccessLogs(logs) {
             let html = "";
             if (logs) {
-                Object.values(logs).forEach(l => {
+                Object.entries(logs).forEach(([key, l]) => {
                     html += `<tr>
                         <td>${escapeHTML(l.studentName || '')}</td>
                         <td><span class="student-id-display">${escapeHTML(l.studentId || '')}</span></td>
                         <td>${escapeHTML(l.courseName || '')}</td>
                         <td>${escapeHTML(l.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('course_access_logs/${l.key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('course_access_logs/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2202,26 +2271,26 @@
             }
         }
 
-        function filterLogs() {
+        window.filterLogs = function() {
             const search = document.getElementById('logSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#logsList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        // ================ NOTIFICATIONS MANAGEMENT ================
+        // ================ عرض الإشعارات ================
         function renderNotifications(notifications) {
             let html = "";
             if (notifications) {
-                Object.values(notifications).forEach(n => {
+                Object.entries(notifications).forEach(([key, n]) => {
                     html += `<tr>
                         <td>${escapeHTML(n.studentName || '')}</td>
                         <td><span class="student-id-display">${escapeHTML(n.studentId || '')}</span></td>
                         <td>${escapeHTML(n.courseName || '')}</td>
                         <td>${escapeHTML(n.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('course_access_notifications/${n.key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('course_access_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2231,26 +2300,26 @@
             }
         }
 
-        function filterNotifications() {
+        window.filterNotifications = function() {
             const search = document.getElementById('notificationSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#notificationsList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        // ================ SUBSCRIPTION NOTIFICATIONS ================
+        // ================ عرض إشعارات الاشتراكات ================
         function renderSubscriptionNotifications(notifications) {
             let html = "";
             if (notifications) {
-                Object.values(notifications).forEach(n => {
+                Object.entries(notifications).forEach(([key, n]) => {
                     html += `<tr>
                         <td>${escapeHTML(n.studentName || '')}</td>
                         <td><span class="student-id-display">${escapeHTML(n.studentId || '')}</span></td>
                         <td>${escapeHTML(n.courseName || '')}</td>
                         <td>${escapeHTML(n.subscribedAt || n.timestamp || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('subscription_notifications/${n.key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('subscription_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2260,16 +2329,16 @@
             }
         }
 
-        function filterSubscriptionNotifications() {
+        window.filterSubscriptionNotifications = function() {
             const search = document.getElementById('subscriptionNotificationSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#subscriptionNotificationsList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        // ================ REVIEWS MANAGEMENT ================
+        // ================ عرض الآراء ================
         function renderReviews(reviews) {
             let html = "";
             if (reviews) {
@@ -2278,7 +2347,7 @@
                         <td>${escapeHTML(r.student || '')}</td>
                         <td>${escapeHTML(r.text || '')}</td>
                         <td>${escapeHTML(r.rating ? '★'.repeat(r.rating) : '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="window.delData('reviews/${id}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm" onclick="delData('reviews/${id}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2288,7 +2357,7 @@
             }
         }
 
-        // ================ ADMINS MANAGEMENT محسنة ================
+        // ================ عرض الأدمنز ================
         function renderAdmins(admins) {
             let html = "";
             if (admins) {
@@ -2300,7 +2369,7 @@
                             <div style="color:#666; font-size:0.85rem;">${escapeHTML(a.email || '')}</div>
                         </div>
                         <div class="item-actions">
-                            ${!isSuper ? `<button class="btn-delete" onclick="window.removeAdmin('${id}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                            ${!isSuper ? `<button class="btn-delete" onclick="removeAdmin('${id}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
                         </div>
                     </div>`;
                 });
@@ -2311,7 +2380,8 @@
             }
         }
 
-        async function addAdmin() {
+        // ================ إضافة أدمن ================
+        window.addAdmin = async function() {
             const email = document.getElementById('newAdminEmail')?.value.trim();
             const name = document.getElementById('newAdminName')?.value.trim();
             
@@ -2330,18 +2400,16 @@
                 const adminId = email.replace(/[.#$[\]]/g, '_');
                 await set(ref(db, `admins/${adminId}`), { email, name });
                 
-                const newAdminEmail = document.getElementById('newAdminEmail');
-                const newAdminName = document.getElementById('newAdminName');
-                if (newAdminEmail) newAdminEmail.value = '';
-                if (newAdminName) newAdminName.value = '';
+                document.getElementById('newAdminEmail').value = '';
+                document.getElementById('newAdminName').value = '';
                 showToast('✅ تم إضافة الأدمن بنجاح', 'success');
             } catch (error) {
                 console.error('Error adding admin:', error);
                 showToast('❌ حدث خطأ في إضافة الأدمن', 'error');
             }
-        }
+        };
 
-        async function removeAdmin(adminId) {
+        window.removeAdmin = async function(adminId) {
             if (adminId === SUPER_ADMIN_EMAIL.replace(/[.#$[\]]/g, '_')) {
                 showToast('❌ لا يمكن حذف السوبر أدمن', 'error');
                 return;
@@ -2356,9 +2424,9 @@
                     showToast('❌ حدث خطأ في حذف الأدمن', 'error');
                 }
             }
-        }
+        };
 
-        // ================ PERFECT SCORES محسنة ================
+        // ================ عرض الدرجات النهائية ================
         function renderPerfectScores(results, students) {
             const perfectScores = [];
             
@@ -2391,7 +2459,7 @@
                     <td>${escapeHTML(ps.grade)}</td>
                     <td>${escapeHTML(ps.time)}</td>
                     <td><span class="progress-badge">${ps.score}/${ps.total}</span></td>
-                    <td><button class="btn btn-danger btn-sm" onclick="window.deletePerfectScore('${ps.key}')"><i class="fas fa-trash"></i></button></td>
+                    <td><button class="btn btn-danger btn-sm" onclick="deletePerfectScore('${ps.key}')"><i class="fas fa-trash"></i></button></td>
                 </tr>`;
             });
             
@@ -2406,16 +2474,16 @@
             }
         }
 
-        function filterPerfectScores() {
+        window.filterPerfectScores = function() {
             const search = document.getElementById('perfectScoreSearch')?.value.toLowerCase() || '';
             const rows = document.querySelectorAll('#perfectScoresList tr');
             rows.forEach(row => {
                 const text = row.textContent.toLowerCase();
                 row.style.display = text.includes(search) ? '' : 'none';
             });
-        }
+        };
 
-        async function deletePerfectScore(resultKey) {
+        window.deletePerfectScore = async function(resultKey) {
             if (confirm('⚠️ هل أنت متأكد؟ حذف النتيجة سيسمح للطالب بإعادة الامتحان.')) {
                 try {
                     await remove(ref(db, `quiz_results/${resultKey}`));
@@ -2425,10 +2493,10 @@
                     showToast('❌ حدث خطأ في حذف النتيجة', 'error');
                 }
             }
-        }
+        };
 
-        // ================ ADVANCED SEARCH محسنة ================
-        async function performAdvancedSearch() {
+        // ================ البحث المتقدم ================
+        window.performAdvancedSearch = async function() {
             const searchTerm = document.getElementById('advancedSearch')?.value.trim().toLowerCase();
             if (!searchTerm) {
                 showToast('❌ يرجى إدخال كلمة بحث', 'error');
@@ -2450,24 +2518,20 @@
                 
                 if (!foundStudent) {
                     showToast('❌ لم يتم العثور على طالب', 'error');
-                    const searchResults = document.getElementById('searchResults');
-                    if (searchResults) searchResults.style.display = 'none';
+                    document.getElementById('searchResults').style.display = 'none';
                     return;
                 }
                 
                 currentStudentData = foundStudent;
                 currentStudentUid = foundUid;
                 
-                const studentInfo = document.getElementById('studentInfo');
-                if (studentInfo) {
-                    studentInfo.innerHTML = `
-                        <div class="card"><strong>الاسم:</strong> ${escapeHTML(foundStudent.name)}</div>
-                        <div class="card"><strong>الكود:</strong> ${escapeHTML(foundStudent.shortId)}</div>
-                        <div class="card"><strong>المرحلة:</strong> ${escapeHTML(foundStudent.grade)}</div>
-                        <div class="card"><strong>واتساب:</strong> ${escapeHTML(foundStudent.whatsapp)}</div>
-                        <div class="card"><strong>النقاط:</strong> ${foundStudent.points || 0}</div>
-                    `;
-                }
+                document.getElementById('studentInfo').innerHTML = `
+                    <div class="card"><strong>الاسم:</strong> ${escapeHTML(foundStudent.name)}</div>
+                    <div class="card"><strong>الكود:</strong> ${escapeHTML(foundStudent.shortId)}</div>
+                    <div class="card"><strong>المرحلة:</strong> ${escapeHTML(foundStudent.grade)}</div>
+                    <div class="card"><strong>واتساب:</strong> ${escapeHTML(foundStudent.whatsapp)}</div>
+                    <div class="card"><strong>النقاط:</strong> ${foundStudent.points || 0}</div>
+                `;
                 
                 let subsHtml = '';
                 if (foundStudent.subscriptions) {
@@ -2475,8 +2539,7 @@
                         subsHtml += `<div class="list-item">${escapeHTML(sub.courseName)} - تقدم: ${sub.progress || 0}%</div>`;
                     });
                 }
-                const studentSubscriptions = document.getElementById('studentSubscriptions');
-                if (studentSubscriptions) studentSubscriptions.innerHTML = subsHtml || '<p>لا يوجد اشتراكات</p>';
+                document.getElementById('studentSubscriptions').innerHTML = subsHtml || '<p>لا يوجد اشتراكات</p>';
                 
                 let videosHtml = '';
                 if (foundStudent.watchedVideos) {
@@ -2484,8 +2547,7 @@
                         videosHtml += `<div class="list-item">${escapeHTML(v.videoTitle)} - ${escapeHTML(v.watchedAt)}</div>`;
                     });
                 }
-                const studentWatchedVideos = document.getElementById('studentWatchedVideos');
-                if (studentWatchedVideos) studentWatchedVideos.innerHTML = videosHtml || '<p>لا توجد فيديوهات مشاهدة</p>';
+                document.getElementById('studentWatchedVideos').innerHTML = videosHtml || '<p>لا توجد فيديوهات مشاهدة</p>';
                 
                 let examsHtml = '';
                 if (foundStudent.examResults) {
@@ -2498,8 +2560,7 @@
                         </tr>`;
                     });
                 }
-                const studentExamResults = document.getElementById('studentExamResults');
-                if (studentExamResults) studentExamResults.innerHTML = examsHtml || '<tr><td colspan="4">لا توجد نتائج</td></tr>';
+                document.getElementById('studentExamResults').innerHTML = examsHtml || '<tr><td colspan="4">لا توجد نتائج</td></tr>';
                 
                 let accessHtml = '';
                 if (allCourseAccess[foundUid]) {
@@ -2507,29 +2568,23 @@
                         accessHtml += `<tr><td>${escapeHTML(acc.courseName)}</td><td>${escapeHTML(acc.time)}</td></tr>`;
                     });
                 }
-                const studentAccessLog = document.getElementById('studentAccessLog');
-                if (studentAccessLog) studentAccessLog.innerHTML = accessHtml || '<tr><td colspan="2">لا توجد سجلات دخول</td></tr>';
+                document.getElementById('studentAccessLog').innerHTML = accessHtml || '<tr><td colspan="2">لا توجد سجلات دخول</td></tr>';
                 
-                const searchResults = document.getElementById('searchResults');
-                if (searchResults) searchResults.style.display = 'block';
+                document.getElementById('searchResults').style.display = 'block';
             } catch (error) {
                 console.error('Search error:', error);
                 showToast('❌ حدث خطأ في البحث', 'error');
             }
-        }
+        };
 
-        function clearAdvancedSearch() {
-            const advancedSearch = document.getElementById('advancedSearch');
-            if (advancedSearch) advancedSearch.value = '';
-            
-            const searchResults = document.getElementById('searchResults');
-            if (searchResults) searchResults.style.display = 'none';
-            
+        window.clearAdvancedSearch = function() {
+            document.getElementById('advancedSearch').value = '';
+            document.getElementById('searchResults').style.display = 'none';
             currentStudentData = null;
             currentStudentUid = null;
-        }
+        };
 
-        function exportStudentPDF() {
+        window.exportStudentPDF = function() {
             if (!currentStudentData) {
                 showToast('❌ لا توجد بيانات للطالب', 'error');
                 return;
@@ -2555,15 +2610,375 @@
                 console.error('PDF error:', error);
                 showToast('❌ حدث خطأ في تصدير PDF', 'error');
             }
+        };
+
+        // ================ حذف البيانات ================
+        window.delData = function(path) { 
+            if (confirm("❓ هل أنت متأكد من الحذف النهائي؟")) {
+                remove(ref(db, path)).then(() => {
+                    showToast("✅ تم الحذف بنجاح", 'success');
+                }).catch(error => {
+                    console.error('Delete error:', error);
+                    showToast("❌ حدث خطأ: " + error.message, 'error');
+                });
+            }
+        };
+
+        // ================ إغلاق المودال ================
+        window.closeModal = function() {
+            document.getElementById('editModal').style.display = 'none';
+            activeCID = "";
+        };
+
+        // ================ تسجيل الخروج ================
+        window.logout = function() {
+            signOut(auth).then(() => {
+                cleanupListeners();
+                showToast('👋 تم تسجيل الخروج', 'success');
+                setTimeout(() => window.location.href = "index.html", 1000);
+            }).catch(error => {
+                console.error('Logout error:', error);
+                showToast('❌ حدث خطأ في تسجيل الخروج', 'error');
+            });
+        };
+
+        // ================ دوال تعديل الامتحان ================
+        window.openEditExamModal = function(courseId, examId, examData) {
+            try {
+                currentEditingExam = { courseId, examId, examData };
+                
+                document.getElementById('editExamCourseId').value = courseId;
+                document.getElementById('editExamId').value = examId;
+                document.getElementById('editExamName').value = examData.name || '';
+                
+                renderEditQuestions(examData.questions || {});
+                
+                document.getElementById('editExamModal').style.display = 'flex';
+            } catch (error) {
+                console.error('Error opening exam modal:', error);
+                showToast('❌ حدث خطأ في فتح تعديل الامتحان', 'error');
+            }
+        };
+
+        window.closeExamModal = function() {
+            document.getElementById('editExamModal').style.display = 'none';
+            document.getElementById('editQuestionsArea').innerHTML = '';
+            currentEditingExam = null;
+        };
+
+        function renderEditQuestions(questions) {
+            const container = document.getElementById('editQuestionsArea');
+            if (!container) return;
+            
+            container.innerHTML = '';
+            
+            Object.keys(questions).forEach((key, index) => {
+                addEditQuestionCard(questions[key], index);
+            });
         }
 
-        // ================ ANALYTICS محسنة ================
+        function addEditQuestionCard(questionData = null, index = null) {
+            const container = document.getElementById('editQuestionsArea');
+            if (!container) return;
+            
+            const qIndex = index !== null ? index : container.children.length;
+            
+            const card = document.createElement('div');
+            card.className = 'edit-question-card';
+            card.dataset.index = qIndex;
+            
+            const isMcq = questionData ? Object.keys(questionData).includes('c') : true;
+            
+            card.innerHTML = `
+                <div class="question-header">
+                    <span class="question-number">سؤال ${qIndex + 1}</span>
+                    <div class="question-actions">
+                        <i class="fas fa-copy" onclick="duplicateQuestion(${qIndex})" title="نسخ السؤال"></i>
+                        <i class="fas fa-trash" onclick="removeEditQuestion(this)" title="حذف السؤال"></i>
+                    </div>
+                </div>
+                
+                <input type="text" class="q-text reg-input" placeholder="نص السؤال" maxlength="500"
+                       value="${escapeHTML(questionData?.text || '')}" style="margin-bottom: 15px;">
+                
+                <div class="question-type-selector" style="margin-bottom: 15px;">
+                    <select class="q-type reg-input" onchange="changeQuestionType(this)">
+                        <option value="mcq" ${isMcq ? 'selected' : ''}>اختيار من متعدد</option>
+                        <option value="tf" ${!isMcq ? 'selected' : ''}>صح/خطأ</option>
+                    </select>
+                </div>
+                
+                <div class="mcq-options" style="display: ${isMcq ? 'grid' : 'none'};">
+                    <div>
+                        <label>A</label>
+                        <input type="text" class="oA reg-input" placeholder="الاختيار A" maxlength="200"
+                               value="${escapeHTML(questionData?.a || '')}">
+                    </div>
+                    <div>
+                        <label>B</label>
+                        <input type="text" class="oB reg-input" placeholder="الاختيار B" maxlength="200"
+                               value="${escapeHTML(questionData?.b || '')}">
+                    </div>
+                    <div>
+                        <label>C</label>
+                        <input type="text" class="oC reg-input" placeholder="الاختيار C" maxlength="200"
+                               value="${escapeHTML(questionData?.c || '')}">
+                    </div>
+                    <div>
+                        <label>D</label>
+                        <input type="text" class="oD reg-input" placeholder="الاختيار D" maxlength="200"
+                               value="${escapeHTML(questionData?.d || '')}">
+                    </div>
+                </div>
+                
+                <div class="tf-options" style="display: ${!isMcq ? 'block' : 'none'};">
+                    <select class="q-correct reg-input">
+                        <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>صح</option>
+                        <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>خطأ</option>
+                    </select>
+                </div>
+                
+                ${isMcq ? `
+                <select class="q-correct reg-input" style="margin-top: 15px;">
+                    <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>الإجابة الصحيحة: A</option>
+                    <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>الإجابة الصحيحة: B</option>
+                    <option value="c" ${questionData?.correct === 'c' ? 'selected' : ''}>الإجابة الصحيحة: C</option>
+                    <option value="d" ${questionData?.correct === 'd' ? 'selected' : ''}>الإجابة الصحيحة: D</option>
+                </select>
+                ` : ''}
+            `;
+            
+            container.appendChild(card);
+        }
+
+        window.addEditQuestion = function(type) {
+            addEditQuestionCard(type === 'mcq' ? { a: '', b: '', c: '', d: '' } : { a: 'صح', b: 'خطأ' });
+        };
+
+        window.changeQuestionType = function(select) {
+            const card = select.closest('.edit-question-card');
+            if (!card) return;
+            
+            const mcqDiv = card.querySelector('.mcq-options');
+            const tfDiv = card.querySelector('.tf-options');
+            
+            if (select.value === 'mcq') {
+                mcqDiv.style.display = 'grid';
+                tfDiv.style.display = 'none';
+            } else {
+                mcqDiv.style.display = 'none';
+                tfDiv.style.display = 'block';
+            }
+        };
+
+        window.removeEditQuestion = function(icon) {
+            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
+                const card = icon.closest('.edit-question-card');
+                if (card) card.remove();
+                
+                document.querySelectorAll('.edit-question-card').forEach((card, idx) => {
+                    const questionNumber = card.querySelector('.question-number');
+                    if (questionNumber) {
+                        questionNumber.textContent = `سؤال ${idx + 1}`;
+                    }
+                    card.dataset.index = idx;
+                });
+            }
+        };
+
+        window.duplicateQuestion = function(index) {
+            const cards = document.querySelectorAll('.edit-question-card');
+            if (index >= 0 && index < cards.length) {
+                const originalCard = cards[index];
+                const clone = originalCard.cloneNode(true);
+                
+                const container = document.getElementById('editQuestionsArea');
+                if (container) container.appendChild(clone);
+                
+                document.querySelectorAll('.edit-question-card').forEach((card, idx) => {
+                    const questionNumber = card.querySelector('.question-number');
+                    if (questionNumber) {
+                        questionNumber.textContent = `سؤال ${idx + 1}`;
+                    }
+                    card.dataset.index = idx;
+                });
+            }
+        };
+
+        function collectEditQuestions() {
+            let questions = {};
+            let qIndex = 0;
+            
+            document.querySelectorAll('#editQuestionsArea .edit-question-card').forEach(card => {
+                const qText = card.querySelector('.q-text')?.value.trim();
+                if (!qText) return;
+                
+                const qType = card.querySelector('.q-type')?.value;
+                const correct = card.querySelector('.q-correct')?.value;
+                
+                if (qType === 'mcq') {
+                    const oA = card.querySelector('.oA')?.value.trim() || '';
+                    const oB = card.querySelector('.oB')?.value.trim() || '';
+                    const oC = card.querySelector('.oC')?.value.trim() || '';
+                    const oD = card.querySelector('.oD')?.value.trim() || '';
+                    
+                    if (!oA || !oB) return;
+                    
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: oA,
+                        b: oB,
+                        c: oC,
+                        d: oD,
+                        correct: correct
+                    };
+                } else {
+                    questions[`q${qIndex}`] = {
+                        text: qText,
+                        a: "صح",
+                        b: "خطأ",
+                        correct: correct
+                    };
+                }
+                qIndex++;
+            });
+            
+            return questions;
+        }
+
+        window.previewExam = function() {
+            try {
+                const examName = document.getElementById('editExamName')?.value.trim();
+                const questions = collectEditQuestions();
+                
+                if (Object.keys(questions).length === 0) {
+                    showToast('❌ لا توجد أسئلة للمعاينة', 'error');
+                    return;
+                }
+                
+                let previewHtml = `
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <h2 style="color: var(--accent);">${escapeHTML(examName || 'امتحان بدون عنوان')}</h2>
+                        <p style="color: #666;">عدد الأسئلة: ${Object.keys(questions).length}</p>
+                    </div>
+                `;
+                
+                Object.keys(questions).forEach((key, idx) => {
+                    const q = questions[key];
+                    previewHtml += `<div class="preview-question">`;
+                    previewHtml += `<h4>سؤال ${idx + 1}: ${escapeHTML(q.text)}</h4>`;
+                    
+                    if (q.c) { // MCQ
+                        previewHtml += `<div class="preview-options">`;
+                        ['a', 'b', 'c', 'd'].forEach(opt => {
+                            if (q[opt]) {
+                                const isCorrect = q.correct === opt;
+                                previewHtml += `
+                                    <div class="preview-option ${isCorrect ? 'correct' : ''}">
+                                        <span>${opt.toUpperCase()}: ${escapeHTML(q[opt])}</span>
+                                        ${isCorrect ? '<span class="correct-badge">✓ الإجابة الصحيحة</span>' : ''}
+                                    </div>
+                                `;
+                            }
+                        });
+                        previewHtml += `</div>`;
+                    } else { // True/False
+                        previewHtml += `
+                            <div class="preview-tf">
+                                <div class="preview-tf-option ${q.correct === 'a' ? 'correct' : ''}">
+                                    صح ${q.correct === 'a' ? '✓' : ''}
+                                </div>
+                                <div class="preview-tf-option ${q.correct === 'b' ? 'correct' : ''}">
+                                    خطأ ${q.correct === 'b' ? '✓' : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    previewHtml += `</div>`;
+                });
+                
+                document.getElementById('previewExamContent').innerHTML = previewHtml;
+                document.getElementById('previewExamModal').style.display = 'flex';
+            } catch (error) {
+                console.error('Preview error:', error);
+                showToast('❌ حدث خطأ في المعاينة', 'error');
+            }
+        };
+
+        window.closePreviewModal = function() {
+            document.getElementById('previewExamModal').style.display = 'none';
+        };
+
+        window.saveExamChanges = async function() {
+            const courseId = document.getElementById('editExamCourseId')?.value;
+            const examId = document.getElementById('editExamId')?.value;
+            const name = document.getElementById('editExamName')?.value.trim();
+            const videoRel = document.getElementById('editExamVideoRel')?.value;
+            
+            if (!name) {
+                showToast('❌ يرجى إدخال اسم الامتحان', 'error');
+                return;
+            }
+            
+            const questions = collectEditQuestions();
+            
+            if (Object.keys(questions).length === 0) {
+                showToast('❌ يجب إضافة سؤال واحد على الأقل', 'error');
+                return;
+            }
+            
+            try {
+                await update(ref(db, `quizzes/${courseId}/${examId}`), {
+                    name: name,
+                    questions: questions,
+                    videoRel: videoRel,
+                    updatedAt: new Date().toISOString()
+                });
+                
+                showToast('✅ تم حفظ التغييرات بنجاح', 'success');
+                closeExamModal();
+                
+                if (activeCID === courseId) {
+                    const editNameField = document.getElementById('editNameField');
+                    openEditModal(courseId, editNameField ? editNameField.value : '');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+            }
+        };
+
+        window.deleteExam = async function() {
+            if (!confirm('⚠️ هل أنت متأكد من حذف هذا الامتحان؟\nسيتم حذف جميع نتائج الطلاب المرتبطة به.')) {
+                return;
+            }
+            
+            const courseId = document.getElementById('editExamCourseId')?.value;
+            const examId = document.getElementById('editExamId')?.value;
+            
+            try {
+                await remove(ref(db, `quizzes/${courseId}/${examId}`));
+                showToast('✅ تم حذف الامتحان بنجاح', 'success');
+                closeExamModal();
+                
+                if (activeCID === courseId) {
+                    const editNameField = document.getElementById('editNameField');
+                    openEditModal(courseId, editNameField ? editNameField.value : '');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('❌ حدث خطأ أثناء الحذف', 'error');
+            }
+        };
+
+        // ================ التحليلات ================
         function loadAnalytics() {
             const summary = document.getElementById('analyticsSummary');
             
             const totalStudents = Object.keys(allStudents).length;
             const totalCourses = Object.keys(allFolders).length;
-            const totalExams = Object.values(allResults).length;
+            const totalExams = Object.keys(allResults).length;
             const avgScore = totalExams > 0 
                 ? Math.round(Object.values(allResults).reduce((acc, r) => acc + (r.percentage || 0), 0) / totalExams) 
                 : 0;
@@ -2699,398 +3114,6 @@
             });
             
             leaderboard.innerHTML = html || '<p style="text-align:center;">لا توجد بيانات</p>';
-        }
-
-        // ================ DELETE DATA محسنة ================
-        function delData(path) { 
-            if (confirm("❓ هل أنت متأكد من الحذف النهائي؟")) {
-                remove(ref(db, path)).then(() => {
-                    showToast("✅ تم الحذف بنجاح", 'success');
-                }).catch(error => {
-                    console.error('Delete error:', error);
-                    showToast("❌ حدث خطأ: " + error.message, 'error');
-                });
-            }
-        }
-
-        // ================ CLOSE MODAL محسنة ================
-        function closeModal() {
-            const editModal = document.getElementById('editModal');
-            if (editModal) editModal.style.display = 'none';
-            activeCID = "";
-        }
-
-        // ================ LOGOUT ================
-        function logout() {
-            signOut(auth).then(() => {
-                cleanupListeners();
-                showToast('👋 تم تسجيل الخروج', 'success');
-                setTimeout(() => window.location.href = "index.html", 1000);
-            }).catch(error => {
-                console.error('Logout error:', error);
-                showToast('❌ حدث خطأ في تسجيل الخروج', 'error');
-            });
-        }
-
-        // ================ EXAM EDIT FUNCTIONS (Modal) محسنة ================
-        async function openEditExamModal(courseId, examId, examData) {
-            try {
-                currentEditingExam = { courseId, examId, examData };
-                
-                const editExamCourseId = document.getElementById('editExamCourseId');
-                const editExamId = document.getElementById('editExamId');
-                const editExamName = document.getElementById('editExamName');
-                
-                if (editExamCourseId) editExamCourseId.value = courseId;
-                if (editExamId) editExamId.value = examId;
-                if (editExamName) editExamName.value = examData.name || '';
-                
-                const videosSnap = await get(ref(db, `folders/${courseId}/videos`));
-                const videoRelSelect = document.getElementById('editExamVideoRel');
-                if (videoRelSelect) {
-                    videoRelSelect.innerHTML = '<option value="all">امتحان شامل (يظهر مع كل الفيديوهات)</option>';
-                    
-                    if (videosSnap.exists()) {
-                        videosSnap.forEach(v => {
-                            const video = v.val();
-                            const option = document.createElement('option');
-                            option.value = v.key;
-                            option.textContent = video.title || 'فيديو بدون عنوان';
-                            videoRelSelect.appendChild(option);
-                        });
-                    }
-                    
-                    videoRelSelect.value = examData.videoRel || 'all';
-                }
-                
-                renderEditQuestions(examData.questions || {});
-                
-                const editExamModal = document.getElementById('editExamModal');
-                if (editExamModal) editExamModal.style.display = 'flex';
-            } catch (error) {
-                console.error('Error opening exam modal:', error);
-                showToast('❌ حدث خطأ في فتح تعديل الامتحان', 'error');
-            }
-        }
-
-        function closeExamModal() {
-            const editExamModal = document.getElementById('editExamModal');
-            if (editExamModal) editExamModal.style.display = 'none';
-            
-            const editQuestionsArea = document.getElementById('editQuestionsArea');
-            if (editQuestionsArea) editQuestionsArea.innerHTML = '';
-            
-            currentEditingExam = null;
-        }
-
-        function renderEditQuestions(questions) {
-            const container = document.getElementById('editQuestionsArea');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            
-            Object.keys(questions).forEach((key, index) => {
-                addEditQuestionCard(questions[key], index);
-            });
-        }
-
-        function addEditQuestionCard(questionData = null, index = null) {
-            const container = document.getElementById('editQuestionsArea');
-            if (!container) return;
-            
-            const qIndex = index !== null ? index : container.children.length;
-            
-            const card = document.createElement('div');
-            card.className = 'edit-question-card';
-            card.dataset.index = qIndex;
-            
-            const isMcq = questionData ? Object.keys(questionData).includes('c') : true;
-            
-            card.innerHTML = `
-                <div class="question-header">
-                    <span class="question-number">سؤال ${qIndex + 1}</span>
-                    <div class="question-actions">
-                        <i class="fas fa-copy" onclick="window.duplicateQuestion(${qIndex})" title="نسخ السؤال"></i>
-                        <i class="fas fa-trash" onclick="window.removeEditQuestion(this)" title="حذف السؤال"></i>
-                    </div>
-                </div>
-                
-                <input type="text" class="q-text reg-input" placeholder="نص السؤال" maxlength="500"
-                       value="${escapeHTML(questionData?.text || '')}" style="margin-bottom: 15px;">
-                
-                <div class="question-type-selector" style="margin-bottom: 15px;">
-                    <select class="q-type reg-input" onchange="window.changeQuestionType(this)">
-                        <option value="mcq" ${isMcq ? 'selected' : ''}>اختيار من متعدد</option>
-                        <option value="tf" ${!isMcq ? 'selected' : ''}>صح/خطأ</option>
-                    </select>
-                </div>
-                
-                <div class="mcq-options" style="display: ${isMcq ? 'grid' : 'none'};">
-                    <div>
-                        <label>A</label>
-                        <input type="text" class="oA reg-input" placeholder="الاختيار A" maxlength="200"
-                               value="${escapeHTML(questionData?.a || '')}">
-                    </div>
-                    <div>
-                        <label>B</label>
-                        <input type="text" class="oB reg-input" placeholder="الاختيار B" maxlength="200"
-                               value="${escapeHTML(questionData?.b || '')}">
-                    </div>
-                    <div>
-                        <label>C</label>
-                        <input type="text" class="oC reg-input" placeholder="الاختيار C" maxlength="200"
-                               value="${escapeHTML(questionData?.c || '')}">
-                    </div>
-                    <div>
-                        <label>D</label>
-                        <input type="text" class="oD reg-input" placeholder="الاختيار D" maxlength="200"
-                               value="${escapeHTML(questionData?.d || '')}">
-                    </div>
-                </div>
-                
-                <div class="tf-options" style="display: ${!isMcq ? 'block' : 'none'};">
-                    <select class="q-correct reg-input">
-                        <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>صح</option>
-                        <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>خطأ</option>
-                    </select>
-                </div>
-                
-                ${isMcq ? `
-                <select class="q-correct reg-input" style="margin-top: 15px;">
-                    <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>الإجابة الصحيحة: A</option>
-                    <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>الإجابة الصحيحة: B</option>
-                    <option value="c" ${questionData?.correct === 'c' ? 'selected' : ''}>الإجابة الصحيحة: C</option>
-                    <option value="d" ${questionData?.correct === 'd' ? 'selected' : ''}>الإجابة الصحيحة: D</option>
-                </select>
-                ` : ''}
-            `;
-            
-            container.appendChild(card);
-        }
-
-        function addEditQuestion(type) {
-            addEditQuestionCard(type === 'mcq' ? { a: '', b: '', c: '', d: '' } : { a: 'صح', b: 'خطأ' });
-        }
-
-        function changeQuestionType(select) {
-            const card = select.closest('.edit-question-card');
-            if (!card) return;
-            
-            const mcqDiv = card.querySelector('.mcq-options');
-            const tfDiv = card.querySelector('.tf-options');
-            
-            if (select.value === 'mcq') {
-                if (mcqDiv) mcqDiv.style.display = 'grid';
-                if (tfDiv) tfDiv.style.display = 'none';
-            } else {
-                if (mcqDiv) mcqDiv.style.display = 'none';
-                if (tfDiv) tfDiv.style.display = 'block';
-            }
-        }
-
-        function removeEditQuestion(icon) {
-            if (confirm('هل أنت متأكد من حذف هذا السؤال؟')) {
-                const card = icon.closest('.edit-question-card');
-                if (card) card.remove();
-                
-                document.querySelectorAll('.edit-question-card').forEach((card, idx) => {
-                    const questionNumber = card.querySelector('.question-number');
-                    if (questionNumber) {
-                        questionNumber.textContent = `سؤال ${idx + 1}`;
-                    }
-                    card.dataset.index = idx;
-                });
-            }
-        }
-
-        function duplicateQuestion(index) {
-            const cards = document.querySelectorAll('.edit-question-card');
-            if (index >= 0 && index < cards.length) {
-                const originalCard = cards[index];
-                const clone = originalCard.cloneNode(true);
-                
-                const container = document.getElementById('editQuestionsArea');
-                if (container) container.appendChild(clone);
-                
-                document.querySelectorAll('.edit-question-card').forEach((card, idx) => {
-                    const questionNumber = card.querySelector('.question-number');
-                    if (questionNumber) {
-                        questionNumber.textContent = `سؤال ${idx + 1}`;
-                    }
-                    card.dataset.index = idx;
-                });
-            }
-        }
-
-        function collectEditQuestions() {
-            let questions = {};
-            let qIndex = 0;
-            
-            document.querySelectorAll('#editQuestionsArea .edit-question-card').forEach(card => {
-                const qText = card.querySelector('.q-text')?.value.trim();
-                if (!qText) return;
-                
-                const qType = card.querySelector('.q-type')?.value;
-                const correct = card.querySelector('.q-correct')?.value;
-                
-                if (qType === 'mcq') {
-                    const oA = card.querySelector('.oA')?.value.trim() || '';
-                    const oB = card.querySelector('.oB')?.value.trim() || '';
-                    const oC = card.querySelector('.oC')?.value.trim() || '';
-                    const oD = card.querySelector('.oD')?.value.trim() || '';
-                    
-                    if (!oA || !oB) return;
-                    
-                    questions[`q${qIndex}`] = {
-                        text: qText,
-                        a: oA,
-                        b: oB,
-                        c: oC,
-                        d: oD,
-                        correct: correct
-                    };
-                } else {
-                    questions[`q${qIndex}`] = {
-                        text: qText,
-                        a: "صح",
-                        b: "خطأ",
-                        correct: correct
-                    };
-                }
-                qIndex++;
-            });
-            
-            return questions;
-        }
-
-        function previewExam() {
-            try {
-                const examName = document.getElementById('editExamName')?.value.trim();
-                const questions = collectEditQuestions();
-                
-                if (Object.keys(questions).length === 0) {
-                    showToast('❌ لا توجد أسئلة للمعاينة', 'error');
-                    return;
-                }
-                
-                let previewHtml = `
-                    <div style="text-align: center; margin-bottom: 30px;">
-                        <h2 style="color: var(--accent);">${escapeHTML(examName || 'امتحان بدون عنوان')}</h2>
-                        <p style="color: #666;">عدد الأسئلة: ${Object.keys(questions).length}</p>
-                    </div>
-                `;
-                
-                Object.keys(questions).forEach((key, idx) => {
-                    const q = questions[key];
-                    previewHtml += `<div class="preview-question">`;
-                    previewHtml += `<h4>سؤال ${idx + 1}: ${escapeHTML(q.text)}</h4>`;
-                    
-                    if (q.c) { // MCQ
-                        previewHtml += `<div class="preview-options">`;
-                        ['a', 'b', 'c', 'd'].forEach(opt => {
-                            if (q[opt]) {
-                                const isCorrect = q.correct === opt;
-                                previewHtml += `
-                                    <div class="preview-option ${isCorrect ? 'correct' : ''}">
-                                        <span>${opt.toUpperCase()}: ${escapeHTML(q[opt])}</span>
-                                        ${isCorrect ? '<span class="correct-badge">✓ الإجابة الصحيحة</span>' : ''}
-                                    </div>
-                                `;
-                            }
-                        });
-                        previewHtml += `</div>`;
-                    } else { // True/False
-                        previewHtml += `
-                            <div class="preview-tf">
-                                <div class="preview-tf-option ${q.correct === 'a' ? 'correct' : ''}">
-                                    صح ${q.correct === 'a' ? '✓' : ''}
-                                </div>
-                                <div class="preview-tf-option ${q.correct === 'b' ? 'correct' : ''}">
-                                    خطأ ${q.correct === 'b' ? '✓' : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
-                    
-                    previewHtml += `</div>`;
-                });
-                
-                const previewExamContent = document.getElementById('previewExamContent');
-                if (previewExamContent) previewExamContent.innerHTML = previewHtml;
-                
-                const previewExamModal = document.getElementById('previewExamModal');
-                if (previewExamModal) previewExamModal.style.display = 'flex';
-            } catch (error) {
-                console.error('Preview error:', error);
-                showToast('❌ حدث خطأ في المعاينة', 'error');
-            }
-        }
-
-        function closePreviewModal() {
-            const previewExamModal = document.getElementById('previewExamModal');
-            if (previewExamModal) previewExamModal.style.display = 'none';
-        }
-
-        async function saveExamChanges() {
-            const courseId = document.getElementById('editExamCourseId')?.value;
-            const examId = document.getElementById('editExamId')?.value;
-            const name = document.getElementById('editExamName')?.value.trim();
-            const videoRel = document.getElementById('editExamVideoRel')?.value;
-            
-            if (!name) {
-                showToast('❌ يرجى إدخال اسم الامتحان', 'error');
-                return;
-            }
-            
-            const questions = collectEditQuestions();
-            
-            if (Object.keys(questions).length === 0) {
-                showToast('❌ يجب إضافة سؤال واحد على الأقل', 'error');
-                return;
-            }
-            
-            try {
-                await update(ref(db, `quizzes/${courseId}/${examId}`), {
-                    name: name,
-                    questions: questions,
-                    videoRel: videoRel,
-                    updatedAt: new Date().toISOString()
-                });
-                
-                showToast('✅ تم حفظ التغييرات بنجاح', 'success');
-                closeExamModal();
-                
-                if (activeCID === courseId) {
-                    const editNameField = document.getElementById('editNameField');
-                    openEditModal(courseId, editNameField ? editNameField.value : '');
-                }
-            } catch (error) {
-                console.error(error);
-                showToast('❌ حدث خطأ أثناء الحفظ', 'error');
-            }
-        }
-
-        async function deleteExam() {
-            if (!confirm('⚠️ هل أنت متأكد من حذف هذا الامتحان؟\nسيتم حذف جميع نتائج الطلاب المرتبطة به.')) {
-                return;
-            }
-            
-            const courseId = document.getElementById('editExamCourseId')?.value;
-            const examId = document.getElementById('editExamId')?.value;
-            
-            try {
-                await remove(ref(db, `quizzes/${courseId}/${examId}`));
-                showToast('✅ تم حذف الامتحان بنجاح', 'success');
-                closeExamModal();
-                
-                if (activeCID === courseId) {
-                    const editNameField = document.getElementById('editNameField');
-                    openEditModal(courseId, editNameField ? editNameField.value : '');
-                }
-            } catch (error) {
-                console.error(error);
-                showToast('❌ حدث خطأ أثناء الحذف', 'error');
-            }
         }
 
         // ================ CLEANUP ON PAGE UNLOAD ================
