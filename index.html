@@ -2,7 +2,7 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <meta name="description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات، متابعة مستمرة">
     <meta name="theme-color" content="#6c5ce7">
     <title>Ms. Mona Kamel | English Academy</title>
@@ -21,6 +21,20 @@
     
     <!-- Preload hero image -->
     <link rel="preload" as="image" href="mona.jpg">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://monaacademy-cd983.web.app/">
+    <meta property="og:title" content="Ms. Mona Kamel | English Academy">
+    <meta property="og:description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات تفاعلية، متابعة مستمرة">
+    <meta property="og:image" content="https://monaacademy-cd983.web.app/mona.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://monaacademy-cd983.web.app/">
+    <meta property="twitter:title" content="Ms. Mona Kamel | English Academy">
+    <meta property="twitter:description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال">
+    <meta property="twitter:image" content="https://monaacademy-cd983.web.app/mona.jpg">
     
     <style>
         /* ========== ROOT VARIABLES ========== */
@@ -66,6 +80,253 @@
             color: var(--text-primary);
             overflow-x: hidden;
             scroll-behavior: smooth;
+        }
+        
+        /* ========== LOADING SPINNER ========== */
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(108, 92, 231, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--main);
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        /* ========== SKELETON LOADING ========== */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 10px;
+            min-height: 200px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* ========== OFFLINE INDICATOR ========== */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.9rem;
+            z-index: 10000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+        
+        /* ========== TAP HIGHLIGHT ========== */
+        * {
+            -webkit-tap-highlight-color: rgba(108, 92, 231, 0.1);
+        }
+        
+        /* ========== BETTER TOUCH SIZES ========== */
+        button, 
+        .auth-btn, 
+        .folder-card, 
+        .item-card,
+        .nav-link,
+        .hamburger-menu {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        
+        /* ========== PROGRESS INDICATOR ========== */
+        .progress-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--main), var(--accent-light));
+            z-index: 10001;
+            transform: scaleX(0);
+            transform-origin: 0 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .progress-indicator.loading {
+            transform: scaleX(1);
+        }
+        
+        /* ========== BETTER MODAL FOR MOBILE ========== */
+        @media (max-width: 768px) {
+            .modal-content {
+                width: 95%;
+                padding: 20px;
+                margin: 10px;
+                max-height: 85vh;
+            }
+            
+            .subscription-content {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .leaderboard-top3 {
+                gap: 10px;
+            }
+            
+            .top-card {
+                min-width: 150px;
+                padding: 20px 15px;
+            }
+            
+            .top-avatar {
+                width: 70px;
+                height: 70px;
+                font-size: 2rem;
+            }
+            
+            .top-points {
+                font-size: 1.5rem;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-number {
+                font-size: 1.8rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header-controls {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .student-id-badge {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .dropdown-menu {
+                width: 90%;
+                left: 5%;
+                top: 60px;
+            }
+            
+            .folder-card img {
+                height: 150px;
+            }
+            
+            .hero-content h1 {
+                font-size: 1.5rem;
+            }
+            
+            .hero-image img {
+                width: 150px;
+                height: 150px;
+            }
+        }
+        
+        /* ========== PULL TO REFRESH ========== */
+        .ptr-element {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            color: var(--main);
+            z-index: 10;
+            text-align: center;
+            height: 50px;
+            line-height: 50px;
+            transform: translateY(-50px);
+            transition: transform 0.3s;
+        }
+        
+        .ptr-element.visible {
+            transform: translateY(0);
+        }
+        
+        /* ========== ANIMATIONS ========== */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .fade-in-up {
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        
+        /* ========== TOUCH FEEDBACK ========== */
+        .touch-feedback {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .touch-feedback::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .touch-feedback:active::after {
+            animation: ripple 0.3s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
         }
         
         /* ========== HEADER ========== */
@@ -609,17 +870,17 @@
             animation: pulse 2s infinite;
         }
         
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
         .perfect-header h2 {
             font-size: 2.2rem;
             font-weight: 900;
             color: var(--perfect);
             margin: 0;
-        }
-        
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
         }
         
         .perfect-grid {
@@ -1563,7 +1824,7 @@
             .student-id-badge { font-size: 0.75rem; padding: 6px 12px; }
         }
         
-        /* ترتيب الأقسام حسب المطلوب */
+        /* ========== ترتيب الأقسام حسب المطلوب ========== */
         .courses {
             order: 1;
         }
@@ -1573,9 +1834,26 @@
         .leaderboard-section {
             order: 3;
         }
+        .reviews {
+            order: 4;
+        }
     </style>
 </head>
 <body>
+    <!-- Progress Indicator -->
+    <div id="progressIndicator" class="progress-indicator"></div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi-slash"></i>
+        أنت غير متصل بالإنترنت - بعض الميزات قد لا تعمل
+    </div>
+    
+    <!-- Pull to Refresh Element (للموبايل) -->
+    <div id="ptrElement" class="ptr-element">
+        <i class="fas fa-arrow-down"></i> اسحب للتحديث
+    </div>
+
     <header>
         <div class="logo-text" id="logoText">MS. MONA KAMEL</div>
         <div class="header-controls">
@@ -1585,11 +1863,11 @@
 
     <!-- HAMBURGER DROPDOWN -->
     <div id="menuDropdown" class="dropdown-menu">
-        <a id="dashboardMenuItem" style="display: none;"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> لوحة التحكم</a>
-        <a id="homeMenuItem" style="display: none;"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
-        <a id="continueWatchingMenuItem" style="display: none;"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> متابعة المشاهدة</a>
+        <a id="dashboardMenuItem" style="display: none;" class="touch-feedback"><i class="fas fa-tachometer-alt" style="margin-left: 10px;"></i> لوحة التحكم</a>
+        <a id="homeMenuItem" style="display: none;" class="touch-feedback"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <a id="continueWatchingMenuItem" style="display: none;" class="touch-feedback"><i class="fas fa-play-circle" style="margin-left: 10px;"></i> متابعة المشاهدة</a>
         <hr id="menuDivider" style="display: none;">
-        <a id="logoutMenuItem" style="display: none; color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
+        <a id="logoutMenuItem" style="display: none; color: var(--danger);" class="touch-feedback"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
     </div>
 
     <!-- SUBSCRIPTION MODAL -->
@@ -1604,7 +1882,7 @@
             </div>
             <div id="subscriptionIdSection" style="display: none;">
                 <p style="color: #666; margin-bottom: 10px;">أدخل كود الطالب الخاص بك (ID) لتأكيد الاشتراك:</p>
-                <input type="text" id="subscriptionIdInput" class="id-input" placeholder="1234567890" maxlength="10">
+                <input type="text" id="subscriptionIdInput" class="id-input" placeholder="1234567890" maxlength="10" inputmode="numeric" pattern="[0-9]*">
                 <button id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">تأكيد الاشتراك</button>
                 <div id="subError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
@@ -1642,7 +1920,12 @@
         <!-- كورساتنا التعليمية - الأول -->
         <section class="courses" id="courses">
             <h2 style="text-align: center; margin-bottom: 40px; font-weight: 900;">كورساتنا التعليمية</h2>
-            <div id="foldersGrid" class="course-grid"></div>
+            <div id="foldersGrid" class="course-grid">
+                <!-- Skeleton Loading -->
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+            </div>
         </section>
 
         <!-- PERFECT SCORES SECTION - الثاني -->
@@ -1666,6 +1949,7 @@
             <div id="leaderboardContainer" class="leaderboard-grid"></div>
         </section>
 
+        <!-- REVIEWS SECTION - الرابع (قالوا عن ميس منى) -->
         <section class="reviews">
             <h2 style="margin-bottom: 40px; font-weight: 900;">قالوا عن Ms. Mona Kamel ✨</h2>
             <div class="reviews-grid" id="testiGrid"></div>
@@ -1787,7 +2071,7 @@
             <!-- نموذج تسجيل الدخول بالإيميل -->
             <div id="loginEmail" style="display:none; text-align:right;">
                 <h2 style="color:var(--main); margin-bottom:20px;">الدخول بالإيميل والباسورد</h2>
-                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
+                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email">
                 <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
                 <button class="auth-btn" id="loginEmailSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     تسجيل الدخول
@@ -1798,7 +2082,7 @@
             <!-- نموذج تسجيل الدخول باليوزر نيم -->
             <div id="loginUsername" style="display:none; text-align:right;">
                 <h2 style="color:var(--main); margin-bottom:20px;">الدخول باليوزر نيم والباسورد</h2>
-                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
+                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text">
                 <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور">
                 <button class="auth-btn" id="loginUsernameSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     تسجيل الدخول
@@ -1821,10 +2105,10 @@
                     
                     <label class="reg-label required-field">الاسم الرباعي</label>
                     <div class="name-grid">
-                        <input type="text" id="n1" class="reg-input" placeholder="الأول" maxlength="50">
-                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" maxlength="50">
-                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" maxlength="50">
-                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" maxlength="50">
+                        <input type="text" id="n1" class="reg-input" placeholder="الأول" maxlength="50" inputmode="text">
+                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" maxlength="50" inputmode="text">
+                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" maxlength="50" inputmode="text">
+                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" maxlength="50" inputmode="text">
                     </div>
                     
                     <label class="reg-label required-field">رقم الواتساب</label>
@@ -1835,8 +2119,12 @@
                             <option value="+971">+971 (الإمارات)</option>
                             <option value="+974">+974 (قطر)</option>
                             <option value="+965">+965 (الكويت)</option>
+                            <option value="+973">+973 (البحرين)</option>
+                            <option value="+968">+968 (عمان)</option>
+                            <option value="+962">+962 (الأردن)</option>
+                            <option value="+970">+970 (فلسطين)</option>
                         </select>
-                        <input type="text" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;">
+                        <input type="tel" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*">
                     </div>
                     <div class="hint-text">أدخل الرقم بدون مفتاح الدولة</div>
                     
@@ -1847,7 +2135,7 @@
                             <option value="+966">+966 (السعودية)</option>
                             <option value="+971">+971 (الإمارات)</option>
                         </select>
-                        <input type="text" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;">
+                        <input type="tel" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*">
                     </div>
                     
                     <div id="step1Error" class="error-message" style="display:none;"></div>
@@ -1901,7 +2189,7 @@
                     
                     <!-- التسجيل بالإيميل -->
                     <div id="step3Email" class="step-container" style="display:none;">
-                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr">
+                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email">
                         <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
                         <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
                         <button id="regBtn" class="btn btn-main" style="width:100%; margin-top:15px;">
@@ -1911,7 +2199,7 @@
                     
                     <!-- التسجيل بيوزر نيم -->
                     <div id="step3Username" class="step-container" style="display:none;">
-                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr">
+                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text">
                         <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
                         <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
                         <button id="regBtnUser" class="btn btn-main" style="width:100%; margin-top:15px;">
@@ -1972,11 +2260,99 @@
     <script type="module" src="script.js" defer></script>
     
     <script>
-        // PWA Service Worker Registration - مبسط وآمن
+        // ================ PWA و تحسينات تجربة المستخدم ================
+        
+        // Progress Indicator
+        let progressInterval;
+        function startProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            if (indicator) {
+                indicator.classList.add('loading');
+                if (progressInterval) clearInterval(progressInterval);
+            }
+        }
+        
+        function stopProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            if (indicator) {
+                indicator.classList.remove('loading');
+                if (progressInterval) clearInterval(progressInterval);
+            }
+        }
+        
+        // Offline/Online Detection
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (indicator) {
+                if (!navigator.onLine) {
+                    indicator.classList.add('show');
+                } else {
+                    indicator.classList.remove('show');
+                }
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+        
+        // Pull to Refresh (للموبايل)
+        let touchStartY = 0;
+        const ptrElement = document.getElementById('ptrElement');
+        
+        window.addEventListener('touchstart', (e) => {
+            if (window.scrollY === 0) {
+                touchStartY = e.touches[0].clientY;
+            }
+        }, { passive: true });
+        
+        window.addEventListener('touchmove', (e) => {
+            if (window.scrollY === 0 && touchStartY > 0) {
+                const touchY = e.touches[0].clientY;
+                const diff = touchY - touchStartY;
+                
+                if (diff > 50 && diff < 150) {
+                    ptrElement?.classList.add('visible');
+                } else {
+                    ptrElement?.classList.remove('visible');
+                }
+            }
+        }, { passive: true });
+        
+        window.addEventListener('touchend', (e) => {
+            if (ptrElement?.classList.contains('visible')) {
+                ptrElement.classList.remove('visible');
+                window.location.reload();
+            }
+            touchStartY = 0;
+        });
+        
+        // تحميل Skeleton
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.skeleton').forEach(el => el.remove());
+            }, 1000);
+        });
+        
+        // Service Worker Registration
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./firebase-messaging-sw.js')
-                    .then(reg => console.log('✅ PWA Service Worker registered'))
+                    .then(reg => {
+                        console.log('✅ PWA Service Worker registered');
+                        
+                        // التحقق من التحديثات
+                        reg.addEventListener('updatefound', () => {
+                            const newWorker = reg.installing;
+                            newWorker.addEventListener('statechange', () => {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    if (confirm('✅ تحديث جديد متاح! هل تريد تحديث الصفحة الآن؟')) {
+                                        window.location.reload();
+                                    }
+                                }
+                            });
+                        });
+                    })
                     .catch(err => console.log('❌ SW registration failed:', err));
             });
         }
@@ -1989,7 +2365,7 @@
         }, true);
 
         // دالة showToast - ستتم overwrite من script.js
-        window.showToast = function(message, type = 'success') {
+        window.showToast = function(message, type = 'success', duration = 3000) {
             const container = document.getElementById('toastContainer');
             if (!container) return;
             
@@ -2010,7 +2386,7 @@
             setTimeout(() => {
                 toast.style.animation = 'fadeOut 0.3s';
                 setTimeout(() => toast.remove(), 300);
-            }, 3000);
+            }, duration);
         };
 
         // دالة تحديث قائمة الصفوف بناءً على المرحلة المختارة (مع إضافة الثانوية)
@@ -2111,11 +2487,18 @@
                 });
             }
             
-            if (closeQuizBtn) {
-                closeQuizBtn.addEventListener('click', function() {
-                    if (quizOverlay) quizOverlay.style.display = 'none';
-                });
-            }
+        if (closeQuizBtn) {
+            closeQuizBtn.addEventListener('click', function() {
+                if (quizOverlay) {
+                    quizOverlay.style.display = 'none';
+                    // --- إضافة تفريغ الحاوية لإيقاف الفيديو ---
+                    const quizContainer = document.getElementById('quizContainer');
+                    if (quizContainer) {
+                        quizContainer.innerHTML = "";
+                    }
+                }
+            });
+        }
             
             // ربط حدث تغيير المرحلة الدراسية
             const regLevel = document.getElementById('regLevel');
@@ -2135,7 +2518,51 @@
                     waModal.style.display = 'none';
                 }
             });
+            
+            // منع التكبير على الـ inputs في الموبايل
+            const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('touchstart', () => {
+                    input.style.fontSize = '16px';
+                });
+            });
         });
+        
+            <!-- نهاية الملف الأصلي هنا -->
+    
+    <!-- ================ LAZY LOADING IMPROVEMENT ================ -->
+    <script>
+    // تحسين تحميل الصور
+    if ('IntersectionObserver' in window) {
+        const lazyImages = document.querySelectorAll('img[loading="lazy"]');
+        
+        if (lazyImages.length > 0) {
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        const originalSrc = img.getAttribute('data-src');
+                        
+                        if (originalSrc) {
+                            img.src = originalSrc;
+                            img.removeAttribute('data-src');
+                        }
+                        
+                        imageObserver.unobserve(img);
+                    }
+                });
+            });
+
+            lazyImages.forEach(img => {
+                const currentSrc = img.src;
+                if (currentSrc && !currentSrc.includes('mona.jpg')) {
+                    img.setAttribute('data-src', currentSrc);
+                    img.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+                }
+                imageObserver.observe(img);
+            });
+        }
+    }
     </script>
 </body>
 </html>

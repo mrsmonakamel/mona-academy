@@ -2,15 +2,16 @@
   "name": "Ms. Mona Kamal | English Academy",
   "short_name": "Mona Academy",
   "description": "منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات تفاعلية، متابعة مستمرة",
-  "start_url": "./index.html",
+  "start_url": "./index.html?utm_source=pwa",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#6c5ce7",
   "theme_color": "#6c5ce7",
-  "orientation": "portrait",
+  "orientation": "portrait-primary",
   "scope": "./",
   "lang": "ar",
   "dir": "rtl",
   "categories": ["education", "learning", "english"],
+  
   "icons": [
     {
       "src": "icons/icon-72x72.png",
@@ -61,6 +62,7 @@
       "purpose": "any maskable"
     }
   ],
+  
   "screenshots": [
     {
       "src": "screenshots/home.jpg",
@@ -68,8 +70,23 @@
       "type": "image/jpeg",
       "platform": "wide",
       "label": "الصفحة الرئيسية للمنصة"
+    },
+    {
+      "src": "screenshots/courses.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "قائمة الكورسات"
+    },
+    {
+      "src": "screenshots/dashboard.jpg",
+      "sizes": "1080x1920",
+      "type": "image/jpeg",
+      "platform": "wide",
+      "label": "لوحة تحكم الطالب"
     }
   ],
+  
   "shortcuts": [
     {
       "name": "الكورسات",
@@ -94,15 +111,67 @@
           "sizes": "96x96"
         }
       ]
+    },
+    {
+      "name": "الامتحانات",
+      "short_name": "امتحانات",
+      "description": "حل الامتحانات",
+      "url": "./index.html#exams",
+      "icons": [
+        {
+          "src": "icons/shortcut-exams.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "المتصدرين",
+      "short_name": "المتصدرين",
+      "description": "عرض لوحة المتصدرين",
+      "url": "./index.html#leaderboard",
+      "icons": [
+        {
+          "src": "icons/shortcut-leaderboard.png",
+          "sizes": "96x96"
+        }
+      ]
     }
   ],
+  
   "related_applications": [],
   "prefer_related_applications": false,
-  "display_override": ["standalone", "window-controls-overlay"],
+  
+  "display_override": [
+    "standalone",
+    "window-controls-overlay",
+    "fullscreen"
+  ],
+  
   "launch_handler": {
-    "client_mode": ["focus-existing", "auto"]
+    "client_mode": ["focus-existing", "auto", "navigate-existing"]
   },
+  
   "edge_side_panel": {
     "preferred_width": 400
+  },
+  
+  "protocol_handlers": [
+    {
+      "protocol": "web+mona",
+      "url": "./index.html?action=%s"
+    }
+  ],
+  
+  "handle_links": "preferred",
+  "prefer_related_applications": false,
+  
+  "share_target": {
+    "action": "./share-target",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
   }
 }

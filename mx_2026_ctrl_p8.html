@@ -2,7 +2,8 @@
 <html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="theme-color" content="#6c5ce7">
     <title>Mona Academy | لوحة الإدارة المتطورة</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -46,6 +47,148 @@
             color: var(--text-main);
             overflow-x: hidden;
             min-height: 100vh;
+        }
+        
+        /* ========== LOADING SPINNER ========== */
+        .loading-spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid rgba(108, 92, 231, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--accent);
+            animation: spin 0.8s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .btn-loading {
+            position: relative;
+            color: transparent !important;
+            pointer-events: none;
+        }
+        
+        .btn-loading::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 2px solid white;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 0.6s linear infinite;
+        }
+        
+        /* ========== SKELETON LOADING ========== */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: skeleton-loading 1.5s infinite;
+            border-radius: 10px;
+            min-height: 100px;
+        }
+        
+        @keyframes skeleton-loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* ========== OFFLINE INDICATOR ========== */
+        .offline-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--danger);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            font-size: 0.9rem;
+            z-index: 10000;
+            transform: translateY(-100%);
+            transition: transform 0.3s ease;
+        }
+        
+        .offline-indicator.show {
+            transform: translateY(0);
+        }
+        
+        /* ========== TAP HIGHLIGHT ========== */
+        * {
+            -webkit-tap-highlight-color: rgba(108, 92, 231, 0.1);
+        }
+        
+        /* ========== BETTER TOUCH SIZES ========== */
+        button, 
+        .btn, 
+        .nav-link,
+        .auth-btn,
+        .social-btn,
+        .close-modal-btn,
+        input, 
+        select, 
+        textarea {
+            min-height: 44px;
+            min-width: 44px;
+            touch-action: manipulation;
+        }
+        
+        /* ========== PROGRESS INDICATOR ========== */
+        .progress-indicator {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            z-index: 10001;
+            transform: scaleX(0);
+            transform-origin: 0 0;
+            transition: transform 0.3s ease;
+        }
+        
+        .progress-indicator.loading {
+            transform: scaleX(1);
+        }
+        
+        /* ========== TOUCH FEEDBACK ========== */
+        .touch-feedback {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .touch-feedback::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 5px;
+            height: 5px;
+            background: rgba(255, 255, 255, 0.3);
+            opacity: 0;
+            border-radius: 100%;
+            transform: scale(1, 1) translate(-50%);
+            transform-origin: 50% 50%;
+        }
+        
+        .touch-feedback:active::after {
+            animation: ripple 0.3s ease-out;
+        }
+        
+        @keyframes ripple {
+            0% {
+                transform: scale(0, 0);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(20, 20);
+                opacity: 0;
+            }
         }
         
         /* ========== HEADER محسن ========== */
@@ -571,6 +714,8 @@
             cursor: pointer;
             font-weight: bold;
             transition: 0.3s;
+            min-height: 44px;
+            min-width: 44px;
         }
         
         .list-item .item-actions .btn-view {
@@ -680,6 +825,7 @@
             top: 20px;
             left: 20px;
             z-index: 10000;
+            pointer-events: none;
         }
         
         .toast-message {
@@ -695,6 +841,8 @@
             animation: slideInRight 0.3s, fadeOut 0.3s 2.7s;
             border-right: 4px solid var(--success);
             backdrop-filter: blur(10px);
+            pointer-events: auto;
+            max-width: 350px;
         }
         
         .toast-message.error {
@@ -784,6 +932,11 @@
             border-radius: 50%;
             transition: 0.3s;
             font-size: 1rem;
+            min-width: 36px;
+            min-height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .edit-question-card .question-actions .fa-copy {
@@ -963,14 +1116,63 @@
             }
             .modal-content {
                 padding: 20px;
+                width: 95%;
+                margin: 10px;
             }
             .mcq-options {
                 grid-template-columns: 1fr;
+            }
+            .grid-system {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .list-item {
+                flex-direction: column;
+                gap: 10px;
+                align-items: flex-start;
+            }
+            .list-item .item-actions {
+                width: 100%;
+                justify-content: flex-end;
+            }
+            .btn {
+                width: 100%;
+            }
+            .analytics-card {
+                flex-direction: column;
+                text-align: center;
+            }
+        }
+        
+        /* ========== PRINT STYLES ========== */
+        @media print {
+            .sidebar, .mobile-header, .overlay, .btn, .modal, .toast-container {
+                display: none !important;
+            }
+            .main-content {
+                margin-right: 0;
+                padding: 0;
+            }
+            .card {
+                break-inside: avoid;
+                box-shadow: none;
+                border: 1px solid #ddd;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Progress Indicator -->
+    <div id="progressIndicator" class="progress-indicator"></div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi-slash"></i>
+        أنت غير متصل بالإنترنت - بعض الميزات قد لا تعمل
+    </div>
+
     <div class="mobile-header">
         <span>لوحة إدارة مـنى</span>
         <div style="display: flex; gap: 10px;">
@@ -988,47 +1190,47 @@
     <div class="wrapper" id="adminApp" style="display: none;">
         <aside class="sidebar" id="sidebar">
             <div class="logo">Mona Academy</div>
-            <div class="nav-link active" onclick="showSection('coursesSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('coursesSection', this)">
                 <i class="fas fa-th-large"></i> إدارة الكورسات
             </div>
-            <div class="nav-link" onclick="showSection('examsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('examsSection', this)">
                 <i class="fas fa-edit"></i> مصنع الاختبارات
             </div>
-            <div class="nav-link" onclick="showSection('studentSearchSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('studentSearchSection', this)">
                 <i class="fas fa-search"></i> بحث متقدم عن الطلاب
             </div>
-            <div class="nav-link" onclick="showSection('studentsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('studentsSection', this)">
                 <i class="fas fa-user-graduate"></i> الطلاب المسجلين
             </div>
-            <div class="nav-link" onclick="showSection('resultsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('resultsSection', this)">
                 <i class="fas fa-poll-h"></i> درجات الطلاب
             </div>
-            <div class="nav-link" onclick="showSection('accessLogsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('accessLogsSection', this)">
                 <i class="fas fa-history"></i> سجل الدخول للكورسات
             </div>
-            <div class="nav-link" onclick="showSection('notificationsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('notificationsSection', this)">
                 <i class="fas fa-bell"></i> إشعارات دخول الكورسات
             </div>
-            <div class="nav-link" onclick="showSection('subscriptionNotificationsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('subscriptionNotificationsSection', this)">
                 <i class="fas fa-user-plus"></i> إشعارات الاشتراكات
             </div>
-            <div class="nav-link" onclick="showSection('reviewsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('reviewsSection', this)">
                 <i class="fas fa-comments"></i> آراء الطلاب
             </div>
-            <div class="nav-link" onclick="showSection('adminsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('adminsSection', this)">
                 <i class="fas fa-user-shield"></i> إدارة الأدمنز
             </div>
-            <div class="nav-link" onclick="showSection('perfectScoresSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('perfectScoresSection', this)">
                 <i class="fas fa-trophy"></i> الدرجات النهائية
             </div>
-            <div class="nav-link" onclick="showSection('analyticsSection', this)">
+            <div class="nav-link touch-feedback" onclick="showSection('analyticsSection', this)">
                 <i class="fas fa-chart-line"></i> التحليلات
             </div>
             <div style="margin-top: 30px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <a href="index.html" class="nav-link" style="color: var(--success);">
+                <a href="index.html" class="nav-link touch-feedback" style="color: var(--success);">
                     <i class="fas fa-home"></i> العودة للموقع
                 </a>
-                <div class="nav-link" onclick="logout()" style="color: var(--danger);">
+                <div class="nav-link touch-feedback" onclick="logout()" style="color: var(--danger);">
                     <i class="fas fa-power-off"></i> خروج
                 </div>
             </div>
@@ -1073,11 +1275,16 @@
                         </div>
                     </div>
                     
-                    <button class="btn btn-main" style="margin-top:20px;" onclick="addCourse()">
+                    <button class="btn btn-main touch-feedback" style="margin-top:20px;" onclick="addCourse()">
                         <i class="fas fa-save"></i> حفظ الكورس
                     </button>
                 </div>
-                <div id="coursesGrid" class="grid-system"></div>
+                <div id="coursesGrid" class="grid-system">
+                    <!-- Skeleton Loading -->
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                    <div class="skeleton"></div>
+                </div>
             </section>
 
             <!-- ========== مصنع الاختبارات ========== -->
@@ -1095,14 +1302,14 @@
                     </select>
                     <div id="questionsArea" style="margin-top: 20px;"></div>
                     <div style="display: flex; gap: 10px; margin-top: 20px;">
-                        <button class="btn btn-success" onclick="addNewQuestion('mcq')" style="flex:1;">
+                        <button class="btn btn-success touch-feedback" onclick="addNewQuestion('mcq')" style="flex:1;">
                             <i class="fas fa-list"></i> + اختيارات
                         </button>
-                        <button class="btn btn-warning" onclick="addNewQuestion('tf')" style="flex:1;">
+                        <button class="btn btn-warning touch-feedback" onclick="addNewQuestion('tf')" style="flex:1;">
                             <i class="fas fa-check-circle"></i> + صح/خطأ
                         </button>
                     </div>
-                    <button class="btn btn-main" style="margin-top: 25px;" onclick="saveFinalExam()">
+                    <button class="btn btn-main touch-feedback" style="margin-top: 25px;" onclick="saveFinalExam()">
                         <i class="fas fa-cloud-upload-alt"></i> نشر الامتحان
                     </button>
                 </div>
@@ -1113,21 +1320,21 @@
                 <div class="card">
                     <h3><i class="fas fa-search" style="margin-left: 10px;"></i> بحث متقدم عن الطلاب</h3>
                     <p style="color: #666; margin-bottom: 20px;">ابحث بالاسم أو كود الطالب للحصول على جميع المعلومات والنشاطات</p>
-                    <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="font-size: 1.1rem;">
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
-                        <button class="btn btn-main" style="flex: 2;" onclick="performAdvancedSearch()">
+                    <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="font-size: 1.1rem;" inputmode="text">
+                    <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                        <button class="btn btn-main touch-feedback" style="flex: 2;" onclick="performAdvancedSearch()">
                             <i class="fas fa-search"></i> بحث
                         </button>
-                        <button class="btn btn-danger" style="flex: 1;" onclick="clearAdvancedSearch()">
+                        <button class="btn btn-danger touch-feedback" style="flex: 1;" onclick="clearAdvancedSearch()">
                             <i class="fas fa-times"></i> إلغاء
                         </button>
                     </div>
                 </div>
                 <div id="searchResults" style="display: none;">
                     <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
                             <h3><i class="fas fa-user-graduate"></i> معلومات الطالب</h3>
-                            <button class="btn btn-pdf btn-sm" onclick="exportStudentPDF()">
+                            <button class="btn btn-pdf btn-sm touch-feedback" onclick="exportStudentPDF()">
                                 <i class="fas fa-file-pdf"></i> تصدير PDF
                             </button>
                         </div>
@@ -1155,7 +1362,7 @@
             <section id="studentsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-users"></i> قائمة الطلاب <span style="color: var(--accent);" id="studentCount"></span></h3>
-                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="filterStudents()">
+                    <input type="text" id="studentSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الإيميل..." style="margin-bottom: 15px;" onkeyup="filterStudents()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الاسم</th><th>كود الطالب</th><th>المرحلة</th><th>واتساب</th><th>ولي الأمر</th><th>طريقة التسجيل</th><th>الاشتراكات</th><th>النقاط</th><th>حذف</th></tr></thead>
@@ -1169,7 +1376,7 @@
             <section id="resultsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-chart-bar"></i> النتائج <span style="color: var(--accent);" id="resultsCount"></span></h3>
-                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="filterResults()">
+                    <input type="text" id="resultSearch" placeholder="🔍 ابحث بالاسم أو الكود..." style="margin-bottom: 15px;" onkeyup="filterResults()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th><th>حذف</th></tr></thead>
@@ -1183,7 +1390,7 @@
             <section id="accessLogsSection" class="admin-section" style="display: none;">
                 <div class="card">
                     <h3><i class="fas fa-history"></i> سجل الدخول للكورسات <span style="color: var(--accent);" id="logsCount"></span></h3>
-                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="filterLogs()">
+                    <input type="text" id="logSearch" placeholder="🔍 ابحث بالاسم أو الكود أو الكورس..." style="margin-bottom: 15px;" onkeyup="filterLogs()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>الطالب</th><th>كود الطالب</th><th>الكورس</th><th>التوقيت</th><th>حذف</th></tr></thead>
@@ -1198,7 +1405,7 @@
                 <div class="card">
                     <h3><i class="fas fa-bell"></i> إشعارات دخول الطلاب للكورسات <span style="color: var(--accent);" id="notificationsCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين دخلوا الكورسات لأول مرة</p>
-                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterNotifications()">
+                    <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterNotifications()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>وقت أول دخول</th><th>حذف</th></tr></thead>
@@ -1213,7 +1420,7 @@
                 <div class="card">
                     <h3><i class="fas fa-user-plus"></i> إشعارات اشتراكات الطلاب في الكورسات <span style="color: var(--accent);" id="subscriptionNotificationsCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بالطلاب الذين اشتركوا في الكورسات</p>
-                    <input type="text" id="subscriptionNotificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterSubscriptionNotifications()">
+                    <input type="text" id="subscriptionNotificationSearch" placeholder="🔍 ابحث..." style="margin-bottom: 15px;" onkeyup="filterSubscriptionNotifications()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead><tr><th>اسم الطالب</th><th>كود الطالب</th><th>اسم الكورس</th><th>تاريخ الاشتراك</th><th>حذف</th></tr></thead>
@@ -1241,9 +1448,9 @@
                 <div class="card">
                     <h3><i class="fas fa-user-shield"></i> إضافة أدمن جديد</h3>
                     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني للأدمن" style="flex: 2;">
-                        <input type="text" id="newAdminName" placeholder="اسم الأدمن" style="flex: 1;">
-                        <button class="btn btn-success" style="flex: 0.5;" onclick="addAdmin()">
+                        <input type="email" id="newAdminEmail" placeholder="البريد الإلكتروني للأدمن" style="flex: 2;" inputmode="email">
+                        <input type="text" id="newAdminName" placeholder="اسم الأدمن" style="flex: 1;" inputmode="text">
+                        <button class="btn btn-success touch-feedback" style="flex: 0.5;" onclick="addAdmin()">
                             <i class="fas fa-user-plus"></i> إضافة
                         </button>
                     </div>
@@ -1260,7 +1467,7 @@
                 <div class="card">
                     <h3><i class="fas fa-trophy" style="color: var(--gold);"></i> طلاب الدرجة النهائية <span style="color: var(--accent);" id="perfectScoresCount"></span></h3>
                     <p style="color: #666; margin-bottom: 15px;">هذه قائمة بجميع الطلاب الذين حصلوا على الدرجة الكاملة في الامتحانات. يمكنك حذف أي نتيجة لإعادة فتح الامتحان للطالب.</p>
-                    <input type="text" id="perfectScoreSearch" placeholder="🔍 ابحث باسم الطالب أو الكود أو الامتحان..." style="margin-bottom: 15px;" onkeyup="filterPerfectScores()">
+                    <input type="text" id="perfectScoreSearch" placeholder="🔍 ابحث باسم الطالب أو الكود أو الامتحان..." style="margin-bottom: 15px;" onkeyup="filterPerfectScores()" inputmode="text">
                     <div class="table-container">
                         <table>
                             <thead>
@@ -1319,17 +1526,17 @@
     <!-- ========== مودال تعديل الكورس (مع إضافة حقل المرحلة) ========== -->
     <div id="editModal" class="modal">
         <div class="modal-content">
-            <button class="close-modal-btn" onclick="closeModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn touch-feedback" onclick="closeModal()"><i class="fas fa-times"></i></button>
             <h3 style="color: var(--accent); margin-bottom: 25px;">
                 <i class="fas fa-edit"></i> إدارة الكورس
             </h3>
             
             <div class="card" style="background: linear-gradient(145deg, #f8f9fa, #ffffff); margin-bottom: 25px;">
                 <label style="font-weight: bold;">تعديل الاسم:</label>
-                <input type="text" id="editNameField" style="margin-bottom: 15px;">
+                <input type="text" id="editNameField" style="margin-bottom: 15px;" inputmode="text">
                 
                 <label style="font-weight: bold;">تعديل الصورة (رابط):</label>
-                <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr" style="margin-bottom: 15px;">
+                <input type="url" id="editImgField" placeholder="https://... (رابط الصورة الجديدة)" dir="ltr" style="margin-bottom: 15px;" inputmode="url">
                 
                 <!-- حقل تعديل المرحلة الدراسية -->
                 <label style="font-weight: bold; margin-top: 15px;">المرحلة الدراسية:</label>
@@ -1355,7 +1562,7 @@
                     </div>
                 </div>
                 
-                <button class="btn btn-main" id="saveBasicBtn" onclick="updateCourseBasic()" style="margin-top: 15px;">
+                <button class="btn btn-main touch-feedback" id="saveBasicBtn" onclick="updateCourseBasic()" style="margin-top: 15px;">
                     <i class="fas fa-save"></i> حفظ البيانات الجديدة
                 </button>
             </div>
@@ -1365,11 +1572,11 @@
                 إضافة فيديو جديد
             </h4>
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-                <input type="text" id="vTitle" placeholder="عنوان الفيديو">
-                <input type="text" id="vUrl" placeholder="رابط اليوتيوب" dir="ltr">
+                <input type="text" id="vTitle" placeholder="عنوان الفيديو" inputmode="text">
+                <input type="text" id="vUrl" placeholder="رابط اليوتيوب" dir="ltr" inputmode="url">
             </div>
-            <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)" style="margin-top: 15px;">
-            <button class="btn btn-success" style="margin-top:15px; width:100%;" onclick="addVideoToCourse()">
+            <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)" style="margin-top: 15px;" inputmode="numeric">
+            <button class="btn btn-success touch-feedback" style="margin-top:15px; width:100%;" onclick="addVideoToCourse()">
                 <i class="fas fa-video"></i> إضافة الفيديو
             </button>
             
@@ -1394,7 +1601,7 @@
     <!-- ========== مودال تعديل الفيديو ========== -->
     <div id="editVideoModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 500px;">
-            <button class="close-modal-btn" onclick="closeVideoModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn touch-feedback" onclick="closeVideoModal()"><i class="fas fa-times"></i></button>
             <h3 style="color: var(--accent); margin-bottom: 25px;">
                 <i class="fas fa-video"></i> تعديل الفيديو
             </h3>
@@ -1403,19 +1610,19 @@
             <input type="hidden" id="editVideoId">
             
             <label style="font-weight: bold;">عنوان الفيديو:</label>
-            <input type="text" id="editVideoTitle" placeholder="أدخل العنوان الجديد" style="margin-bottom: 20px;">
+            <input type="text" id="editVideoTitle" placeholder="أدخل العنوان الجديد" style="margin-bottom: 20px;" inputmode="text">
             
             <label style="font-weight: bold;">رابط اليوتيوب:</label>
-            <input type="text" id="editVideoUrl" placeholder="https://youtube.com/..." dir="ltr" style="margin-bottom: 20px;">
+            <input type="text" id="editVideoUrl" placeholder="https://youtube.com/..." dir="ltr" style="margin-bottom: 20px;" inputmode="url">
             
             <label style="font-weight: bold;">الترتيب:</label>
-            <input type="number" id="editVideoOrder" placeholder="رقم الترتيب" style="margin-bottom: 25px;">
+            <input type="number" id="editVideoOrder" placeholder="رقم الترتيب" style="margin-bottom: 25px;" inputmode="numeric">
             
             <div style="display: flex; gap: 10px;">
-                <button class="btn btn-main" onclick="saveVideoChanges()" style="flex: 2;">
+                <button class="btn btn-main touch-feedback" onclick="saveVideoChanges()" style="flex: 2;">
                     <i class="fas fa-save"></i> حفظ التغييرات
                 </button>
-                <button class="btn btn-danger" onclick="closeVideoModal()" style="flex: 1;">
+                <button class="btn btn-danger touch-feedback" onclick="closeVideoModal()" style="flex: 1;">
                     <i class="fas fa-times"></i> إلغاء
                 </button>
             </div>
@@ -1425,14 +1632,14 @@
     <!-- ========== مودال تعديل الامتحان ========== -->
     <div id="editExamModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 1000px;">
-            <button class="close-modal-btn" onclick="closeExamModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn touch-feedback" onclick="closeExamModal()"><i class="fas fa-times"></i></button>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 10px;">
                 <h3 style="color: var(--accent);">
                     <i class="fas fa-edit"></i> تعديل الامتحان
                 </h3>
                 <div style="display: flex; gap: 10px;">
-                    <button class="btn btn-success btn-sm" onclick="previewExam()">
+                    <button class="btn btn-success btn-sm touch-feedback" onclick="previewExam()">
                         <i class="fas fa-eye"></i> معاينة الامتحان
                     </button>
                 </div>
@@ -1443,7 +1650,7 @@
             
             <div class="card" style="background: linear-gradient(145deg, #f8f9fa, #ffffff); margin-bottom: 25px;">
                 <label style="font-weight: bold;">اسم الامتحان:</label>
-                <input type="text" id="editExamName" class="reg-input" placeholder="أدخل اسم الامتحان" style="margin-bottom: 15px;">
+                <input type="text" id="editExamName" class="reg-input" placeholder="أدخل اسم الامتحان" style="margin-bottom: 15px;" inputmode="text">
                 
                 <label style="font-weight: bold;">ربط الامتحان بـ:</label>
                 <select id="editExamVideoRel" class="reg-input" style="margin-bottom: 15px;">
@@ -1451,13 +1658,13 @@
                 </select>
             </div>
             
-            <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0; flex-wrap: wrap; gap: 10px;">
                 <h4><i class="fas fa-question-circle"></i> الأسئلة</h4>
                 <div>
-                    <button class="btn btn-success btn-sm" onclick="addEditQuestion('mcq')">
+                    <button class="btn btn-success btn-sm touch-feedback" onclick="addEditQuestion('mcq')">
                         <i class="fas fa-plus"></i> سؤال اختيارات
                     </button>
-                    <button class="btn btn-warning btn-sm" onclick="addEditQuestion('tf')" style="margin-right: 10px;">
+                    <button class="btn btn-warning btn-sm touch-feedback" onclick="addEditQuestion('tf')" style="margin-right: 10px;">
                         <i class="fas fa-plus"></i> سؤال صح/خطأ
                     </button>
                 </div>
@@ -1466,10 +1673,10 @@
             <div id="editQuestionsArea" style="max-height: 400px; overflow-y: auto; padding: 10px;"></div>
             
             <div style="display: flex; gap: 10px; margin-top: 25px;">
-                <button class="btn btn-main" onclick="saveExamChanges()" style="flex: 2;">
+                <button class="btn btn-main touch-feedback" onclick="saveExamChanges()" style="flex: 2;">
                     <i class="fas fa-save"></i> حفظ التغييرات
                 </button>
-                <button class="btn btn-danger" onclick="deleteExam()" style="flex: 1;">
+                <button class="btn btn-danger touch-feedback" onclick="deleteExam()" style="flex: 1;">
                     <i class="fas fa-trash"></i> حذف الامتحان
                 </button>
             </div>
@@ -1479,7 +1686,7 @@
     <!-- ========== مودال معاينة الامتحان ========== -->
     <div id="previewExamModal" class="modal" style="display: none;">
         <div class="modal-content" style="max-width: 700px;">
-            <button class="close-modal-btn" onclick="closePreviewModal()"><i class="fas fa-times"></i></button>
+            <button class="close-modal-btn touch-feedback" onclick="closePreviewModal()"><i class="fas fa-times"></i></button>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                 <h3 style="color: var(--accent);">
@@ -1536,6 +1743,40 @@
         let currentStudentUid = null;
         let currentEditingExam = null;
 
+        // ================ Progress Indicator ================
+        let progressInterval;
+        function startProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            if (indicator) {
+                indicator.classList.add('loading');
+                if (progressInterval) clearInterval(progressInterval);
+            }
+        }
+        
+        function stopProgress() {
+            const indicator = document.getElementById('progressIndicator');
+            if (indicator) {
+                indicator.classList.remove('loading');
+                if (progressInterval) clearInterval(progressInterval);
+            }
+        }
+
+        // ================ Offline/Online Detection ================
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (indicator) {
+                if (!navigator.onLine) {
+                    indicator.classList.add('show');
+                } else {
+                    indicator.classList.remove('show');
+                }
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
         // ================ دالة escapeHTML (للحماية من XSS) ================
         function escapeHTML(str) {
             if (str === null || str === undefined) return '';
@@ -1545,13 +1786,29 @@
             return div.innerHTML;
         }
 
-        // ================ دالة convertImageToBase64 ================
+        // ================ دالة التحقق من رابط الصورة ================
+        function isValidImageUrl(url) {
+            try {
+                const urlObj = new URL(url);
+                const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg'];
+                const path = urlObj.pathname.toLowerCase();
+                return validExtensions.some(ext => path.endsWith(ext));
+            } catch {
+                return false;
+            }
+        }
+
+        // ================ دالة تحويل الصورة إلى Base64 ================
         function convertImageToBase64(file) {
             return new Promise((resolve, reject) => {
+                if (!file) reject(new Error('لم يتم اختيار ملف'));
+                if (!file.type.startsWith('image/')) reject(new Error('الملف ليس صورة'));
+                if (file.size > 5 * 1024 * 1024) reject(new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)'));
+                
                 const reader = new FileReader();
-                reader.readAsDataURL(file);
                 reader.onload = () => resolve(reader.result);
-                reader.onerror = error => reject(error);
+                reader.onerror = () => reject(new Error('فشل في قراءة الملف'));
+                reader.readAsDataURL(file);
             });
         }
 
@@ -1598,6 +1855,7 @@
         onAuthStateChanged(auth, async user => {
             if (user) {
                 try {
+                    startProgress();
                     const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
                     const adminsSnap = await get(ref(db, 'admins'));
                     const admins = adminsSnap.val() || {};
@@ -1621,6 +1879,8 @@
                 } catch (error) {
                     console.error('Auth error:', error);
                     showToast('❌ حدث خطأ في التحقق من الهوية', 'error');
+                } finally {
+                    stopProgress();
                 }
             } else {
                 window.location.href = "index.html";
@@ -1630,6 +1890,7 @@
         // ================ SYNC DATA محسنة ================
         function syncData() {
             cleanupListeners();
+            startProgress();
             
             const listeners = [
                 onValue(ref(db, 'folders'), snap => {
@@ -1679,6 +1940,7 @@
             ];
             
             dataListeners = listeners;
+            setTimeout(stopProgress, 1000);
         }
 
         // ================ UPDATE COUNTS ================
@@ -1713,7 +1975,7 @@
         // ================ COURSES MANAGEMENT (محدث مع إضافة المرحلة) ================
         function renderCourses(folders) {
             let h = "";
-            if (folders) {
+            if (folders && Object.keys(folders).length > 0) {
                 Object.keys(folders).forEach(id => {
                     const f = folders[id];
                     const imgSrc = f.img && f.img.startsWith('data:image') ? f.img : (f.img || 'mona.jpg');
@@ -1726,10 +1988,10 @@
                             ${'★'.repeat(Math.min(5, Math.round(f.avgRating || 0)))} (${escapeHTML(f.reviewCount || 0)})
                         </div>
                         <div style="display: flex; gap: 10px;">
-                            <button class="btn btn-main" style="flex: 1;" onclick='openEditModal("${id}", ${JSON.stringify(f).replace(/</g, '\\u003c')})'>
+                            <button class="btn btn-main touch-feedback" style="flex: 1;" onclick='openEditModal("${id}", ${JSON.stringify(f).replace(/</g, '\\u003c')})'>
                                 <i class="fas fa-edit"></i> تعديل
                             </button>
-                            <button class="btn btn-danger" style="flex: 0.5;" onclick="delData('folders/${id}')">
+                            <button class="btn btn-danger touch-feedback" style="flex: 0.5;" onclick="delData('folders/${id}')">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -1761,13 +2023,22 @@
             
             let imageData = imgUrl || 'mona.jpg';
             
+            // التحقق من رابط الصورة إذا تم إدخاله
+            if (imgUrl && !imgFile) {
+                if (!isValidImageUrl(imgUrl)) {
+                    showToast("❌ رابط الصورة غير صالح. يجب أن ينتهي بـ .jpg, .png, .gif, إلخ", 'error');
+                    return;
+                }
+            }
+            
             // إذا تم اختيار صورة من الجهاز
             if (imgFile) {
                 try {
+                    showToast('🔄 جاري رفع الصورة...', 'success', 2000);
                     imageData = await convertImageToBase64(imgFile);
                 } catch (error) {
                     console.error('Error converting image:', error);
-                    showToast("❌ حدث خطأ في معالجة الصورة", 'error');
+                    showToast("❌ " + error.message, 'error');
                     return;
                 }
             } else if (imgUrl) {
@@ -1780,6 +2051,7 @@
             }
             
             try {
+                startProgress();
                 await push(ref(db, 'folders'), { 
                     name, 
                     img: imageData,
@@ -1797,6 +2069,8 @@
             } catch (error) {
                 console.error('Error adding course:', error);
                 showToast("❌ حدث خطأ أثناء إضافة الكورس", 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -1809,8 +2083,12 @@
                     if (file) {
                         const preview = document.getElementById('imagePreview');
                         const previewImg = document.getElementById('previewImg');
-                        previewImg.src = await convertImageToBase64(file);
-                        preview.style.display = 'block';
+                        try {
+                            previewImg.src = await convertImageToBase64(file);
+                            preview.style.display = 'block';
+                        } catch (error) {
+                            showToast(error.message, 'error');
+                        }
                     }
                 });
             }
@@ -1822,11 +2100,20 @@
                     if (file) {
                         const preview = document.getElementById('editImagePreview');
                         const previewImg = document.getElementById('editPreviewImg');
-                        previewImg.src = await convertImageToBase64(file);
-                        preview.style.display = 'block';
+                        try {
+                            previewImg.src = await convertImageToBase64(file);
+                            preview.style.display = 'block';
+                        } catch (error) {
+                            showToast(error.message, 'error');
+                        }
                     }
                 });
             }
+            
+            // إخفاء الـ Skeleton بعد التحميل
+            setTimeout(() => {
+                document.querySelectorAll('.skeleton').forEach(el => el.remove());
+            }, 2000);
         });
 
         // ================ فتح مودال التعديل (محدث مع إضافة المرحلة) ================
@@ -1845,6 +2132,7 @@
             document.getElementById('editImageFile').value = '';
             
             try {
+                startProgress();
                 const [folderSnap, quizzesSnap] = await Promise.all([
                     get(ref(db, `folders/${id}`)),
                     get(ref(db, `quizzes/${id}`))
@@ -1873,13 +2161,13 @@
                                 <div style="font-size:0.8rem; color: #666; margin-top:5px;">${escapeHTML(v.url)}</div>
                             </div>
                             <div class="item-actions">
-                                <button class="btn-view" onclick='playVideoAdmin("${escapeHTML(v.url)}", "${escapeHTML(v.title)}")' title="مشاهدة">
+                                <button class="btn-view touch-feedback" onclick='playVideoAdmin("${escapeHTML(v.url)}", "${escapeHTML(v.title)}")' title="مشاهدة">
                                     <i class="fas fa-play"></i>
                                 </button>
-                                <button class="btn-edit" onclick='openEditVideoModal("${id}", "${v.id}", ${JSON.stringify(v).replace(/</g, '\\u003c')})' title="تعديل">
+                                <button class="btn-edit touch-feedback" onclick='openEditVideoModal("${id}", "${v.id}", ${JSON.stringify(v).replace(/</g, '\\u003c')})' title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-delete" onclick="delData('folders/${id}/videos/${v.id}')" title="حذف">
+                                <button class="btn-delete touch-feedback" onclick="delData('folders/${id}/videos/${v.id}')" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -1903,13 +2191,13 @@
                                 <span class="badge-exam" style="margin-right: 10px;">${escapeHTML(qCount)} سؤال</span>
                             </div>
                             <div class="item-actions">
-                                <button class="btn-view" onclick='previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="معاينة">
+                                <button class="btn-view touch-feedback" onclick='previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="معاينة">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn-edit" onclick='openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="تعديل">
+                                <button class="btn-edit touch-feedback" onclick='openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-delete" onclick="delData('quizzes/${id}/${q.key}')" title="حذف">
+                                <button class="btn-delete touch-feedback" onclick="delData('quizzes/${id}/${q.key}')" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -1924,6 +2212,8 @@
             } catch (error) {
                 console.error('Error loading modal data:', error);
                 showToast('❌ حدث خطأ في تحميل البيانات', 'error');
+            } finally {
+                stopProgress();
             }
             
             const editModal = document.getElementById('editModal');
@@ -1950,9 +2240,11 @@
             if (btn) {
                 btn.innerText = "جاري الحفظ..."; 
                 btn.disabled = true;
+                btn.classList.add('btn-loading');
             }
             
             try {
+                startProgress();
                 const updateData = { name };
                 
                 // إضافة المرحلة إذا تم اختيارها
@@ -1972,6 +2264,7 @@
                         if (btn) {
                             btn.innerText = "حفظ البيانات الجديدة"; 
                             btn.disabled = false;
+                            btn.classList.remove('btn-loading');
                         }
                         return;
                     }
@@ -1987,9 +2280,11 @@
                 console.error('Error updating course:', error);
                 showToast('❌ حدث خطأ في التحديث', 'error');
             } finally {
+                stopProgress();
                 if (btn) {
                     btn.innerText = "حفظ البيانات الجديدة"; 
                     btn.disabled = false;
+                    btn.classList.remove('btn-loading');
                 }
             }
         };
@@ -2006,15 +2301,23 @@
                 const overlay = document.createElement('div');
                 overlay.className = 'video-player-overlay';
                 overlay.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.9); z-index:5000; display:flex; align-items:center; justify-content:center;';
+                
+                // إغلاق عند الضغط على الخلفية
+                overlay.addEventListener('click', (e) => {
+                    if (e.target === overlay) overlay.remove();
+                });
+                
                 const iframe = document.createElement('iframe');
                 iframe.style.cssText = 'width:80%; height:80%; border-radius:15px;';
                 iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
                 iframe.allow = 'autoplay; encrypted-media';
                 iframe.allowFullscreen = true;
+                
                 const closeBtn = document.createElement('span');
-                closeBtn.style.cssText = 'position:absolute; top:20px; left:20px; color:white; font-size:3rem; cursor:pointer;';
+                closeBtn.style.cssText = 'position:absolute; top:20px; left:20px; color:white; font-size:3rem; cursor:pointer; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.5); border-radius:50%;';
                 closeBtn.innerHTML = '&times;';
                 closeBtn.onclick = () => overlay.remove();
+                
                 overlay.appendChild(iframe);
                 overlay.appendChild(closeBtn);
                 document.body.appendChild(overlay);
@@ -2112,6 +2415,7 @@
             }
 
             try {
+                startProgress();
                 await update(ref(db, `folders/${courseId}/videos/${videoId}`), {
                     title: title,
                     url: url,
@@ -2125,6 +2429,8 @@
             } catch (error) {
                 console.error(error);
                 showToast('❌ حدث خطأ أثناء التعديل', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -2136,13 +2442,13 @@
             const q = document.createElement('div');
             q.className = "card"; 
             q.style = "background:#f8f9fa; position:relative; margin-top:10px;";
-            q.innerHTML = `<i class="fas fa-trash" style="position:absolute; left:10px; top:10px; color:red; cursor:pointer;" onclick="this.parentElement.remove()"></i>
-                <input type="text" class="q-text" placeholder="نص السؤال" maxlength="500" style="width:100%; padding:10px; margin-bottom:10px;">
+            q.innerHTML = `<i class="fas fa-trash" style="position:absolute; left:10px; top:10px; color:red; cursor:pointer; min-height:44px; min-width:44px; display:flex; align-items:center; justify-content:center;" onclick="this.parentElement.remove()"></i>
+                <input type="text" class="q-text" placeholder="نص السؤال" maxlength="500" style="width:100%; padding:10px; margin-bottom:10px;" inputmode="text">
                 ${type==='mcq' ? `<div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-top:5px;">
-                    <input type="text" class="oA" placeholder="الاختيار A" maxlength="200">
-                    <input type="text" class="oB" placeholder="الاختيار B" maxlength="200">
-                    <input type="text" class="oC" placeholder="الاختيار C" maxlength="200">
-                    <input type="text" class="oD" placeholder="الاختيار D" maxlength="200">
+                    <input type="text" class="oA" placeholder="الاختيار A" maxlength="200" inputmode="text">
+                    <input type="text" class="oB" placeholder="الاختيار B" maxlength="200" inputmode="text">
+                    <input type="text" class="oC" placeholder="الاختيار C" maxlength="200" inputmode="text">
+                    <input type="text" class="oD" placeholder="الاختيار D" maxlength="200" inputmode="text">
                 </div>
                 <select class="q-correct" style="margin-top:5px; width:100%; padding:8px;">
                     <option value="a">الإجابة الصحيحة: A</option>
@@ -2264,7 +2570,7 @@
                         <td>${escapeHTML(regMethod)}</td>
                         <td>${escapeHTML(subCount)}</td>
                         <td>${escapeHTML(s.points || 0)}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('students/${uid}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('students/${uid}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2295,7 +2601,7 @@
                         <td>${escapeHTML(r.score)}/${escapeHTML(r.total)}</td>
                         <td><span class="progress-badge">${escapeHTML(r.percentage)}%</span></td>
                         <td>${escapeHTML(r.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('quiz_results/${key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('quiz_results/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2324,7 +2630,7 @@
                         <td><span class="student-id-display">${escapeHTML(l.studentId || '')}</span></td>
                         <td>${escapeHTML(l.courseName || '')}</td>
                         <td>${escapeHTML(l.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('course_access_logs/${key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('course_access_logs/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2353,7 +2659,7 @@
                         <td><span class="student-id-display">${escapeHTML(n.studentId || '')}</span></td>
                         <td>${escapeHTML(n.courseName || '')}</td>
                         <td>${escapeHTML(n.time || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('course_access_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('course_access_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2382,7 +2688,7 @@
                         <td><span class="student-id-display">${escapeHTML(n.studentId || '')}</span></td>
                         <td>${escapeHTML(n.courseName || '')}</td>
                         <td>${escapeHTML(n.subscribedAt || n.timestamp || '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('subscription_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('subscription_notifications/${key}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2410,7 +2716,7 @@
                         <td>${escapeHTML(r.student || '')}</td>
                         <td>${escapeHTML(r.text || '')}</td>
                         <td>${escapeHTML(r.rating ? '★'.repeat(r.rating) : '')}</td>
-                        <td><button class="btn btn-danger btn-sm" onclick="delData('reviews/${id}')"><i class="fas fa-trash"></i></button></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="delData('reviews/${id}')"><i class="fas fa-trash"></i></button></td>
                     </tr>`;
                 });
             }
@@ -2432,7 +2738,7 @@
                             <div style="color:#666; font-size:0.85rem;">${escapeHTML(a.email || '')}</div>
                         </div>
                         <div class="item-actions">
-                            ${!isSuper ? `<button class="btn-delete" onclick="removeAdmin('${id}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
+                            ${!isSuper ? `<button class="btn-delete touch-feedback" onclick="removeAdmin('${id}')"><i class="fas fa-trash"></i> حذف</button>` : ''}
                         </div>
                     </div>`;
                 });
@@ -2460,6 +2766,7 @@
             }
             
             try {
+                startProgress();
                 const adminId = email.replace(/[.#$[\]]/g, '_');
                 await set(ref(db, `admins/${adminId}`), { email, name });
                 
@@ -2469,6 +2776,8 @@
             } catch (error) {
                 console.error('Error adding admin:', error);
                 showToast('❌ حدث خطأ في إضافة الأدمن', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -2480,11 +2789,14 @@
             
             if (confirm('❓ هل أنت متأكد من حذف هذا الأدمن؟')) {
                 try {
+                    startProgress();
                     await remove(ref(db, `admins/${adminId}`));
                     showToast('✅ تم حذف الأدمن', 'success');
                 } catch (error) {
                     console.error('Error removing admin:', error);
                     showToast('❌ حدث خطأ في حذف الأدمن', 'error');
+                } finally {
+                    stopProgress();
                 }
             }
         };
@@ -2514,17 +2826,19 @@
             allPerfectScores = perfectScores;
             
             let html = "";
-            perfectScores.forEach(ps => {
-                html += `<tr>
-                    <td>${escapeHTML(ps.studentName)}</td>
-                    <td><span class="student-id-display">${escapeHTML(ps.studentId)}</span></td>
-                    <td>${escapeHTML(ps.examName)}</td>
-                    <td>${escapeHTML(ps.grade)}</td>
-                    <td>${escapeHTML(ps.time)}</td>
-                    <td><span class="progress-badge">${ps.score}/${ps.total}</span></td>
-                    <td><button class="btn btn-danger btn-sm" onclick="deletePerfectScore('${ps.key}')"><i class="fas fa-trash"></i></button></td>
-                </tr>`;
-            });
+            if (perfectScores.length > 0) {
+                perfectScores.forEach(ps => {
+                    html += `<tr>
+                        <td>${escapeHTML(ps.studentName)}</td>
+                        <td><span class="student-id-display">${escapeHTML(ps.studentId)}</span></td>
+                        <td>${escapeHTML(ps.examName)}</td>
+                        <td>${escapeHTML(ps.grade)}</td>
+                        <td>${escapeHTML(ps.time)}</td>
+                        <td><span class="progress-badge">${ps.score}/${ps.total}</span></td>
+                        <td><button class="btn btn-danger btn-sm touch-feedback" onclick="deletePerfectScore('${ps.key}')"><i class="fas fa-trash"></i></button></td>
+                    </tr>`;
+                });
+            }
             
             const perfectScoresList = document.getElementById('perfectScoresList');
             if (perfectScoresList) {
@@ -2549,11 +2863,14 @@
         window.deletePerfectScore = async function(resultKey) {
             if (confirm('⚠️ هل أنت متأكد؟ حذف النتيجة سيسمح للطالب بإعادة الامتحان.')) {
                 try {
+                    startProgress();
                     await remove(ref(db, `quiz_results/${resultKey}`));
                     showToast('✅ تم حذف النتيجة', 'success');
                 } catch (error) {
                     console.error('Error deleting score:', error);
                     showToast('❌ حدث خطأ في حذف النتيجة', 'error');
+                } finally {
+                    stopProgress();
                 }
             }
         };
@@ -2567,6 +2884,7 @@
             }
             
             try {
+                startProgress();
                 let foundStudent = null;
                 let foundUid = null;
                 
@@ -2637,6 +2955,8 @@
             } catch (error) {
                 console.error('Search error:', error);
                 showToast('❌ حدث خطأ في البحث', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -2654,6 +2974,7 @@
             }
             
             try {
+                startProgress();
                 const { jsPDF } = window.jspdf;
                 const doc = new jsPDF();
                 
@@ -2672,17 +2993,22 @@
             } catch (error) {
                 console.error('PDF error:', error);
                 showToast('❌ حدث خطأ في تصدير PDF', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
         // ================ حذف البيانات ================
         window.delData = function(path) { 
             if (confirm("❓ هل أنت متأكد من الحذف النهائي؟")) {
+                startProgress();
                 remove(ref(db, path)).then(() => {
                     showToast("✅ تم الحذف بنجاح", 'success');
                 }).catch(error => {
                     console.error('Delete error:', error);
                     showToast("❌ حدث خطأ: " + error.message, 'error');
+                }).finally(() => {
+                    stopProgress();
                 });
             }
         };
@@ -2706,7 +3032,7 @@
         };
 
         // ================ دوال تعديل الامتحان ================
-        window.openEditExamModal = function(courseId, examId, examData) {
+        window.openEditExamModal = async function(courseId, examId, examData) {
             try {
                 currentEditingExam = { courseId, examId, examData };
                 
@@ -2714,6 +3040,25 @@
                 document.getElementById('editExamId').value = examId;
                 document.getElementById('editExamName').value = examData.name || '';
                 
+                const videoRelSelect = document.getElementById('editExamVideoRel');
+                videoRelSelect.innerHTML = '<option value="all">امتحان شامل (يظهر مع كل الفيديوهات)</option>';
+                
+                const videosSnap = await get(ref(db, `folders/${courseId}/videos`));
+                if (videosSnap.exists()) {
+                    const videos = videosSnap.val();
+                    Object.keys(videos).forEach(videoId => {
+                        const video = videos[videoId];
+                        const option = document.createElement('option');
+                        option.value = videoId;
+                        option.textContent = video.title || 'فيديو بدون عنوان';
+                        videoRelSelect.appendChild(option);
+                    });
+                }
+                
+                if (examData.videoRel) {
+                    videoRelSelect.value = examData.videoRel;
+                }
+
                 renderEditQuestions(examData.questions || {});
                 
                 document.getElementById('editExamModal').style.display = 'flex';
@@ -2735,9 +3080,11 @@
             
             container.innerHTML = '';
             
-            Object.keys(questions).forEach((key, index) => {
-                addEditQuestionCard(questions[key], index);
-            });
+            if (questions && Object.keys(questions).length > 0) {
+                Object.keys(questions).forEach((key, index) => {
+                    addEditQuestionCard(questions[key], index);
+                });
+            }
         }
 
         function addEditQuestionCard(questionData = null, index = null) {
@@ -2756,13 +3103,13 @@
                 <div class="question-header">
                     <span class="question-number">سؤال ${qIndex + 1}</span>
                     <div class="question-actions">
-                        <i class="fas fa-copy" onclick="duplicateQuestion(${qIndex})" title="نسخ السؤال"></i>
-                        <i class="fas fa-trash" onclick="removeEditQuestion(this)" title="حذف السؤال"></i>
+                        <i class="fas fa-copy touch-feedback" onclick="duplicateQuestion(${qIndex})" title="نسخ السؤال"></i>
+                        <i class="fas fa-trash touch-feedback" onclick="removeEditQuestion(this)" title="حذف السؤال"></i>
                     </div>
                 </div>
                 
                 <input type="text" class="q-text reg-input" placeholder="نص السؤال" maxlength="500"
-                       value="${escapeHTML(questionData?.text || '')}" style="margin-bottom: 15px;">
+                       value="${escapeHTML(questionData?.text || '')}" style="margin-bottom: 15px;" inputmode="text">
                 
                 <div class="question-type-selector" style="margin-bottom: 15px;">
                     <select class="q-type reg-input" onchange="changeQuestionType(this)">
@@ -2775,22 +3122,22 @@
                     <div>
                         <label>A</label>
                         <input type="text" class="oA reg-input" placeholder="الاختيار A" maxlength="200"
-                               value="${escapeHTML(questionData?.a || '')}">
+                               value="${escapeHTML(questionData?.a || '')}" inputmode="text">
                     </div>
                     <div>
                         <label>B</label>
                         <input type="text" class="oB reg-input" placeholder="الاختيار B" maxlength="200"
-                               value="${escapeHTML(questionData?.b || '')}">
+                               value="${escapeHTML(questionData?.b || '')}" inputmode="text">
                     </div>
                     <div>
                         <label>C</label>
                         <input type="text" class="oC reg-input" placeholder="الاختيار C" maxlength="200"
-                               value="${escapeHTML(questionData?.c || '')}">
+                               value="${escapeHTML(questionData?.c || '')}" inputmode="text">
                     </div>
                     <div>
                         <label>D</label>
                         <input type="text" class="oD reg-input" placeholder="الاختيار D" maxlength="200"
-                               value="${escapeHTML(questionData?.d || '')}">
+                               value="${escapeHTML(questionData?.d || '')}" inputmode="text">
                     </div>
                 </div>
                 
@@ -2992,6 +3339,7 @@
             }
             
             try {
+                startProgress();
                 await update(ref(db, `quizzes/${courseId}/${examId}`), {
                     name: name,
                     questions: questions,
@@ -3009,6 +3357,8 @@
             } catch (error) {
                 console.error(error);
                 showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -3021,6 +3371,7 @@
             const examId = document.getElementById('editExamId')?.value;
             
             try {
+                startProgress();
                 await remove(ref(db, `quizzes/${courseId}/${examId}`));
                 showToast('✅ تم حذف الامتحان بنجاح', 'success');
                 closeExamModal();
@@ -3032,6 +3383,8 @@
             } catch (error) {
                 console.error(error);
                 showToast('❌ حدث خطأ أثناء الحذف', 'error');
+            } finally {
+                stopProgress();
             }
         };
 
@@ -3168,15 +3521,19 @@
                 .sort((a, b) => (b.points || 0) - (a.points || 0))
                 .slice(0, 20);
             
-            topStudents.forEach((s, i) => {
-                html += `<div class="leaderboard-row">
-                    <span class="leaderboard-rank">#${i+1}</span>
-                    <span>${escapeHTML(s.name || '')}</span>
-                    <span>${s.points || 0} <i class="fas fa-star" style="color: var(--gold);"></i></span>
-                </div>`;
-            });
+            if (topStudents.length > 0) {
+                topStudents.forEach((s, i) => {
+                    html += `<div class="leaderboard-row">
+                        <span class="leaderboard-rank">#${i+1}</span>
+                        <span>${escapeHTML(s.name || '')}</span>
+                        <span>${s.points || 0} <i class="fas fa-star" style="color: var(--gold);"></i></span>
+                    </div>`;
+                });
+            } else {
+                html += '<div class="leaderboard-row"><span colspan="3" style="text-align:center;">لا توجد بيانات</span></div>';
+            }
             
-            leaderboard.innerHTML = html || '<p style="text-align:center;">لا توجد بيانات</p>';
+            leaderboard.innerHTML = html;
         }
 
         // ================ CLEANUP ON PAGE UNLOAD ================
