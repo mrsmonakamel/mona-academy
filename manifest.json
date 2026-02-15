@@ -163,8 +163,6 @@
   ],
   
   "handle_links": "preferred",
-  "prefer_related_applications": false,
-  
   "share_target": {
     "action": "./share-target",
     "method": "GET",
@@ -173,5 +171,18 @@
       "text": "text",
       "url": "url"
     }
-  }
+  },
+  
+  "permissions": {
+    "notifications": {
+      "description": "للحصول على إشعارات التحديثات والامتحانات الجديدة"
+    }
+  },
+  
+  "features": [
+    "Cross Platform",
+    "Offline Support",
+    "Push Notifications",
+    "Screen Reader Support"
+  ]
 }

@@ -25,6 +25,14 @@
     --accent-dark: #4a3bb5;
     --dark-bg: #111417;
     --perfect: #ffb142;
+    
+    /* إضافات جديدة للتحسين */
+    --toast-success: #00b894;
+    --toast-error: #ff7675;
+    --toast-warning: #f1c40f;
+    --gradient-main: linear-gradient(135deg, var(--main), var(--dark));
+    --gradient-gold: linear-gradient(135deg, var(--gold), #f1c40f);
+    --shadow-hover: 0 15px 35px rgba(108,92,231,0.15);
 }
 
 * {
@@ -218,6 +226,11 @@ button,
 
 .fade-in-up {
     animation: fadeInUp 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 /* ================ TOUCH FEEDBACK ================ */
@@ -1948,6 +1961,37 @@ footer {
     right: 50%;
     transform: translateX(50%);
     border-radius: 10px;
+}
+
+/* ✅ تحسينات جديدة للوحة المتصدرين */
+.leaderboard-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.leaderboard-empty {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* ✅ تحسين ظهور شارات الطلاب */
+.badge-item i {
+    font-size: 1.2rem;
+}
+
+/* ✅ تحسين الأزرار في الموبايل */
+@media (max-width: 480px) {
+    .btn, .auth-btn, .sub-btn {
+        width: 100%;
+        margin: 5px 0;
+    }
+    
+    .sub-option {
+        flex-direction: column;
+    }
 }
 
 /* ================ BETTER MODAL FOR MOBILE ================ */

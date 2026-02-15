@@ -364,6 +364,7 @@ window.handleRegisterEmail = async function() {
     }
 };
 
+// ✅ دالة محسنة لتسجيل الدخول باليوزر نيم
 window.handleRegisterUsername = async function() {
     if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
         showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
@@ -441,8 +442,9 @@ window.handleRegisterUsername = async function() {
         }
         
         const sid = await generateUniqueStudentId();
-        const fakeEmail = `${username}_${Date.now()}@monaacademy.local`;
-        const res = await createUserWithEmailAndPassword(auth, fakeEmail, pass);
+        // ✅ استخدام بريد إلكتروني ثابت للتسجيل
+        const email = `${username}@monastudent.local`;
+        const res = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(res.user, { displayName: fullName });
         
         await set(ref(db, 'students/' + res.user.uid), { 
@@ -452,6 +454,7 @@ window.handleRegisterUsername = async function() {
             parentPhone: parentPhone || '',
             shortId: sid,
             username: username,
+            email: email, // ✅ حفظ البريد الإلكتروني للرجوع إليه لاحقاً
             points: 0,
             badges: [],
             subscriptions: {},
@@ -604,12 +607,13 @@ window.loginEmailSubmit = async function() {
     }
 };
 
+// ✅ دالة محسنة لتسجيل الدخول باليوزر نيم
 window.loginUsernameSubmit = async function() {
     const username = document.getElementById('stUsername')?.value.trim().toLowerCase() || '';
-    const pass = document.getElementById('stPassUsername')?.value || '';
+    const password = document.getElementById('stPassUsername')?.value || '';
     
-    if(!username || !pass) {
-        showToast('❌ يرجى إدخال البيانات', 'error');
+    if(!username || !password) {
+        showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
         return;
     }
     
@@ -621,35 +625,58 @@ window.loginUsernameSubmit = async function() {
     startProgress();
     
     try {
+        // جلب جميع الطلاب للبحث عن اسم المستخدم
         const studentsSnap = await get(child(dbRef, 'students'));
-        let foundUid = null;
-        let foundEmail = null;
         
-        if (studentsSnap.exists()) {
-            studentsSnap.forEach(studentSnapshot => {
-                const studentData = studentSnapshot.val();
-                if (studentData.username && studentData.username.toLowerCase() === username) {
-                    foundUid = studentSnapshot.key;
-                    foundEmail = studentData.email;
-                }
-            });
+        if (!studentsSnap.exists()) {
+            showToast('❌ لا يوجد طلاب مسجلين بعد', 'error');
+            return;
         }
         
-        if (!foundUid) {
+        // البحث عن الطالب الذي يطابق اسم المستخدم
+        let foundUser = null;
+        let foundUid = null;
+        
+        studentsSnap.forEach((studentSnapshot) => {
+            const studentData = studentSnapshot.val();
+            // التأكد من وجود خاصية username ومطابقتها
+            if (studentData.username && studentData.username.toLowerCase() === username) {
+                foundUser = studentData;
+                foundUid = studentSnapshot.key;
+            }
+        });
+        
+        if (!foundUser || !foundUid) {
             showToast('❌ اسم المستخدم غير موجود', 'error');
             return;
         }
         
-        try {
-            await signInWithEmailAndPassword(auth, foundEmail, pass);
-            window.closeLogin();
-            showToast('✅ تم تسجيل الدخول بنجاح', 'success');
-        } catch (loginErr) {
-            showToast('❌ اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
+        // التحقق من وجود email
+        if (!foundUser.email) {
+            showToast('❌ خطأ في بيانات المستخدم - لم يتم العثور على بريد إلكتروني مرتبط', 'error');
+            return;
         }
+        
+        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
+        await signInWithEmailAndPassword(auth, foundUser.email, password);
+        
+        // إذا وصلنا إلى هنا، فهذا يعني أن تسجيل الدخول نجح
+        window.closeLogin();
+        showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+        
     } catch(err) {
         console.error('Username login error:', err);
-        showToast('❌ اسم المستخدم أو كلمة المرور غير صحيحة', 'error');
+        
+        // معالجة الأخطاء بشكل أفضل
+        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+            showToast('❌ كلمة المرور غير صحيحة', 'error');
+        } else if (err.code === 'auth/user-not-found') {
+            showToast('❌ لم يتم العثور على حساب بهذا الاسم', 'error');
+        } else if (err.code === 'auth/too-many-requests') {
+            showToast('❌ تم حظر الحساب مؤقتاً لكثرة محاولات الدخول الفاشلة', 'error');
+        } else {
+            showToast('❌ حدث خطأ: ' + (err.message || 'يرجى المحاولة مرة أخرى'), 'error');
+        }
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -700,47 +727,59 @@ onAuthStateChanged(auth, async user => {
     if (!statusDiv) return;
     
     if (user) {
-        const isAdmin = user.email === ADMIN_EMAIL;
-        const adminsSnap = await get(ref(db, 'admins'));
-        const admins = adminsSnap.val() || {};
-        const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
-        isAdminUser = isAdmin || isAddedAdmin;
-        
-        const userSnap = await get(child(dbRef, `students/${user.uid}`));
-        let displayName = user.displayName || '';
-        
-        if (userSnap.exists()) {
-            const data = userSnap.val();
-            myShortId = data.shortId || '';
-            displayName = data.name || user.displayName || '';
-            currentStudentGrade = data.grade;
+        startProgress();
+        try {
+            const isAdmin = user.email === ADMIN_EMAIL;
+            const adminsSnap = await get(ref(db, 'admins'));
+            const admins = adminsSnap.val() || {};
+            const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+            isAdminUser = isAdmin || isAddedAdmin;
+            
+            const userSnap = await get(child(dbRef, `students/${user.uid}`));
+            let displayName = user.displayName || '';
+            
+            if (userSnap.exists()) {
+                const data = userSnap.val();
+                myShortId = data.shortId || '';
+                displayName = data.name || user.displayName || '';
+                currentStudentGrade = data.grade; // ✅ تحديث الصف الدراسي
+            } else {
+                currentStudentGrade = null;
+                myShortId = "";
+            }
+            
+            statusDiv.innerHTML = `
+                <span class="student-id-badge" style="margin-left: 10px;">
+                    <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
+                </span>
+                <div class="hamburger-menu" onclick="window.toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+            `;
+            
+            if (isAdminUser) {
+                statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
+            }
+            
+            if (reviewContainer) {
+                reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
+            }
+            
+            updateMenuItems(true);
+            
+            window.loadFolders();
+            await window.loadLeaderboard();
+            await window.loadPerfectScores();
+        } catch (error) {
+            console.error("خطأ في جلب بيانات المستخدم:", error);
+            showToast("حدث خطأ أثناء تحميل بياناتك.", 'error');
+        } finally {
+            stopProgress();
         }
-        
-        statusDiv.innerHTML = `
-            <span class="student-id-badge" style="margin-left: 10px;">
-                <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
-            </span>
-            <div class="hamburger-menu" onclick="window.toggleMenu()">
-                <i class="fas fa-bars"></i>
-            </div>
-        `;
-        
-        if (isAdminUser) {
-            statusDiv.innerHTML += `<button class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
-        }
-        
-        if (reviewContainer) {
-            reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
-        }
-        
-        updateMenuItems(true);
-        
-        window.loadFolders();
-        await window.loadLeaderboard();
-        await window.loadPerfectScores();
     } else {
         isAdminUser = false;
         myShortId = "";
+        currentStudentGrade = null;
         statusDiv.innerHTML = `<button class="auth-btn" onclick="window.openLogin()" style="background:var(--main); color:white; border:none; padding:8px 20px; border-radius:10px; font-weight:bold; cursor:pointer;">تسجيل الدخول</button>`;
         
         if (reviewContainer) {
@@ -830,11 +869,12 @@ function updateMenuItems(isLoggedIn) {
     }
 }
 
-// ================ LEADERBOARD ================
+// ✅ دالة محسنة للوحة المتصدرين
 window.loadLeaderboard = async function() {
     try {
         const studentsRef = ref(db, 'students');
-        const topStudentsQuery = query(studentsRef, orderByChild('points'), limitToLast(50));
+        // جلب أعلى 20 طالب بناءً على النقاط
+        const topStudentsQuery = query(studentsRef, orderByChild('points'), limitToLast(20));
         const snapshot = await get(topStudentsQuery);
         
         const leaderboardSection = document.getElementById('leaderboardSection');
@@ -860,8 +900,8 @@ window.loadLeaderboard = async function() {
             }
         });
         
+        // ترتيب تنازلي (الأعلى أولاً)
         leaderboard.sort((a, b) => b.points - a.points);
-        leaderboard = leaderboard.slice(0, 20);
         
         if (leaderboard.length === 0) {
             leaderboardSection.style.display = 'none';
@@ -870,6 +910,7 @@ window.loadLeaderboard = async function() {
         
         leaderboardSection.style.display = 'block';
         
+        // عرض أول 3
         let top3Html = '';
         const top3 = leaderboard.slice(0, 3);
         const medals = ['🥇', '🥈', '🥉'];
@@ -888,6 +929,7 @@ window.loadLeaderboard = async function() {
         });
         topThreeContainer.innerHTML = top3Html;
         
+        // عرض الباقي (من المركز الرابع)
         let html = '';
         leaderboard.slice(3).forEach((student, index) => {
             html += `<div class="leaderboard-item">
@@ -902,6 +944,9 @@ window.loadLeaderboard = async function() {
         leaderboardContainer.innerHTML = html;
     } catch(error) {
         console.error("Error loading leaderboard:", error);
+        // إخفاء القسم في حالة الخطأ
+        const leaderboardSection = document.getElementById('leaderboardSection');
+        if (leaderboardSection) leaderboardSection.style.display = 'none';
     }
 };
 
@@ -2196,6 +2241,30 @@ window.cleanupListeners = function() {
     listeners = [];
 };
 
+// ✅ دالة للتأكد من ربط أزرار تسجيل الدخول
+window.debugLoginButtons = function() {
+    console.log('=== Debugging Login Buttons ===');
+    
+    const loginUsernameSubmitBtn = document.getElementById('loginUsernameSubmitBtn');
+    const loginEmailSubmitBtn = document.getElementById('loginEmailSubmitBtn');
+    
+    console.log('loginUsernameSubmitBtn exists:', !!loginUsernameSubmitBtn);
+    console.log('loginEmailSubmitBtn exists:', !!loginEmailSubmitBtn);
+    
+    if (loginUsernameSubmitBtn) {
+        // إزالة الأحداث القديمة وإضافة حدث جديد
+        loginUsernameSubmitBtn.removeEventListener('click', window.loginUsernameSubmit);
+        loginUsernameSubmitBtn.addEventListener('click', window.loginUsernameSubmit);
+        console.log('✅ Re-attached click event to loginUsernameSubmitBtn');
+    }
+    
+    if (loginEmailSubmitBtn) {
+        loginEmailSubmitBtn.removeEventListener('click', window.loginEmailSubmit);
+        loginEmailSubmitBtn.addEventListener('click', window.loginEmailSubmit);
+        console.log('✅ Re-attached click event to loginEmailSubmitBtn');
+    }
+};
+
 // ================ EVENT LISTENERS FOR SUBSCRIPTION ================
 document.addEventListener('DOMContentLoaded', function() {
     const previewBtn = document.getElementById('previewBtn');
@@ -2304,6 +2373,9 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         }
     });
+    
+    // ✅ استدعاء دالة التصحيح بعد تحميل الصفحة
+    setTimeout(window.debugLoginButtons, 1000);
 });
 
 // ================ INIT ================

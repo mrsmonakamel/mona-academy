@@ -1,5 +1,6 @@
 // ================ FIREBASE MESSAGING SERVICE WORKER ================
 // Mona Academy - نسخة محسنة بالكامل مع دعم PWA المتقدم - 2026
+// النسخة المعدلة - حل مشاكل الـ Cache
 
 // استيراد مكتبات فايربيز
 importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
@@ -22,9 +23,10 @@ if (typeof self === 'undefined') {
     const messaging = firebase.messaging();
 
     // ================ التخزين المؤقت المتقدم للـ PWA ================
-    const CACHE_NAME = 'mona-academy-v2';
-    const DYNAMIC_CACHE = 'mona-academy-dynamic-v1';
+    const CACHE_NAME = 'mona-academy-v3'; // تم تحديث الإصدار
+    const DYNAMIC_CACHE = 'mona-academy-dynamic-v2';
     const OFFLINE_URL = './offline.html';
+    const API_CACHE = 'mona-academy-api-v1'; // كاش جديد للطلبات
     
     // الملفات الأساسية للتخزين المؤقت الفوري
     const STATIC_ASSETS = [
@@ -34,20 +36,8 @@ if (typeof self === 'undefined') {
         './style.css',
         './manifest.json',
         'https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap',
-        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-solid-900.woff2',
-        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/webfonts/fa-brands-400.woff2'
+        'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css'
     ];
-
-    // ================ استراتيجيات التخزين المؤقت ================
-    const CACHE_STRATEGIES = {
-        // استراتيجية Cache First للملفات الثابتة
-        CACHE_FIRST: 'cache-first',
-        // استراتيجية Network First للملفات الديناميكية
-        NETWORK_FIRST: 'network-first',
-        // استراتيجية Stale While Revalidate للتوازن
-        STALE_WHILE_REVALIDATE: 'stale-while-revalidate'
-    };
 
     // ================ التثبيت والتخزين المؤقت ================
     self.addEventListener('install', (event) => {
@@ -61,22 +51,18 @@ if (typeof self === 'undefined') {
                 const cache = await caches.open(CACHE_NAME);
                 
                 // تخزين الملفات الأساسية
-                try {
-                    await cache.addAll(STATIC_ASSETS);
-                    console.log('[SW] ✅ تم تخزين الملفات الأساسية بنجاح');
-                } catch (error) {
-                    console.error('[SW] ❌ فشل تخزين بعض الملفات:', error);
-                    
-                    // محاولة تخزين الملفات واحدًا تلو الآخر
-                    for (const asset of STATIC_ASSETS) {
+                const results = await Promise.allSettled(
+                    STATIC_ASSETS.map(async (asset) => {
                         try {
                             await cache.add(asset);
                             console.log('[SW] ✅ تم تخزين:', asset);
                         } catch (e) {
                             console.warn('[SW] ⚠️ فشل تخزين:', asset);
                         }
-                    }
-                }
+                    })
+                );
+                
+                console.log('[SW] ✅ تمت عملية التخزين المؤقت');
             })()
         );
     });
@@ -90,7 +76,7 @@ if (typeof self === 'undefined') {
                 // حذف المخابئ القديمة
                 const cacheKeys = await caches.keys();
                 const oldCaches = cacheKeys.filter(key => 
-                    key !== CACHE_NAME && key !== DYNAMIC_CACHE
+                    key !== CACHE_NAME && key !== DYNAMIC_CACHE && key !== API_CACHE
                 );
                 
                 await Promise.all(oldCaches.map(key => caches.delete(key)));
@@ -110,9 +96,9 @@ if (typeof self === 'undefined') {
         
         const url = new URL(event.request.url);
         
-        // تجاهل طلبات Firebase و Analytics
-        if (url.hostname.includes('firebase') || 
-            url.hostname.includes('google') ||
+        // تجاهل طلبات Firebase
+        if (url.hostname.includes('firebaseio.com') || 
+            url.hostname.includes('googleapis.com') ||
             url.pathname.includes('analytics')) {
             return;
         }
@@ -121,6 +107,9 @@ if (typeof self === 'undefined') {
         if (isStaticAsset(url)) {
             // استراتيجية Cache First للملفات الثابتة
             event.respondWith(cacheFirstStrategy(event.request));
+        } else if (isApiRequest(url)) {
+            // ✅ استراتيجية Network First لطلبات API (الأهم)
+            event.respondWith(networkFirstStrategy(event.request, API_CACHE));
         } else if (isHtmlRequest(event.request)) {
             // استراتيجية Network First لصفحات HTML
             event.respondWith(networkFirstStrategy(event.request));
@@ -142,29 +131,37 @@ if (typeof self === 'undefined') {
         try {
             const networkResponse = await fetch(request);
             const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, networkResponse.clone());
+            // نتأكد من أن الاستجابة صالحة للتخزين
+            if (networkResponse && networkResponse.status === 200) {
+                cache.put(request, networkResponse.clone());
+            }
             return networkResponse;
         } catch (error) {
             console.warn('[SW] فشل جلب:', request.url);
             
-            // إذا كان طلب صفحة HTML، أعد صفحة Offline
             if (isHtmlRequest(request)) {
                 return caches.match(OFFLINE_URL);
             }
             
             return new Response('غير متصل', {
                 status: 503,
-                statusText: 'Service Unavailable'
+                statusText: 'Service Unavailable',
+                headers: new Headers({ 'Content-Type': 'text/plain' })
             });
         }
     }
 
-    // استراتيجية Network First
-    async function networkFirstStrategy(request) {
+    // استراتيجية Network First (محسنة)
+    async function networkFirstStrategy(request, cacheName = DYNAMIC_CACHE) {
         try {
             const networkResponse = await fetch(request);
-            const cache = await caches.open(DYNAMIC_CACHE);
-            cache.put(request, networkResponse.clone());
+            
+            // نتأكد من أن الاستجابة صالحة للتخزين
+            if (networkResponse && networkResponse.status === 200) {
+                const cache = await caches.open(cacheName);
+                cache.put(request, networkResponse.clone());
+            }
+            
             return networkResponse;
         } catch (error) {
             const cachedResponse = await caches.match(request);
@@ -178,33 +175,55 @@ if (typeof self === 'undefined') {
             
             return new Response('غير متصل', {
                 status: 503,
-                statusText: 'Service Unavailable'
+                statusText: 'Service Unavailable',
+                headers: new Headers({ 'Content-Type': 'text/plain' })
             });
         }
     }
 
-    // استراتيجية Stale While Revalidate
+    // استراتيجية Stale While Revalidate (محسنة)
     async function staleWhileRevalidateStrategy(request) {
         const cache = await caches.open(DYNAMIC_CACHE);
         const cachedResponse = await cache.match(request);
         
+        // محاولة التحديث في الخلفية
         const networkPromise = fetch(request)
             .then(networkResponse => {
-                cache.put(request, networkResponse.clone());
+                if (networkResponse && networkResponse.status === 200) {
+                    cache.put(request, networkResponse.clone());
+                }
                 return networkResponse;
             })
             .catch(() => null);
         
-        return cachedResponse || networkPromise || new Response('غير متصل', {
+        // نعيد المخزن مؤقتاً إذا وجد، وإلا ننتظر الاستجابة من الشبكة
+        if (cachedResponse) {
+            return cachedResponse;
+        }
+        
+        const networkResponse = await networkPromise;
+        if (networkResponse) {
+            return networkResponse;
+        }
+        
+        return new Response('غير متصل', {
             status: 503,
-            statusText: 'Service Unavailable'
+            statusText: 'Service Unavailable',
+            headers: new Headers({ 'Content-Type': 'text/plain' })
         });
     }
 
-    // ================ دوال مساعدة ================
+    // ================ دوال مساعدة محسنة ================
     function isStaticAsset(url) {
-        const staticExtensions = ['.css', '.js', '.jpg', '.png', '.gif', '.svg', '.woff', '.woff2'];
-        return staticExtensions.some(ext => url.pathname.endsWith(ext));
+        const staticExtensions = ['.css', '.js', '.jpg', '.jpeg', '.png', '.gif', '.svg', '.webp', '.woff', '.woff2', '.ttf', '.ico'];
+        return staticExtensions.some(ext => url.pathname.toLowerCase().endsWith(ext));
+    }
+    
+    function isApiRequest(url) {
+        // ✅ نتعرف على طلبات Firebase Database
+        return url.hostname.includes('firebaseio.com') || 
+               url.pathname.includes('/api/') ||
+               url.pathname.includes('.json');
     }
 
     function isHtmlRequest(request) {
@@ -272,8 +291,7 @@ if (typeof self === 'undefined') {
             requireInteraction: true,
             silent: false,
             tag: 'mona-academy-notification-' + Date.now(),
-            renotify: true,
-            timestamp: Date.now()
+            renotify: true
         };
 
         self.registration.showNotification(notificationTitle, notificationOptions)
@@ -284,7 +302,7 @@ if (typeof self === 'undefined') {
 
     // ================ معالجة الضغط على الإشعارات ================
     self.addEventListener('notificationclick', (event) => {
-        console.log('[SW] تم الضغط على الإشعار:', event);
+        console.log('[SW] تم الضغط على الإشعار');
         event.notification.close();
 
         if (event.action === 'dismiss') {
@@ -299,15 +317,16 @@ if (typeof self === 'undefined') {
                 includeUncontrolled: true
             })
             .then((clientList) => {
+                // البحث عن نافذة مفتوحة بنفس الرابط
                 for (const client of clientList) {
                     if (client.url === urlToOpen && 'focus' in client) {
                         return client.focus();
                     }
                 }
+                // فتح نافذة جديدة إذا لم توجد
                 if (clients.openWindow) {
                     return clients.openWindow(urlToOpen);
                 }
-                return Promise.resolve();
             })
             .catch(error => {
                 console.error('[SW] خطأ في فتح الرابط:', error);
@@ -328,19 +347,30 @@ if (typeof self === 'undefined') {
     async function syncData() {
         console.log('[SW] جاري مزامنة البيانات في الخلفية');
         
-        // محاولة تحديث المخابئ
-        const cache = await caches.open(DYNAMIC_CACHE);
-        const keys = await cache.keys();
-        
-        for (const request of keys) {
-            try {
-                const response = await fetch(request);
-                if (response.ok) {
-                    await cache.put(request, response);
+        try {
+            // محاولة تحديث المخابئ
+            const cache = await caches.open(DYNAMIC_CACHE);
+            const keys = await cache.keys();
+            
+            // نحدد الصفحات المهمة فقط للتحديث
+            const importantUrls = keys.filter(request => 
+                request.url.includes('folders') || 
+                request.url.includes('students')
+            );
+            
+            for (const request of importantUrls) {
+                try {
+                    const response = await fetch(request);
+                    if (response && response.ok) {
+                        await cache.put(request, response);
+                        console.log('[SW] ✅ تم تحديث:', request.url);
+                    }
+                } catch (error) {
+                    console.warn('[SW] فشل تحديث:', request.url);
                 }
-            } catch (error) {
-                console.warn('[SW] فشل تحديث:', request.url);
             }
+        } catch (error) {
+            console.error('[SW] خطأ في المزامنة:', error);
         }
     }
 
@@ -366,5 +396,5 @@ if (typeof self === 'undefined') {
         self.registration.update();
     }, 60 * 60 * 1000); // كل ساعة
 
-    console.log('[SW] ✅ Service Worker جاهز للعمل');
+    console.log('[SW] ✅ Service Worker جاهز للعمل (النسخة المعدلة)');
 }
