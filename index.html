@@ -75,13 +75,13 @@
             <h2 style="color: var(--main); margin-bottom: 20px;">🎯 اشترك في الكورس</h2>
             <div id="subCourseInfo" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"></div>
             <div class="sub-option">
-                <button id="previewBtn" class="sub-btn">👁️ مشاهدة المحتوى</button>
-                <button id="subscribeBtn" class="sub-btn primary">✅ اشتراك</button>
+                <button type="button" id="previewBtn" class="sub-btn">👁️ مشاهدة المحتوى</button>
+                <button type="button" id="subscribeBtn" class="sub-btn primary">✅ اشتراك</button>
             </div>
             <div id="subscriptionIdSection" style="display: none;">
                 <p style="color: #666; margin-bottom: 10px;">أدخل كود الطالب الخاص بك (ID) لتأكيد الاشتراك:</p>
                 <input type="text" id="subscriptionIdInput" class="id-input" placeholder="1234567890" maxlength="10" inputmode="numeric" pattern="[0-9]*">
-                <button id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">تأكيد الاشتراك</button>
+                <button type="button" id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">تأكيد الاشتراك</button>
                 <div id="subError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></div>
             </div>
         </div>
@@ -146,7 +146,7 @@
 
     <!-- COURSE CONTENT AREA -->
     <div id="contentArea" style="display: none;">
-        <button id="backToHomeBtn" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; margin-bottom:25px; font-family:'Cairo';">
+        <button type="button" id="backToHomeBtn" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; margin-bottom:25px; font-family:'Cairo';">
             <i class="fas fa-arrow-right"></i> العودة للرئيسية
         </button>
         <h2 id="folderTitleName" style="margin-bottom:30px; color:var(--dark); text-align:center; font-weight: 900;"></h2>
@@ -161,7 +161,7 @@
     <div id="quizOverlay">
         <div class="quiz-header">
             <h2 id="quizTitle" style="font-weight: 900; color: var(--main);"></h2>
-            <button id="closeQuizBtn" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
+            <button type="button" id="closeQuizBtn" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
         </div>
         <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
     </div>
@@ -174,10 +174,10 @@
             <!-- شاشة اختيار تسجيل دخول / حساب جديد -->
             <div id="authChoice">
                 <h2 style="color:var(--main); margin-bottom:20px;">مرحباً بك 🎓</h2>
-                <button class="auth-btn" id="showLoginChoiceBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <button type="button" class="auth-btn" id="showLoginChoiceBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     تسجيل الدخول
                 </button>
-                <button class="auth-btn" id="showRegisterBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <button type="button" class="auth-btn" id="showRegisterBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     إنشاء حساب جديد
                 </button>
             </div>
@@ -185,13 +185,13 @@
             <!-- شاشة اختيار طريقة تسجيل الدخول -->
             <div id="loginChoice" style="display:none;">
                 <h2 style="color:var(--main); margin-bottom:20px;">اختر طريقة تسجيل الدخول</h2>
-                <button class="auth-btn" id="showLoginEmailBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <button type="button" class="auth-btn" id="showLoginEmailBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     الدخول بالإيميل والباسورد
                 </button>
-                <button class="auth-btn" id="showLoginUsernameBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <button type="button" class="auth-btn" id="showLoginUsernameBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     الدخول باليوزر نيم والباسورد
                 </button>
-                <button class="auth-btn" id="loginGoogleBtn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
+                <button type="button" class="auth-btn" id="loginGoogleBtn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> 
                     الدخول بواسطة جوجل
                 </button>
@@ -201,9 +201,9 @@
             <!-- نموذج تسجيل الدخول بالإيميل -->
             <div id="loginEmail" style="display:none; text-align:right;">
                 <h2 style="color:var(--main); margin-bottom:20px;">الدخول بالإيميل والباسورد</h2>
-                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email">
-                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" id="loginEmailSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email" name="email">
+                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور" name="password">
+                <button type="button" class="auth-btn" id="loginEmailSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     تسجيل الدخول
                 </button>
                 <p id="backToLoginChoiceFromEmail" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);;">العودة للخلف</p>
@@ -212,9 +212,9 @@
             <!-- نموذج تسجيل الدخول باليوزر نيم -->
             <div id="loginUsername" style="display:none; text-align:right;">
                 <h2 style="color:var(--main); margin-bottom:20px;">الدخول باليوزر نيم والباسورد</h2>
-                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text">
-                <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور">
-                <button class="auth-btn" id="loginUsernameSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text" name="username">
+                <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور" name="password">
+                <button type="button" class="auth-btn" id="loginUsernameSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                     تسجيل الدخول
                 </button>
                 <p id="backToLoginChoiceFromUsername" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);;">العودة للخلف</p>
@@ -235,15 +235,15 @@
                     
                     <label class="reg-label required-field">الاسم الرباعي</label>
                     <div class="name-grid">
-                        <input type="text" id="n1" class="reg-input" placeholder="الأول" maxlength="50" inputmode="text">
-                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" maxlength="50" inputmode="text">
-                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" maxlength="50" inputmode="text">
-                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" maxlength="50" inputmode="text">
+                        <input type="text" id="n1" class="reg-input" placeholder="الأول" maxlength="50" inputmode="text" name="firstname">
+                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" maxlength="50" inputmode="text" name="middlename1">
+                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" maxlength="50" inputmode="text" name="middlename2">
+                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" maxlength="50" inputmode="text" name="lastname">
                     </div>
                     
                     <label class="reg-label required-field">رقم الواتساب</label>
                     <div class="phone-row">
-                        <select id="countryCode" class="country-select">
+                        <select id="countryCode" class="country-select" name="countrycode">
                             <option value="+20">+20 (مصر)</option>
                             <option value="+966">+966 (السعودية)</option>
                             <option value="+971">+971 (الإمارات)</option>
@@ -254,23 +254,23 @@
                             <option value="+962">+962 (الأردن)</option>
                             <option value="+970">+970 (فلسطين)</option>
                         </select>
-                        <input type="tel" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*">
+                        <input type="tel" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*" name="whatsapp">
                     </div>
                     <div class="hint-text">أدخل الرقم بدون مفتاح الدولة</div>
                     
                     <label class="reg-label">رقم ولي الأمر (اختياري)</label>
                     <div class="phone-row">
-                        <select id="parentCountryCode" class="country-select">
+                        <select id="parentCountryCode" class="country-select" name="parentcountrycode">
                             <option value="+20">+20 (مصر)</option>
                             <option value="+966">+966 (السعودية)</option>
                             <option value="+971">+971 (الإمارات)</option>
                         </select>
-                        <input type="tel" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*">
+                        <input type="tel" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*" name="parentphone">
                     </div>
                     
                     <div id="step1Error" class="error-message" style="display:none;"></div>
                     
-                    <button id="step1NextBtn" class="btn btn-main" style="margin-top:20px; width:100%;" disabled>
+                    <button type="button" id="step1NextBtn" class="btn btn-main" style="margin-top:20px; width:100%;" disabled>
                         التالي <i class="fas fa-arrow-left"></i>
                     </button>
                 </div>
@@ -280,7 +280,7 @@
                     <h3 style="color:var(--dark); margin-bottom:15px;">📚 الخطوة 2: المرحلة الدراسية</h3>
                     
                     <label class="reg-label required-field">المرحلة التعليمية</label>
-                    <select id="regLevel" class="reg-input">
+                    <select id="regLevel" class="reg-input" name="level">
                         <option value="">-- اختر المرحلة --</option>
                         <option value="primary">المرحلة الابتدائية</option>
                         <option value="middle">المرحلة الإعدادية</option>
@@ -288,17 +288,17 @@
                     </select>
                     
                     <label class="reg-label required-field">الصف الدراسي</label>
-                    <select id="regGrade" class="reg-input">
+                    <select id="regGrade" class="reg-input" name="grade">
                         <option value="">-- اختر الصف أولاً --</option>
                     </select>
                     
                     <div id="step2Error" class="error-message" style="display:none;"></div>
                     
                     <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button id="step2PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                        <button type="button" id="step2PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
                             <i class="fas fa-arrow-right"></i> السابق
                         </button>
-                        <button id="step2NextBtn" class="btn btn-main" style="flex:2;" disabled>
+                        <button type="button" id="step2NextBtn" class="btn btn-main" style="flex:2;" disabled>
                             التالي <i class="fas fa-arrow-left"></i>
                         </button>
                     </div>
@@ -309,45 +309,45 @@
                     <h3 style="color:var(--dark); margin-bottom:15px;">🔐 الخطوة 3: طريقة التسجيل</h3>
                     
                     <div style="display:flex; gap:10px; margin-bottom:20px;">
-                        <button id="showRegEmailBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                        <button type="button" id="showRegEmailBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
                             <i class="fas fa-envelope"></i> إيميل
                         </button>
-                        <button id="showRegUsernameBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                        <button type="button" id="showRegUsernameBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
                             <i class="fas fa-user"></i> يوزر نيم
                         </button>
                     </div>
                     
                     <!-- التسجيل بالإيميل -->
                     <div id="step3Email" class="step-container" style="display:none;">
-                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email">
-                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
-                        <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
-                        <button id="regBtn" class="btn btn-main" style="width:100%; margin-top:15px;">
+                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email" name="email">
+                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)" name="password">
+                        <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور" name="password_confirm">
+                        <button type="button" id="regBtn" class="btn btn-main" style="width:100%; margin-top:15px;">
                             تسجيل
                         </button>
                     </div>
                     
                     <!-- التسجيل بيوزر نيم -->
                     <div id="step3Username" class="step-container" style="display:none;">
-                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text">
-                        <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)">
-                        <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور">
-                        <button id="regBtnUser" class="btn btn-main" style="width:100%; margin-top:15px;">
+                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text" name="username">
+                        <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)" name="password">
+                        <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور" name="password_confirm">
+                        <button type="button" id="regBtnUser" class="btn btn-main" style="width:100%; margin-top:15px;" disabled>
                             تسجيل
                         </button>
                     </div>
                     
                     <!-- التسجيل بجوجل -->
-                    <button id="registerGoogleBtn" class="auth-btn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:15px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    <button type="button" id="registerGoogleBtn" class="auth-btn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:15px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
                         <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
                         التسجيل بجوجل
                     </button>
                     
                     <div style="display:flex; gap:10px; margin-top:20px;">
-                        <button id="step3PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                        <button type="button" id="step3PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
                             <i class="fas fa-arrow-right"></i> السابق
                         </button>
-                        <button id="step3CancelBtn" class="btn" style="background:var(--danger); color:white; flex:1;">
+                        <button type="button" id="step3CancelBtn" class="btn" style="background:var(--danger); color:white; flex:1;">
                             إلغاء
                         </button>
                     </div>
@@ -364,7 +364,7 @@
             <h3 style="margin-bottom: 20px;">تواصل مع Ms. Mona</h3>
             <a href="https://wa.me/201026298954" class="social-btn wa" style="display:block; margin-bottom:10px;" target="_blank">01026298954</a>
             <a href="https://wa.me/201128874885" class="social-btn wa" style="display:block;" target="_blank">01128874885</a>
-            <button id="closeWaModalBtn" style="margin-top: 15px; border: none; background: none; color: var(--danger); cursor: pointer; font-family:'Cairo';">إغلاق</button>
+            <button type="button" id="closeWaModalBtn" style="margin-top: 15px; border: none; background: none; color: var(--danger); cursor: pointer; font-family:'Cairo';">إغلاق</button>
         </div>
     </div>
 
@@ -387,28 +387,10 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- استيراد السكريبت الرئيسي -->
-    <script type="module" src="script.js?v=2.0"></script>
+    <script type="module" src="script.js?v=2.1"></script>
     
     <script>
         // ================ تحسينات تجربة المستخدم ================
-        
-        // Progress Indicator
-        let progressInterval;
-        function startProgress() {
-            const indicator = document.getElementById('progressIndicator');
-            if (indicator) {
-                indicator.classList.add('loading');
-                if (progressInterval) clearInterval(progressInterval);
-            }
-        }
-        
-        function stopProgress() {
-            const indicator = document.getElementById('progressIndicator');
-            if (indicator) {
-                indicator.classList.remove('loading');
-                if (progressInterval) clearInterval(progressInterval);
-            }
-        }
         
         // Offline/Online Detection
         function updateOnlineStatus() {
@@ -432,31 +414,6 @@
                 document.querySelectorAll('.skeleton').forEach(el => el.remove());
             }, 1000);
         });
-
-        // دالة showToast
-        window.showToast = function(message, type = 'success', duration = 3000) {
-            const container = document.getElementById('toastContainer');
-            if (!container) return;
-            
-            const toast = document.createElement('div');
-            toast.className = `toast-message ${type}`;
-            
-            const icon = type === 'success' ? 'fa-check-circle' : 
-                        type === 'error' ? 'fa-exclamation-circle' : 
-                        'fa-exclamation-triangle';
-            
-            toast.innerHTML = `
-                <i class="fas ${icon}"></i>
-                <span>${message}</span>
-            `;
-            
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.style.animation = 'fadeOut 0.3s';
-                setTimeout(() => toast.remove(), 300);
-            }, duration);
-        };
 
         // ربط الأحداث الأساسية
         document.addEventListener('DOMContentLoaded', function() {
