@@ -1,6 +1,6 @@
 // ================ FIREBASE IMPORTS ================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, child, push, onValue, set, update, query, orderByChild, limitToLast, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, child, push, onValue, set, update, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // ================ FIREBASE CONFIG ================
@@ -26,61 +26,50 @@ let isAdminUser = false;
 let currentFolderId = null;
 let currentFolderName = "";
 let currentStudentGrade = null;
-let messaging = null;
-let listeners = [];
 let selectedRating = null;
 let studentDataCache = {};
 let cacheTime = {};
-const CACHE_DURATION = 60000; // دقيقة واحدة
+const CACHE_DURATION = 60000;
 
-// ================ HANDLE FIREBASE ERRORS ================
-const handleFirebaseError = (error, customMessage = 'حدث خطأ') => {
-    console.error('Firebase Error:', error);
-    let message = customMessage;
-    
-    if (error.code === 'PERMISSION_DENIED') {
-        message = 'ليس لديك صلاحية للوصول إلى هذه البيانات';
-    } else if (error.code === 'NETWORK_ERROR') {
-        message = 'مشكلة في الاتصال بالإنترنت';
-    } else if (error.code === 'auth/user-not-found') {
-        message = 'المستخدم غير موجود';
-    } else if (error.code === 'auth/wrong-password') {
-        message = 'كلمة المرور غير صحيحة';
-    } else if (error.code === 'auth/email-already-in-use') {
-        message = 'البريد الإلكتروني مستخدم بالفعل';
-    } else if (error.code === 'auth/invalid-email') {
-        message = 'البريد الإلكتروني غير صالح';
-    } else if (error.code === 'auth/weak-password') {
-        message = 'كلمة المرور ضعيفة جداً';
-    } else if (error.code === 'auth/network-request-failed') {
-        message = 'مشكلة في الاتصال بالإنترنت';
+// ================ LISTENER MANAGER ================
+class ListenerManager {
+    constructor() {
+        this.listeners = new Map();
     }
     
-    showToast(`❌ ${message}`, 'error');
-};
+    add(name, ref, listener, context = 'global') {
+        const listenerId = `${context}_${name}_${Date.now()}`;
+        this.listeners.set(listenerId, {
+            name,
+            ref,
+            listener,
+            context,
+            createdAt: Date.now()
+        });
+        return listenerId;
+    }
+    
+    removeByContext(context) {
+        let removed = 0;
+        for (const [id, data] of this.listeners.entries()) {
+            if (data.context === context) {
+                off(data.ref, 'value', data.listener);
+                this.listeners.delete(id);
+                removed++;
+            }
+        }
+        return removed;
+    }
+    
+    removeAll() {
+        for (const [id, data] of this.listeners.entries()) {
+            off(data.ref, 'value', data.listener);
+        }
+        this.listeners.clear();
+    }
+}
 
-const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
-
-// ================ POINTS & BADGES SYSTEM ================
-const POINTS = {
-    WATCH_VIDEO: 10,
-    PERFECT_QUIZ: 50,
-    PASS_QUIZ: 20,
-    SUBSCRIBE_COURSE: 30,
-    ADD_REVIEW: 15,
-    FIRST_VIDEO: 50,
-    FIRST_EXAM: 50
-};
-
-const BADGES = {
-    BRONZE: { threshold: 100, name: '🥉 برونزي', icon: 'fas fa-medal' },
-    SILVER: { threshold: 300, name: '🥈 فضي', icon: 'fas fa-medal' },
-    GOLD: { threshold: 600, name: '🥇 ذهبي', icon: 'fas fa-medal' },
-    PLATINUM: { threshold: 1000, name: '💎 بلاتيني', icon: 'fas fa-crown' },
-    FIRST_VIDEO: { name: '🎬 أول فيديو', icon: 'fas fa-play-circle' },
-    FIRST_EXAM: { name: '📝 أول امتحان', icon: 'fas fa-file-alt' },
-    PERFECT_SCORE: { name: '🏆 درجة نهائية', icon: 'fas fa-trophy' }
-};
+const listenerManager = new ListenerManager();
 
 // ================ PROGRESS INDICATOR ================
 let progressInterval;
@@ -111,8 +100,6 @@ function escapeHTML(str) {
 }
 
 // ================ TOAST NOTIFICATION ================
-let toastTimeout;
-
 function showToast(message, type = 'success', duration = 3000) {
     let container = document.getElementById('toastContainer');
     if (!container) {
@@ -121,8 +108,6 @@ function showToast(message, type = 'success', duration = 3000) {
         container.className = 'toast-container';
         document.body.appendChild(container);
     }
-    
-    if (toastTimeout) clearTimeout(toastTimeout);
     
     const toast = document.createElement('div');
     toast.className = `toast-message ${type}`;
@@ -160,36 +145,55 @@ async function getCachedStudentData(uid) {
     return studentDataCache[uid] || null;
 }
 
-// ================ RETRY FUNCTION ================
-async function firebaseFetchWithRetry(fetchFunction, maxRetries = 3) {
-    for (let i = 0; i < maxRetries; i++) {
-        try {
-            return await fetchFunction();
-        } catch (error) {
-            if (i === maxRetries - 1) throw error;
-            await new Promise(resolve => setTimeout(resolve, 1000 * (i + 1)));
+function clearExpiredCache() {
+    const now = Date.now();
+    Object.keys(cacheTime).forEach(uid => {
+        if (now - cacheTime[uid] > CACHE_DURATION) {
+            delete studentDataCache[uid];
+            delete cacheTime[uid];
         }
-    }
+    });
 }
+
+setInterval(clearExpiredCache, 60000);
 
 // ================ دالة توليد كود طالب فريد ================
 async function generateUniqueStudentId() {
-    const studentsSnap = await get(child(dbRef, 'students'));
-    const existingIds = new Set();
-    
-    if (studentsSnap.exists()) {
-        studentsSnap.forEach(studentSnapshot => {
-            const studentData = studentSnapshot.val();
-            if (studentData.shortId) existingIds.add(studentData.shortId);
-        });
+    try {
+        const studentsSnap = await get(child(dbRef, 'students'));
+        const existingIds = new Set();
+        
+        if (studentsSnap.exists()) {
+            studentsSnap.forEach(studentSnapshot => {
+                const studentData = studentSnapshot.val();
+                if (studentData.shortId) existingIds.add(studentData.shortId);
+            });
+        }
+        
+        let newId;
+        let attempts = 0;
+        const MAX_ATTEMPTS = 100;
+        
+        do {
+            newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+            attempts++;
+            if (attempts >= MAX_ATTEMPTS) {
+                throw new Error('فشل توليد كود طالب فريد بعد محاولات عديدة');
+            }
+        } while (existingIds.has(newId));
+        
+        return newId;
+    } catch (error) {
+        console.error('❌ خطأ في توليد كود الطالب:', error);
+        throw new Error('فشل في توليد كود الطالب');
     }
-    
-    let newId;
-    do {
-        newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-    } while (existingIds.has(newId));
-    
-    return newId;
+}
+
+// ================ PHONE VALIDATION ================
+function validatePhoneNumber(phone) {
+    const phoneRegex = /^[0-9]{10,15}$/;
+    const isRepeated = /^(.)\1+$/.test(phone);
+    return phoneRegex.test(phone) && !isRepeated;
 }
 
 // ================ STEP VALIDATION ================
@@ -204,13 +208,13 @@ window.checkStep1Completion = function() {
     if (!nextBtn || !errorDiv) return false;
     
     const isNameValid = n1 !== '' && n4 !== '';
-    const isWhatsappValid = whatsapp !== '' && whatsapp.length >= 10 && /^[0-9]+$/.test(whatsapp);
-    const isParentPhoneValid = parentPhone === '' || (parentPhone.length >= 10 && /^[0-9]+$/.test(parentPhone));
+    const isWhatsappValid = whatsapp !== '' && validatePhoneNumber(whatsapp);
+    const isParentPhoneValid = parentPhone === '' || validatePhoneNumber(parentPhone);
     
     let errorMessage = '';
     if (!isNameValid) errorMessage = '❌ يرجى إدخال الاسم الأول واللقب على الأقل';
-    else if (!isWhatsappValid) errorMessage = '❌ يرجى إدخال رقم واتساب صحيح (10 أرقام على الأقل)';
-    else if (!isParentPhoneValid) errorMessage = '❌ رقم ولي الأمر غير صحيح (10 أرقام على الأقل)';
+    else if (!isWhatsappValid) errorMessage = '❌ يرجى إدخال رقم واتساب صحيح (10-15 رقماً)';
+    else if (!isParentPhoneValid) errorMessage = '❌ رقم ولي الأمر غير صحيح (10-15 رقماً)';
     
     if (isNameValid && isWhatsappValid && isParentPhoneValid) {
         nextBtn.disabled = false;
@@ -223,7 +227,7 @@ window.checkStep1Completion = function() {
         nextBtn.style.opacity = '0.6';
         nextBtn.style.pointerEvents = 'none';
         errorDiv.style.display = 'block';
-        errorDiv.innerHTML = escapeHTML(errorMessage);
+        errorDiv.textContent = errorMessage;
         return false;
     }
 };
@@ -247,10 +251,77 @@ window.checkStep2Completion = function() {
         nextBtn.style.opacity = '0.6';
         nextBtn.style.pointerEvents = 'none';
         errorDiv.style.display = 'block';
-        errorDiv.innerHTML = '❌ يرجى اختيار المرحلة والصف الدراسي';
+        errorDiv.textContent = '❌ يرجى اختيار المرحلة والصف الدراسي';
         return false;
     }
 };
+
+// ================ HANDLE FIREBASE ERRORS ================
+const handleFirebaseError = (error, customMessage = 'حدث خطأ') => {
+    console.error('Firebase Error:', error);
+    
+    const errorMap = {
+        'PERMISSION_DENIED': 'ليس لديك صلاحية للوصول إلى هذه البيانات',
+        'NETWORK_ERROR': 'مشكلة في الاتصال بالإنترنت',
+        'auth/user-not-found': 'المستخدم غير موجود',
+        'auth/wrong-password': 'كلمة المرور غير صحيحة',
+        'auth/email-already-in-use': 'البريد الإلكتروني مستخدم بالفعل',
+        'auth/invalid-email': 'البريد الإلكتروني غير صالح',
+        'auth/weak-password': 'كلمة المرور ضعيفة جداً',
+        'auth/network-request-failed': 'مشكلة في الاتصال بالإنترنت',
+        'auth/too-many-requests': 'تم حظر الحساب مؤقتاً. يرجى المحاولة لاحقاً',
+        'auth/invalid-credential': 'بيانات الدخول غير صحيحة',
+        'auth/account-exists-with-different-credential': 'هذا البريد الإلكتروني مستخدم بطريقة تسجيل مختلفة',
+        'auth/popup-closed-by-user': 'تم إغلاق نافذة التسجيل',
+        'auth/cancelled-popup-request': 'تم إلغاء طلب التسجيل',
+        'auth/popup-blocked': 'تم حظر النافذة المنبثقة، يرجى السماح بالنوافذ المنبثقة'
+    };
+    
+    const message = errorMap[error.code] || customMessage;
+    showToast(`❌ ${message}`, 'error');
+    return message;
+};
+
+const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+
+// ================ دوال مساعدة للتحقق من البيانات المكررة ================
+async function isEmailExists(email) {
+    try {
+        const studentsSnap = await get(child(dbRef, 'students'));
+        if (!studentsSnap.exists()) return false;
+        
+        let exists = false;
+        studentsSnap.forEach(studentSnapshot => {
+            const studentData = studentSnapshot.val();
+            if (studentData.email && studentData.email.toLowerCase() === email.toLowerCase()) {
+                exists = true;
+            }
+        });
+        return exists;
+    } catch (error) {
+        console.error('Error checking email:', error);
+        return false;
+    }
+}
+
+async function isUsernameExists(username) {
+    try {
+        const studentsSnap = await get(child(dbRef, 'students'));
+        if (!studentsSnap.exists()) return false;
+        
+        let exists = false;
+        studentsSnap.forEach(studentSnapshot => {
+            const studentData = studentSnapshot.val();
+            if (studentData.username && studentData.username.toLowerCase() === username.toLowerCase()) {
+                exists = true;
+            }
+        });
+        return exists;
+    } catch (error) {
+        console.error('Error checking username:', error);
+        return false;
+    }
+}
 
 // ================ REGISTRATION FUNCTIONS ================
 window.handleRegisterEmail = async function() {
@@ -273,14 +344,9 @@ window.handleRegisterEmail = async function() {
     const pass = document.getElementById('regPass')?.value || '';
     const passConfirm = document.getElementById('regPassConfirm')?.value || '';
     
-    if (!email || !pass) {
-        showToast('❌ يرجى إدخال البريد الإلكتروني وكلمة المرور', 'error');
-        return;
-    }
-    
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-        showToast('❌ البريد الإلكتروني غير صالح', 'error');
+        showToast('❌ يرجى إدخال بريد إلكتروني صحيح', 'error');
         return;
     }
     
@@ -292,7 +358,7 @@ window.handleRegisterEmail = async function() {
         showToast('❌ كلمة المرور غير متطابقة!', 'error');
         return;
     }
-
+    
     const btn = document.getElementById('regBtn');
     if (!btn) return;
     
@@ -302,18 +368,8 @@ window.handleRegisterEmail = async function() {
     startProgress();
     
     try {
-        const studentsSnap = await get(child(dbRef, 'students'));
-        let emailExists = false;
-        
-        if (studentsSnap.exists()) {
-            studentsSnap.forEach(studentSnapshot => {
-                const studentData = studentSnapshot.val();
-                if (studentData.email && studentData.email.toLowerCase() === email.toLowerCase()) {
-                    emailExists = true;
-                }
-            });
-        }
-        
+        // التحقق من وجود البريد الإلكتروني مسبقاً
+        const emailExists = await isEmailExists(email);
         if (emailExists) {
             showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل. الرجاء تسجيل الدخول.', 'error');
             btn.disabled = false;
@@ -327,6 +383,7 @@ window.handleRegisterEmail = async function() {
         const res = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(res.user, { displayName: fullName });
         
+        // حفظ جميع البيانات بما في ذلك username فارغ
         await set(ref(db, 'students/' + res.user.uid), { 
             name: fullName, 
             grade: grade, 
@@ -334,28 +391,19 @@ window.handleRegisterEmail = async function() {
             parentPhone: parentPhone || '',
             shortId: sid,
             email: email,
-            points: 0,
-            badges: [],
+            username: '', // إضافة حقل username فارغ
+            authMethod: 'email',
             subscriptions: {},
             watchedVideos: {},
             examResults: {},
             createdAt: new Date().toLocaleString('ar-EG')
         });
         
-        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success', 5000);
         window.closeLogin();
     } catch(err) {
         console.error('Registration error:', err);
-        
-        if (err.code === 'auth/email-already-in-use') {
-            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل في نظام authentication', 'error');
-        } else if (err.code === 'auth/invalid-email') {
-            showToast('❌ البريد الإلكتروني غير صالح', 'error');
-        } else if (err.code === 'auth/weak-password') {
-            showToast('❌ كلمة المرور ضعيفة جداً', 'error');
-        } else {
-            showToast('❌ حدث خطأ: ' + (err.message || 'يرجى المحاولة مرة أخرى'), 'error');
-        }
+        handleFirebaseError(err, 'حدث خطأ في التسجيل');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -364,8 +412,9 @@ window.handleRegisterEmail = async function() {
     }
 };
 
-// ✅ دالة محسنة لتسجيل الدخول باليوزر نيم
 window.handleRegisterUsername = async function() {
+    console.log('🔵 تم استدعاء handleRegisterUsername');
+    
     if (!window.checkStep1Completion() || !window.checkStep2Completion()) {
         showToast('❌ يرجى إكمال جميع البيانات المطلوبة أولاً', 'error');
         return;
@@ -384,6 +433,8 @@ window.handleRegisterUsername = async function() {
     const username = document.getElementById('regUsername')?.value.trim().toLowerCase() || '';
     const pass = document.getElementById('regPassUser')?.value || '';
     const passConfirm = document.getElementById('regPassUserConfirm')?.value || '';
+    
+    console.log('📝 البيانات المدخلة:', { username, fullName, grade });
     
     if (!username || !pass) {
         showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
@@ -412,7 +463,10 @@ window.handleRegisterUsername = async function() {
     }
     
     const btn = document.getElementById('regBtnUser');
-    if (!btn) return;
+    if (!btn) {
+        console.error('❌ زر التسجيل غير موجود');
+        return;
+    }
     
     btn.disabled = true;
     btn.innerText = "جاري التحميل...";
@@ -420,18 +474,9 @@ window.handleRegisterUsername = async function() {
     startProgress();
     
     try {
-        const studentsSnap = await get(child(dbRef, 'students'));
-        let usernameExists = false;
-        
-        if (studentsSnap.exists()) {
-            studentsSnap.forEach(studentSnapshot => {
-                const studentData = studentSnapshot.val();
-                if (studentData.username && studentData.username.toLowerCase() === username) {
-                    usernameExists = true;
-                }
-            });
-        }
-        
+        console.log('🔍 التحقق من وجود اسم المستخدم...');
+        // التحقق من وجود اسم المستخدم
+        const usernameExists = await isUsernameExists(username);
         if (usernameExists) {
             showToast('❌ اسم المستخدم هذا مستخدم بالفعل. الرجاء اختيار اسم آخر.', 'error');
             btn.disabled = false;
@@ -441,12 +486,30 @@ window.handleRegisterUsername = async function() {
             return;
         }
         
+        console.log('✅ اسم المستخدم متاح');
         const sid = await generateUniqueStudentId();
-        // ✅ استخدام بريد إلكتروني ثابت للتسجيل
+        console.log('✅ تم توليد كود الطالب:', sid);
+        
+        // إنشاء بريد إلكتروني وهمي
         const email = `${username}@monastudent.local`;
+        
+        // التحقق من عدم وجود هذا البريد الإلكتروني الوهمي
+        const emailExists = await isEmailExists(email);
+        if (emailExists) {
+            // هذا لا يجب أن يحدث، ولكن للاحتياط
+            showToast('❌ حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.', 'error');
+            btn.disabled = false;
+            btn.innerText = "تسجيل";
+            btn.classList.remove('btn-loading');
+            stopProgress();
+            return;
+        }
+        
+        console.log('🔐 إنشاء حساب Firebase...');
         const res = await createUserWithEmailAndPassword(auth, email, pass);
         await updateProfile(res.user, { displayName: fullName });
         
+        console.log('💾 حفظ البيانات في قاعدة البيانات...');
         await set(ref(db, 'students/' + res.user.uid), { 
             name: fullName, 
             grade: grade, 
@@ -454,27 +517,20 @@ window.handleRegisterUsername = async function() {
             parentPhone: parentPhone || '',
             shortId: sid,
             username: username,
-            email: email, // ✅ حفظ البريد الإلكتروني للرجوع إليه لاحقاً
-            points: 0,
-            badges: [],
+            email: email,
+            authMethod: 'username',
             subscriptions: {},
             watchedVideos: {},
             examResults: {},
             createdAt: new Date().toLocaleString('ar-EG')
         });
         
-        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        console.log('✅ تم التسجيل بنجاح!');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success', 5000);
         window.closeLogin();
     } catch(err) {
-        console.error('Username registration error:', err);
-        
-        if (err.code === 'auth/email-already-in-use') {
-            showToast('❌ حدث تعارض في اسم المستخدم. يرجى المحاولة مرة أخرى.', 'error');
-        } else if (err.code === 'auth/weak-password') {
-            showToast('❌ كلمة المرور ضعيفة جداً', 'error');
-        } else {
-            showToast('❌ حدث خطأ: ' + (err.message || 'يرجى المحاولة مرة أخرى'), 'error');
-        }
+        console.error('❌ خطأ في التسجيل باليوزرنيم:', err);
+        handleFirebaseError(err, 'حدث خطأ في التسجيل');
     } finally {
         btn.disabled = false;
         btn.innerText = "تسجيل";
@@ -508,37 +564,24 @@ window.registerWithGoogle = async function() {
     startProgress();
     
     try {
+        // استخدام signInWithPopup للحصول على بيانات المستخدم أولاً
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         
-        const userSnap = await get(child(dbRef, `students/${user.uid}`));
-        if(userSnap.exists()) {
-            showToast('❌ هذا الحساب موجود بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
-            await signOut(auth);
-            return;
-        }
-        
-        const studentsSnap = await get(child(dbRef, 'students'));
-        let emailExists = false;
-        
-        if (studentsSnap.exists()) {
-            studentsSnap.forEach(studentSnapshot => {
-                const studentData = studentSnapshot.val();
-                if (studentData.email && studentData.email.toLowerCase() === user.email.toLowerCase()) {
-                    emailExists = true;
-                }
-            });
-        }
-        
+        // التحقق من عدم وجود هذا البريد الإلكتروني في قاعدة البيانات
+        const emailExists = await isEmailExists(user.email);
         if (emailExists) {
-            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل في حساب آخر. الرجاء تسجيل الدخول.', 'error');
-            await signOut(auth);
+            showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
+            await signOut(auth); // تسجيل الخروج لأن المستخدم موجود بالفعل
             return;
         }
         
         const sid = await generateUniqueStudentId();
+        
+        // تحديث اسم المستخدم
         await updateProfile(user, { displayName: fullName });
         
+        // حفظ البيانات في Realtime Database
         await set(ref(db, 'students/' + user.uid), {
             name: fullName,
             grade: grade,
@@ -546,19 +589,23 @@ window.registerWithGoogle = async function() {
             parentPhone: parentPhone || '',
             shortId: sid,
             email: user.email,
-            points: 0,
-            badges: [],
+            username: '', // إضافة حقل username فارغ
+            authMethod: 'google',
             subscriptions: {},
             watchedVideos: {},
             examResults: {},
             createdAt: new Date().toLocaleString('ar-EG')
         });
         
-        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success');
+        showToast(`✅ تم التسجيل بنجاح! كود الطالب: ${sid}`, 'success', 5000);
         window.closeLogin();
     } catch(err) {
         console.error('Google registration error:', err);
-        showToast('❌ ' + (err.message || 'حدث خطأ في التسجيل'), 'error');
+        // إذا كان المستخدم قد سجل دخول لكن حدث خطأ في الحفظ، نسجله خروج
+        if (auth.currentUser) {
+            await signOut(auth);
+        }
+        handleFirebaseError(err, 'حدث خطأ في التسجيل');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -569,11 +616,21 @@ window.registerWithGoogle = async function() {
 };
 
 // ================ LOGIN FUNCTIONS ================
-window.loginEmailSubmit = async function() {
-    const e = document.getElementById('stEmail')?.value.trim() || '';
-    const p = document.getElementById('stPass')?.value || '';
+window.loginEmailSubmit = async function(e) {
+    if (e) e.preventDefault();
     
-    if(!e || !p) {
+    const emailInput = document.getElementById('stEmail');
+    const passwordInput = document.getElementById('stPass');
+    
+    if (!emailInput || !passwordInput) {
+        showToast('❌ خطأ في النظام - يرجى تحديث الصفحة', 'error');
+        return;
+    }
+    
+    const e_mail = emailInput.value.trim();
+    const p = passwordInput.value;
+    
+    if(!e_mail || !p) {
         showToast('❌ يرجى إدخال البيانات', 'error');
         return;
     }
@@ -586,18 +643,12 @@ window.loginEmailSubmit = async function() {
     startProgress();
     
     try {
-        await signInWithEmailAndPassword(auth, e, p);
+        await signInWithEmailAndPassword(auth, e_mail, p);
         window.closeLogin();
-        showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+        showToast('✅ مرحباً بك مجدداً!', 'success');
     } catch(err) {
-        console.error('Login error:', err);
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
-            showToast('❌ البريد الإلكتروني أو كلمة المرور غير صحيحة', 'error');
-        } else if (err.code === 'auth/invalid-email') {
-            showToast('❌ البريد الإلكتروني غير صالح', 'error');
-        } else {
-            showToast('❌ فشل تسجيل الدخول', 'error');
-        }
+        console.error('❌ Login error:', err);
+        handleFirebaseError(err, 'فشل تسجيل الدخول');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -607,10 +658,19 @@ window.loginEmailSubmit = async function() {
     }
 };
 
-// ✅ دالة محسنة لتسجيل الدخول باليوزر نيم
-window.loginUsernameSubmit = async function() {
-    const username = document.getElementById('stUsername')?.value.trim().toLowerCase() || '';
-    const password = document.getElementById('stPassUsername')?.value || '';
+window.loginUsernameSubmit = async function(e) {
+    if (e) e.preventDefault();
+    
+    const usernameInput = document.getElementById('stUsername');
+    const passwordInput = document.getElementById('stPassUsername');
+    
+    if (!usernameInput || !passwordInput) {
+        showToast('❌ خطأ في النظام - يرجى تحديث الصفحة', 'error');
+        return;
+    }
+    
+    const username = usernameInput.value.trim().toLowerCase();
+    const password = passwordInput.value;
     
     if(!username || !password) {
         showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
@@ -625,21 +685,19 @@ window.loginUsernameSubmit = async function() {
     startProgress();
     
     try {
-        // جلب جميع الطلاب للبحث عن اسم المستخدم
-        const studentsSnap = await get(child(dbRef, 'students'));
+        const studentsRef = ref(db, 'students');
+        const studentsSnap = await get(studentsRef);
         
         if (!studentsSnap.exists()) {
-            showToast('❌ لا يوجد طلاب مسجلين بعد', 'error');
+            showToast('❌ اسم المستخدم غير موجود', 'error');
             return;
         }
         
-        // البحث عن الطالب الذي يطابق اسم المستخدم
         let foundUser = null;
         let foundUid = null;
         
         studentsSnap.forEach((studentSnapshot) => {
             const studentData = studentSnapshot.val();
-            // التأكد من وجود خاصية username ومطابقتها
             if (studentData.username && studentData.username.toLowerCase() === username) {
                 foundUser = studentData;
                 foundUid = studentSnapshot.key;
@@ -651,32 +709,28 @@ window.loginUsernameSubmit = async function() {
             return;
         }
         
-        // التحقق من وجود email
-        if (!foundUser.email) {
-            showToast('❌ خطأ في بيانات المستخدم - لم يتم العثور على بريد إلكتروني مرتبط', 'error');
-            return;
+        let email = foundUser.email;
+        if (!email) {
+            // إنشاء بريد إلكتروني وهمي إذا لم يكن موجوداً
+            email = `${username}@monastudent.local`;
+            await update(ref(db, `students/${foundUid}`), {
+                email: email,
+                authMethod: 'username'
+            });
+        } else if (email.endsWith('@monastudent.local') && email.split('@')[0] !== username) {
+            // تحديث البريد الإلكتروني إذا تغير اسم المستخدم (حالة نادرة)
+            email = `${username}@monastudent.local`;
+            await update(ref(db, `students/${foundUid}`), {
+                email: email
+            });
         }
         
-        // محاولة تسجيل الدخول باستخدام البريد الإلكتروني وكلمة المرور
-        await signInWithEmailAndPassword(auth, foundUser.email, password);
-        
-        // إذا وصلنا إلى هنا، فهذا يعني أن تسجيل الدخول نجح
+        await signInWithEmailAndPassword(auth, email, password);
         window.closeLogin();
-        showToast('✅ تم تسجيل الدخول بنجاح', 'success');
-        
+        showToast('✅ مرحباً بك مجدداً!', 'success');
     } catch(err) {
-        console.error('Username login error:', err);
-        
-        // معالجة الأخطاء بشكل أفضل
-        if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-            showToast('❌ كلمة المرور غير صحيحة', 'error');
-        } else if (err.code === 'auth/user-not-found') {
-            showToast('❌ لم يتم العثور على حساب بهذا الاسم', 'error');
-        } else if (err.code === 'auth/too-many-requests') {
-            showToast('❌ تم حظر الحساب مؤقتاً لكثرة محاولات الدخول الفاشلة', 'error');
-        } else {
-            showToast('❌ حدث خطأ: ' + (err.message || 'يرجى المحاولة مرة أخرى'), 'error');
-        }
+        console.error('❌ Username login error:', err);
+        handleFirebaseError(err, 'حدث خطأ في تسجيل الدخول');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -704,11 +758,11 @@ window.loginGoogle = async function() {
             await signOut(auth);
         } else {
             window.closeLogin();
-            showToast('✅ تم تسجيل الدخول بنجاح', 'success');
+            showToast('✅ مرحباً بك مجدداً!', 'success');
         }
     } catch(err) {
         console.error('Google login error:', err);
-        showToast('❌ ' + (err.message || 'حدث خطأ في تسجيل الدخول'), 'error');
+        handleFirebaseError(err, 'حدث خطأ في تسجيل الدخول');
     } finally {
         if (btn) {
             btn.disabled = false;
@@ -742,7 +796,7 @@ onAuthStateChanged(auth, async user => {
                 const data = userSnap.val();
                 myShortId = data.shortId || '';
                 displayName = data.name || user.displayName || '';
-                currentStudentGrade = data.grade; // ✅ تحديث الصف الدراسي
+                currentStudentGrade = data.grade;
             } else {
                 currentStudentGrade = null;
                 myShortId = "";
@@ -768,7 +822,6 @@ onAuthStateChanged(auth, async user => {
             updateMenuItems(true);
             
             window.loadFolders();
-            await window.loadLeaderboard();
             await window.loadPerfectScores();
         } catch (error) {
             console.error("خطأ في جلب بيانات المستخدم:", error);
@@ -797,11 +850,7 @@ onAuthStateChanged(auth, async user => {
 window.toggleMenu = function() {
     const menu = document.getElementById('menuDropdown');
     if (menu) {
-        if (menu.style.display === 'none' || menu.style.display === '') {
-            menu.style.display = 'block';
-        } else {
-            menu.style.display = 'none';
-        }
+        menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
     }
 };
 
@@ -818,36 +867,17 @@ document.addEventListener('click', (e) => {
     }
 });
 
-// ================ تحديث عناصر القائمة ================
 function updateMenuItems(isLoggedIn) {
-    const dashboardItem = document.getElementById('dashboardMenuItem');
     const homeItem = document.getElementById('homeMenuItem');
-    const continueItem = document.getElementById('continueWatchingMenuItem');
     const divider = document.getElementById('menuDivider');
     const logoutItem = document.getElementById('logoutMenuItem');
     
     if (isLoggedIn) {
-        if (dashboardItem) {
-            dashboardItem.style.display = 'block';
-            dashboardItem.onclick = function(e) {
-                e.preventDefault();
-                window.openDashboard();
-                window.closeMenu();
-            };
-        }
         if (homeItem) {
             homeItem.style.display = 'block';
             homeItem.onclick = function(e) {
                 e.preventDefault();
                 window.goHome();
-                window.closeMenu();
-            };
-        }
-        if (continueItem) {
-            continueItem.style.display = 'block';
-            continueItem.onclick = function(e) {
-                e.preventDefault();
-                window.openDashboard();
                 window.closeMenu();
             };
         }
@@ -861,96 +891,13 @@ function updateMenuItems(isLoggedIn) {
             };
         }
     } else {
-        if (dashboardItem) dashboardItem.style.display = 'none';
         if (homeItem) homeItem.style.display = 'none';
-        if (continueItem) continueItem.style.display = 'none';
         if (divider) divider.style.display = 'none';
         if (logoutItem) logoutItem.style.display = 'none';
     }
 }
 
-// ✅ دالة محسنة للوحة المتصدرين
-window.loadLeaderboard = async function() {
-    try {
-        const studentsRef = ref(db, 'students');
-        // جلب أعلى 20 طالب بناءً على النقاط
-        const topStudentsQuery = query(studentsRef, orderByChild('points'), limitToLast(20));
-        const snapshot = await get(topStudentsQuery);
-        
-        const leaderboardSection = document.getElementById('leaderboardSection');
-        const leaderboardContainer = document.getElementById('leaderboardContainer');
-        const topThreeContainer = document.getElementById('topThreeContainer');
-        
-        if (!leaderboardSection || !leaderboardContainer || !topThreeContainer) return;
-        
-        if (!snapshot.exists()) {
-            leaderboardSection.style.display = 'none';
-            return;
-        }
-        
-        let leaderboard = [];
-        snapshot.forEach(s => {
-            const data = s.val();
-            if (data.points && data.points > 0) {
-                leaderboard.push({
-                    name: data.name || 'طالب',
-                    points: data.points || 0,
-                    shortId: data.shortId || ''
-                });
-            }
-        });
-        
-        // ترتيب تنازلي (الأعلى أولاً)
-        leaderboard.sort((a, b) => b.points - a.points);
-        
-        if (leaderboard.length === 0) {
-            leaderboardSection.style.display = 'none';
-            return;
-        }
-        
-        leaderboardSection.style.display = 'block';
-        
-        // عرض أول 3
-        let top3Html = '';
-        const top3 = leaderboard.slice(0, 3);
-        const medals = ['🥇', '🥈', '🥉'];
-        const classes = ['first', 'second', 'third'];
-        
-        top3.forEach((student, index) => {
-            top3Html += `
-                <div class="top-card ${classes[index]}">
-                    <div class="top-crown">${medals[index]}</div>
-                    <div class="top-avatar">${escapeHTML(student.name.charAt(0))}</div>
-                    <div class="top-name">${escapeHTML(student.name)}</div>
-                    <div class="top-points">${student.points} <i class="fas fa-star"></i></div>
-                    <div class="top-badge">#${index + 1} في النقاط</div>
-                </div>
-            `;
-        });
-        topThreeContainer.innerHTML = top3Html;
-        
-        // عرض الباقي (من المركز الرابع)
-        let html = '';
-        leaderboard.slice(3).forEach((student, index) => {
-            html += `<div class="leaderboard-item">
-                <div class="leaderboard-rank-circle">#${index + 4}</div>
-                <div class="leaderboard-info">
-                    <h4>${escapeHTML(student.name)}</h4>
-                    <div class="leaderboard-points"><i class="fas fa-star" style="color: var(--gold);"></i> ${student.points} نقطة</div>
-                </div>
-            </div>`;
-        });
-        
-        leaderboardContainer.innerHTML = html;
-    } catch(error) {
-        console.error("Error loading leaderboard:", error);
-        // إخفاء القسم في حالة الخطأ
-        const leaderboardSection = document.getElementById('leaderboardSection');
-        if (leaderboardSection) leaderboardSection.style.display = 'none';
-    }
-};
-
-// ================ PERFECT SCORES SECTION ================
+// ================ PERFECT SCORES ================
 window.loadPerfectScores = async function() {
     try {
         const resultsSnap = await get(child(dbRef, 'quiz_results'));
@@ -961,8 +908,11 @@ window.loadPerfectScores = async function() {
         
         if (!perfectScoresSection || !perfectScoresGrid) return;
         
+        // ✅ إظهار القسم دائماً (حتى لو كان فارغاً)
+        perfectScoresSection.style.display = 'block';
+        
         if (!resultsSnap.exists() || !studentsSnap.exists()) {
-            perfectScoresSection.style.display = 'none';
+            perfectScoresGrid.innerHTML = '<div class="empty-state" style="text-align:center; padding:40px; color:#999;"><i class="fas fa-trophy" style="font-size:3rem; opacity:0.3; margin-bottom:15px;"></i><br>🎉 لا توجد درجات نهائية بعد. كن أنت الأول!</div>';
             return;
         }
 
@@ -1001,8 +951,6 @@ window.loadPerfectScores = async function() {
         const finalList = Object.values(unique);
         
         if (finalList.length > 0) {
-            perfectScoresSection.style.display = 'block';
-            
             let html = '';
             finalList.forEach(ps => {
                 html += `<div class="perfect-card">
@@ -1025,24 +973,31 @@ window.loadPerfectScores = async function() {
             });
             perfectScoresGrid.innerHTML = html;
         } else {
-            perfectScoresSection.style.display = 'none';
+            // ✅ رسالة عند عدم وجود نتائج
+            perfectScoresGrid.innerHTML = '<div class="empty-state" style="text-align:center; padding:40px; color:#999;"><i class="fas fa-star" style="font-size:3rem; opacity:0.3; margin-bottom:15px;"></i><br>🎉 لا توجد درجات نهائية بعد. كن أنت الأول!</div>';
         }
     } catch (error) {
         console.error("Error loading perfect scores:", error);
         const perfectScoresSection = document.getElementById('perfectScoresSection');
-        if (perfectScoresSection) perfectScoresSection.style.display = 'none';
+        const perfectScoresGrid = document.getElementById('perfectScoresGrid');
+        
+        if (perfectScoresSection && perfectScoresGrid) {
+            perfectScoresSection.style.display = 'block';
+            perfectScoresGrid.innerHTML = '<div class="empty-state" style="text-align:center; padding:40px; color:#e74c3c;"><i class="fas fa-exclamation-triangle" style="font-size:3rem; margin-bottom:15px;"></i><br>حدث خطأ في تحميل الدرجات النهائية</div>';
+        }
     }
 };
 
-// ================ COURSE LOADING ================
+// ================ FOLDERS LOADING ================
 window.loadFolders = function() {
+    listenerManager.removeByContext('folders');
+    
     const foldersRef = ref(db, 'folders');
     const listener = onValue(foldersRef, async (snapshot) => {
         const grid = document.getElementById('foldersGrid');
         if (!grid) return;
         
         document.querySelectorAll('.skeleton').forEach(el => el.remove());
-        
         grid.innerHTML = "";
         
         if (!snapshot.exists()) {
@@ -1058,13 +1013,8 @@ window.loadFolders = function() {
             });
         });
         
+        // ✅ عرض جميع الكورسات لجميع المستخدمين (تم إزالة التصفية)
         let filteredCourses = courses;
-        if (currentUser && currentStudentGrade) {
-            filteredCourses = courses.filter(course => {
-                if (!course.data.grade) return true;
-                return course.data.grade === currentStudentGrade;
-            });
-        }
         
         filteredCourses.forEach(course => {
             const courseData = course.data;
@@ -1101,7 +1051,6 @@ window.loadFolders = function() {
             card.appendChild(ratingDiv);
             
             card.addEventListener('click', () => window.openContent(courseId, courseName));
-            
             grid.appendChild(card);
         });
         
@@ -1110,11 +1059,13 @@ window.loadFolders = function() {
         }
     });
     
-    listeners.push({ ref: foldersRef, listener });
+    listenerManager.add('folders', foldersRef, listener, 'folders');
 };
 
-// ================ LOAD REVIEWS ================
+// ================ REVIEWS LOADING ================
 function loadReviews() {
+    listenerManager.removeByContext('reviews');
+    
     const reviewsRef = ref(db, 'reviews');
     const listener = onValue(reviewsRef, snapshot => {
         let html = "";
@@ -1135,181 +1086,8 @@ function loadReviews() {
         if (testiGrid) testiGrid.innerHTML = html;
     });
     
-    listeners.push({ ref: reviewsRef, listener });
+    listenerManager.add('reviews', reviewsRef, listener, 'reviews');
 }
-
-// ================ DASHBOARD ================
-window.openDashboard = async function() {
-    if (!currentUser) { 
-        window.openLogin(); 
-        return; 
-    }
-    
-    if (isAdminUser) {
-        window.location.href = 'mx_2026_ctrl_p8.html';
-        return;
-    }
-    
-    startProgress();
-    
-    const homePage = document.getElementById('homePage');
-    const contentArea = document.getElementById('contentArea');
-    const studentDashboard = document.getElementById('studentDashboard');
-    
-    if (homePage) homePage.style.display = 'none';
-    if (contentArea) contentArea.style.display = 'none';
-    if (studentDashboard) studentDashboard.style.display = 'block';
-    
-    try {
-        const studentSnap = await getCachedStudentData(currentUser.uid);
-        if (!studentSnap) return;
-        
-        const student = studentSnap;
-        myShortId = student.shortId || '';
-        
-        const studentNameDashboard = document.getElementById('studentNameDashboard');
-        const dashboardStudentId = document.getElementById('dashboardStudentId');
-        
-        if (studentNameDashboard) studentNameDashboard.innerText = student.name || currentUser.displayName || '';
-        if (dashboardStudentId) {
-            dashboardStudentId.innerHTML = `<i class="fas fa-id-card"></i> كود الطالب: ${escapeHTML(myShortId)}`;
-        }
-
-        const subscriptions = student.subscriptions || {};
-        const watchedVideos = student.watchedVideos || {};
-        const examResults = student.examResults || {};
-        const points = student.points || 0;
-        const badges = student.badges || [];
-
-        const statCourses = document.getElementById('statCourses');
-        const statVideos = document.getElementById('statVideos');
-        const statExams = document.getElementById('statExams');
-        const statAvgScore = document.getElementById('statAvgScore');
-        const statPoints = document.getElementById('statPoints');
-        
-        if (statCourses) statCourses.innerText = Object.keys(subscriptions).length;
-        if (statVideos) statVideos.innerText = Object.keys(watchedVideos).length;
-        if (statExams) statExams.innerText = Object.keys(examResults).length;
-        
-        let totalPercentage = 0;
-        Object.values(examResults).forEach(ex => totalPercentage += ex.percentage || 0);
-        const avg = Object.keys(examResults).length > 0 ? Math.round(totalPercentage / Object.keys(examResults).length) : 0;
-        if (statAvgScore) statAvgScore.innerText = avg + '%';
-        if (statPoints) statPoints.innerText = points;
-
-        let badgesHtml = '';
-        badges.forEach(b => {
-            const badge = BADGES[b];
-            if (badge) badgesHtml += `<span class="badge-item"><i class="${badge.icon}"></i> ${badge.name}</span>`;
-        });
-        
-        const badgesContainer = document.getElementById('badgesContainer');
-        if (badgesContainer) {
-            badgesContainer.innerHTML = badgesHtml || '<p style="color:#666;">لم تحصل على شارات بعد</p>';
-        }
-
-        let coursesHtml = '';
-        for (const [courseId, subData] of Object.entries(subscriptions)) {
-            const courseSnap = await get(child(dbRef, `folders/${courseId}`));
-            if (courseSnap.exists()) {
-                const course = courseSnap.val();
-                const progress = subData.progress || 0;
-                
-                const card = document.createElement('div');
-                card.className = 'folder-card touch-feedback';
-                
-                const img = document.createElement('img');
-                img.src = course.img && course.img.startsWith('data:image') ? course.img : (course.img || 'mona.jpg');
-                img.loading = 'lazy';
-                img.onerror = () => img.src = 'mona.jpg';
-                card.appendChild(img);
-                
-                const h3 = document.createElement('h3');
-                h3.textContent = course.name || '';
-                card.appendChild(h3);
-                
-                const progressDiv = document.createElement('div');
-                progressDiv.style.padding = '0 20px 20px';
-                progressDiv.innerHTML = `
-                    <div class="progress-bar-bg"><div class="progress-fill-green" style="width: ${progress}%;"></div></div>
-                    <span style="color: var(--main); font-weight: bold;">${progress}% مكتمل</span>
-                `;
-                card.appendChild(progressDiv);
-                
-                card.addEventListener('click', () => window.openContent(courseId, course.name));
-                
-                coursesHtml += card.outerHTML;
-            }
-        }
-        
-        const myCoursesGrid = document.getElementById('myCoursesGrid');
-        if (myCoursesGrid) {
-            myCoursesGrid.innerHTML = coursesHtml || `<p style="text-align:center; color:#999;">لم تشترك في أي كورس بعد</p>`;
-        }
-        
-        let continueHtml = '';
-        const watchedEntries = Object.entries(watchedVideos);
-        if (watchedEntries.length > 0) {
-            watchedEntries
-                .sort((a, b) => (b[1].watchedAt || '').localeCompare(a[1].watchedAt || ''))
-                .slice(0, 3)
-                .forEach(([videoId, video]) => {
-                    continueHtml += `
-                        <div class="continue-card">
-                            <div>
-                                <h4>${escapeHTML(video.videoTitle || '')}</h4>
-                                <p style="color: #666;">من كورس: ${escapeHTML(video.courseName || '')}</p>
-                            </div>
-                            <button class="btn-continue touch-feedback" onclick="window.continueWatching('${escapeHTML(video.courseId)}')">
-                                <i class="fas fa-play"></i> متابعة
-                            </button>
-                        </div>
-                    `;
-                });
-        }
-        const continueGrid = document.getElementById('continueWatchingGrid');
-        if (continueGrid) {
-            continueGrid.innerHTML = continueHtml || '<p class="empty-state">لم تشاهد أي فيديو بعد</p>';
-        }
-
-        let examsHtml = '';
-        Object.entries(examResults)
-            .sort((a,b) => (b[1].completedAt || '').localeCompare(a[1].completedAt || ''))
-            .slice(0,5)
-            .forEach(([id, exam]) => {
-                examsHtml += `<div class="exam-item">
-                    <div><strong style="color: var(--main);">${escapeHTML(exam.quizName || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(exam.courseName || '')}</div></div>
-                    <div><span class="exam-score">${exam.score}/${exam.total}</span><span style="color: #666; margin-right: 10px;">${exam.completedAt || ''}</span></div>
-                </div>`;
-            });
-        
-        const recentExamsList = document.getElementById('recentExamsList');
-        if (recentExamsList) {
-            recentExamsList.innerHTML = examsHtml || `<p style="text-align:center; color:#999;">لم تؤد أي امتحان بعد</p>`;
-        }
-
-        let videosHtml = '';
-        Object.entries(watchedVideos)
-            .sort((a,b) => (b[1].watchedAt || '').localeCompare(a[1].watchedAt || ''))
-            .slice(0,5)
-            .forEach(([id, video]) => {
-                videosHtml += `<div class="video-item">
-                    <div><strong>${escapeHTML(video.videoTitle || '')}</strong><div style="color: #666; font-size: 0.85rem;">${escapeHTML(video.courseName || '')}</div></div>
-                    <span style="color: #f1c40f;">${video.watchedAt || ''}</span>
-                </div>`;
-            });
-        
-        const recentVideosList = document.getElementById('recentVideosList');
-        if (recentVideosList) {
-            recentVideosList.innerHTML = videosHtml || `<p style="text-align:center; color:#999;">لم تشاهد أي فيديو بعد</p>`;
-        }
-    } catch (error) {
-        console.error('Dashboard error:', error);
-        showToast('❌ حدث خطأ في تحميل لوحة التحكم', 'error');
-    } finally {
-        stopProgress();
-    }
-};
 
 // ================ OPEN CONTENT ================
 window.openContent = async function(folderId, folderName) {
@@ -1403,7 +1181,6 @@ window.confirmSubscription = async function() {
             subscribedAt: new Date().toLocaleString('ar-EG'),
             studentName: studentData.name,
             studentId: studentData.shortId,
-            progress: 0
         };
         
         await set(ref(db, `students/${currentUser.uid}/subscriptions/${currentFolderId}`), subscriptionData);
@@ -1413,7 +1190,6 @@ window.confirmSubscription = async function() {
             timestamp: new Date().toLocaleString('ar-EG')
         });
         
-        await window.awardPoints(currentUser.uid, 'SUBSCRIBE_COURSE', { courseId: currentFolderId, courseName: currentFolderName });
         showToast('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.', 'success');
         window.closeSubscriptionModal();
         await window.loadCourseContent(currentFolderId, currentFolderName, true);
@@ -1425,27 +1201,35 @@ window.confirmSubscription = async function() {
     }
 };
 
+// ================ LOAD COURSE CONTENT ================
 window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     const homePage = document.getElementById('homePage');
-    const studentDashboard = document.getElementById('studentDashboard');
     const contentArea = document.getElementById('contentArea');
     const folderTitleName = document.getElementById('folderTitleName');
     
     if (homePage) homePage.style.display = "none";
-    if (studentDashboard) studentDashboard.style.display = "none";
     if (contentArea) contentArea.style.display = "block";
     if (folderTitleName) folderTitleName.innerText = folderName;
 
     await window.loadCourseRatingUI(folderId);
 
-    const [vSnap, qSnap] = await Promise.all([
-        get(child(dbRef, `folders/${folderId}/videos`)),
-        get(child(dbRef, `quizzes/${folderId}`))
-    ]);
-
+    // ✅ تحسين الأداء بجلب كل شيء دفعة واحدة
+    let vSnap, qSnap, resultsSnap;
     let examResultsMap = {};
+
     if (hasAccess && currentUser) {
-        const resultsSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults`));
+        // جلب كل البيانات المطلوبة في نفس الوقت
+        const promises = [
+            get(child(dbRef, `folders/${folderId}/videos`)),
+            get(child(dbRef, `quizzes/${folderId}`)),
+            get(child(dbRef, `students/${currentUser.uid}/examResults`))
+        ];
+        
+        const results = await Promise.all(promises);
+        vSnap = results[0];
+        qSnap = results[1];
+        resultsSnap = results[2];
+        
         if (resultsSnap.exists()) {
             const results = resultsSnap.val();
             Object.keys(results).forEach(quizId => {
@@ -1454,6 +1238,16 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 }
             });
         }
+    } else {
+        // المستخدم ليس لديه صلاحية أو غير مسجل - جلب الفيديوهات والاختبارات فقط
+        const promises = [
+            get(child(dbRef, `folders/${folderId}/videos`)),
+            get(child(dbRef, `quizzes/${folderId}`))
+        ];
+        
+        const results = await Promise.all(promises);
+        vSnap = results[0];
+        qSnap = results[1];
     }
 
     const grid = document.getElementById('combinedGrid');
@@ -1461,14 +1255,14 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     
     grid.innerHTML = "";
 
+    // عرض الفيديوهات
     if (vSnap.exists()) {
         const videosArray = [];
         vSnap.forEach(v => {
-            const videoData = v.val();
             videosArray.push({
                 id: v.key,
-                ...videoData,
-                order: videoData.order || 999
+                ...v.val(),
+                order: v.val().order || 999
             });
         });
         
@@ -1504,99 +1298,108 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             badge.textContent = 'فيديو شرح';
             detailsDiv.appendChild(badge);
             
-            const title = document.createElement('h4');
-            title.textContent = videoData.title || '';
+            const title = document.createElement('h3');
+            title.textContent = videoData.title || 'فيديو';
             detailsDiv.appendChild(title);
-            
-            if (!hasAccess) {
-                const lockMsg = document.createElement('span');
-                lockMsg.style.cssText = 'color:#ff7675; font-size:0.8rem;';
-                lockMsg.textContent = 'اشترك لتشاهد';
-                detailsDiv.appendChild(lockMsg);
-            }
             
             card.appendChild(detailsDiv);
             
             if (hasAccess) {
                 card.addEventListener('click', () => window.openVideo(videoData.url, videoData.title, videoData.id, folderId));
+            } else {
+                card.style.cursor = 'not-allowed';
             }
             
             grid.appendChild(card);
         });
     }
 
+    // عرض الاختبارات
     if (qSnap.exists()) {
+        const quizzesArray = [];
         qSnap.forEach(q => {
-            const quizData = q.val();
-            if (quizData.videoRel === "all" || !quizData.videoRel) {
-                const quizId = q.key;
-                const isCompleted = examResultsMap[quizId] ? true : false;
-                
-                const card = document.createElement('div');
-                card.className = `item-card ${hasAccess ? '' : 'disabled'} touch-feedback`;
-                
-                if (!hasAccess) {
-                    const lockIcon = document.createElement('i');
-                    lockIcon.className = 'fas fa-lock lock-icon';
-                    card.appendChild(lockIcon);
-                }
-                
-                const iconDiv = document.createElement('div');
-                iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;';
-                const icon = document.createElement('i');
-                icon.className = 'fas fa-file-signature fa-3x';
-                icon.style.cssText = 'color: var(--main);';
-                iconDiv.appendChild(icon);
-                card.appendChild(iconDiv);
-                
-                const detailsDiv = document.createElement('div');
-                detailsDiv.className = 'item-details';
-                
-                const badge = document.createElement('span');
-                badge.className = 'badge';
-                if (isCompleted) {
-                    badge.textContent = '✅ تم الحل - مراجعة';
-                    badge.style.cssText = 'background: var(--success); color: white;';
-                } else {
-                    badge.textContent = 'ابدأ الامتحان';
-                }
-                detailsDiv.appendChild(badge);
-                
-                const title = document.createElement('h4');
-                title.textContent = quizData.name || '';
-                detailsDiv.appendChild(title);
-                
-                if (!hasAccess) {
-                    const lockMsg = document.createElement('span');
-                    lockMsg.style.cssText = 'color:#ff7675; font-size:0.8rem;';
-                    lockMsg.textContent = 'اشترك لتؤدي الامتحان';
-                    detailsDiv.appendChild(lockMsg);
-                }
-                
-                if (isCompleted) {
-                    const scoreSpan = document.createElement('span');
-                    scoreSpan.style.cssText = 'display:block; margin-top:8px; color: var(--success); font-size:0.85rem;';
-                    scoreSpan.innerHTML = `<i class="fas fa-check-circle"></i> النتيجة: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)`;
-                    detailsDiv.appendChild(scoreSpan);
-                }
-                
-                card.appendChild(detailsDiv);
-                
-                if (hasAccess) {
-                    if (isCompleted) {
-                        card.addEventListener('click', () => window.viewQuizResult(folderId, quizId));
-                    } else {
-                        card.addEventListener('click', () => window.startQuiz(folderId, quizId));
-                    }
-                }
-                
-                grid.appendChild(card);
+            quizzesArray.push({
+                id: q.key,
+                ...q.val(),
+                order: q.val().order || 999
+            });
+        });
+        
+        quizzesArray.sort((a, b) => a.order - b.order);
+        
+        quizzesArray.forEach(quizData => {
+            const quizId = quizData.id;
+            const isCompleted = examResultsMap[quizId] ? true : false;
+            
+            const card = document.createElement('div');
+            card.className = `item-card ${hasAccess ? '' : 'disabled'} touch-feedback`;
+            
+            if (!hasAccess) {
+                const lockIcon = document.createElement('i');
+                lockIcon.className = 'fas fa-lock lock-icon';
+                card.appendChild(lockIcon);
             }
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;';
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-file-signature fa-3x';
+            icon.style.cssText = 'color: var(--main);';
+            iconDiv.appendChild(icon);
+            card.appendChild(iconDiv);
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'item-details';
+            
+            const badge = document.createElement('span');
+            badge.className = 'badge';
+            if (isCompleted) {
+                badge.textContent = '✅ تم الحل - مراجعة';
+                badge.style.cssText = 'background: var(--success); color: white;';
+            } else {
+                badge.textContent = 'ابدأ الامتحان';
+            }
+            detailsDiv.appendChild(badge);
+            
+            const title = document.createElement('h3');
+            title.textContent = quizData.name || 'امتحان';
+            detailsDiv.appendChild(title);
+            
+            const questionsCount = quizData.questions ? Object.keys(quizData.questions).length : 0;
+            const info = document.createElement('p');
+            info.innerHTML = `<i class="fas fa-question-circle"></i> ${questionsCount} سؤال`;
+            detailsDiv.appendChild(info);
+            
+            if (!hasAccess) {
+                const lockMsg = document.createElement('span');
+                lockMsg.style.cssText = 'color:#ff7675; font-size:0.8rem;';
+                lockMsg.textContent = 'اشترك لتؤدي الامتحان';
+                detailsDiv.appendChild(lockMsg);
+            }
+            
+            if (isCompleted) {
+                const scoreSpan = document.createElement('span');
+                scoreSpan.style.cssText = 'display:block; margin-top:8px; color: var(--success); font-size:0.85rem;';
+                scoreSpan.innerHTML = `<i class="fas fa-check-circle"></i> النتيجة: ${examResultsMap[quizId].score}/${examResultsMap[quizId].total} (${examResultsMap[quizId].percentage}%)`;
+                detailsDiv.appendChild(scoreSpan);
+            }
+            
+            card.appendChild(detailsDiv);
+            
+            if (hasAccess) {
+                if (isCompleted) {
+                    card.addEventListener('click', () => window.viewQuizResult(folderId, quizId));
+                } else {
+                    card.addEventListener('click', () => window.startQuiz(folderId, quizId));
+                }
+            }
+            
+            grid.appendChild(card);
         });
     }
 
     if (grid.children.length === 0) {
-        grid.innerHTML = "<p style='text-align:center; grid-column:1/-1;'>قريباً...</p>";
+        grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذا الكورس بعد</p>";
     }
 };
 
@@ -1624,18 +1427,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
             watchedAt: new Date().toLocaleString('ar-EG')
         });
         
-        await window.updateCourseProgress(currentUser.uid, folderId);
-        
-        const studentSnap = await get(child(dbRef, `students/${currentUser.uid}/watchedVideos`));
-        const watchedVideos = studentSnap.val() || {};
-        const watchedCount = Object.keys(watchedVideos).length;
-        
-        if (watchedCount === 1) {
-            await window.awardPoints(currentUser.uid, 'FIRST_VIDEO', { videoId, title });
-        } else {
-            await window.awardPoints(currentUser.uid, 'WATCH_VIDEO', { videoId, title });
-        }
-        
         const quizTitle = document.getElementById('quizTitle');
         const quizOverlay = document.getElementById('quizOverlay');
         const quizContainer = document.getElementById('quizContainer');
@@ -1650,72 +1441,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
         showToast('❌ حدث خطأ في تشغيل الفيديو', 'error');
     } finally {
         stopProgress();
-    }
-};
-
-window.updateCourseProgress = async function(uid, courseId) {
-    try {
-        const watchedSnap = await get(child(dbRef, `students/${uid}/watchedVideos`));
-        const videosSnap = await get(child(dbRef, `folders/${courseId}/videos`));
-        
-        if (watchedSnap.exists() && videosSnap.exists()) {
-            const watchedVideos = watchedSnap.val() || {};
-            const watchedVideosInCourse = Object.values(watchedVideos).filter(v => v.courseId === courseId).length;
-            const totalVideos = Object.keys(videosSnap.val() || {}).length;
-            const progress = totalVideos > 0 ? Math.round((watchedVideosInCourse / totalVideos) * 100) : 0;
-            
-            await update(ref(db, `students/${uid}/subscriptions/${courseId}`), {
-                progress: progress,
-                lastWatched: new Date().toLocaleString('ar-EG')
-            });
-        }
-    } catch(error) {
-        console.error("Error updating course progress:", error);
-    }
-};
-
-window.awardPoints = async function(uid, action, metadata = {}) {
-    try {
-        const points = POINTS[action];
-        if (!points) return;
-        
-        const studentRef = ref(db, `students/${uid}`);
-        const snap = await get(studentRef);
-        if (!snap.exists()) return;
-        
-        const student = snap.val();
-        const currentPoints = student.points || 0;
-        const newPoints = currentPoints + points;
-        
-        await update(studentRef, { points: newPoints });
-        
-        await window.checkBadges(uid, newPoints, student);
-        await window.loadLeaderboard();
-    } catch(error) {
-        console.error("Error awarding points:", error);
-    }
-};
-
-window.checkBadges = async function(uid, totalPoints, studentData) {
-    try {
-        const earnedBadges = studentData.badges || [];
-        const newBadges = [];
-        
-        for (const [key, badge] of Object.entries(BADGES)) {
-            if (badge.threshold && totalPoints >= badge.threshold) {
-                if (!earnedBadges.includes(key)) {
-                    newBadges.push(key);
-                    earnedBadges.push(key);
-                }
-            }
-        }
-        
-        if (newBadges.length > 0) {
-            await update(ref(db, `students/${uid}`), { badges: earnedBadges });
-            showToast('🎉 تهانينا! حصلت على شارة: ' + newBadges.map(b => BADGES[b].name).join(', '), 'success');
-        }
-    } catch(error) {
-        console.error("Error checking badges:", error);
     }
 };
 
@@ -1850,22 +1575,7 @@ window.submitQuiz = async function(folderId, quizId) {
             time: new Date().toLocaleString('ar-EG')
         });
 
-        const isPerfect = (score === total);
-        if (isPerfect) {
-            await window.awardPoints(currentUser.uid, 'PERFECT_QUIZ', { quizId, quizName: quizData.name });
-        } else {
-            await window.awardPoints(currentUser.uid, 'PASS_QUIZ', { quizId, quizName: quizData.name, score, total });
-        }
-        
-        const examResultsSnap = await get(child(dbRef, `students/${currentUser.uid}/examResults`));
-        const examResults = examResultsSnap.val() || {};
-        const examCount = Object.keys(examResults).length;
-        if (examCount === 1) {
-            await window.awardPoints(currentUser.uid, 'FIRST_EXAM', {});
-        }
-
         await window.loadPerfectScores();
-        await window.loadLeaderboard();
         window.closeQuiz();
     } catch (error) {
         console.error('Submit quiz error:', error);
@@ -2069,7 +1779,6 @@ window.submitCourseRating = async function(courseId) {
             reviewCount: count 
         });
         
-        await window.awardPoints(currentUser.uid, 'ADD_REVIEW', { courseId });
         showToast('✅ تم إرسال تقييمك، شكراً لك!', 'success');
         window.loadCourseRatingUI(courseId);
     } catch (error) {
@@ -2104,6 +1813,7 @@ window.sendStuReview = async function() {
     }
 };
 
+// ✅ دالة تحديث الصفوف الدراسية - نسخة واحدة فقط
 window.updateGrades = function() {
     const level = document.getElementById('regLevel')?.value || '';
     const gradeSelect = document.getElementById('regGrade');
@@ -2153,15 +1863,12 @@ window.closeLogin = function() {
 window.goHome = function() { 
     const homePage = document.getElementById('homePage');
     const contentArea = document.getElementById('contentArea');
-    const studentDashboard = document.getElementById('studentDashboard');
     
     if (homePage) homePage.style.display = "block";
     if (contentArea) contentArea.style.display = "none";
-    if (studentDashboard) studentDashboard.style.display = "none";
     
     window.loadFolders();
     window.loadPerfectScores();
-    window.loadLeaderboard();
 };
 
 window.showAuthForm = function(type) {
@@ -2219,29 +1926,15 @@ window.nextStep = function(s) {
     else if (s === 2) setTimeout(window.checkStep2Completion, 100);
 };
 
-// ================ CONTINUE WATCHING ================
-window.continueWatching = function(courseId) {
-    get(child(dbRef, `folders/${courseId}`)).then((snap) => {
-        if (snap.exists()) {
-            const courseData = snap.val();
-            window.openContent(courseId, courseData.name || 'الكورس');
-        } else {
-            window.openContent(courseId, 'الكورس');
-        }
-    }).catch(() => {
-        window.openContent(courseId, 'الكورس');
-    });
+// ================ CLEANUP ================
+window.cleanupListeners = function(context = null) {
+    if (context) {
+        return listenerManager.removeByContext(context);
+    }
+    return listenerManager.removeAll();
 };
 
-// ================ CLEANUP LISTENERS ================
-window.cleanupListeners = function() {
-    listeners.forEach(item => {
-        off(item.ref, 'value', item.listener);
-    });
-    listeners = [];
-};
-
-// ✅ دالة للتأكد من ربط أزرار تسجيل الدخول
+// ================ DEBUG LOGIN BUTTONS ================
 window.debugLoginButtons = function() {
     console.log('=== Debugging Login Buttons ===');
     
@@ -2252,7 +1945,6 @@ window.debugLoginButtons = function() {
     console.log('loginEmailSubmitBtn exists:', !!loginEmailSubmitBtn);
     
     if (loginUsernameSubmitBtn) {
-        // إزالة الأحداث القديمة وإضافة حدث جديد
         loginUsernameSubmitBtn.removeEventListener('click', window.loginUsernameSubmit);
         loginUsernameSubmitBtn.addEventListener('click', window.loginUsernameSubmit);
         console.log('✅ Re-attached click event to loginUsernameSubmitBtn');
@@ -2322,6 +2014,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const regLevel = document.getElementById('regLevel');
     const regGrade = document.getElementById('regGrade');
     
+    // إضافة حقول اسم المستخدم للتحقق
+    const regUsername = document.getElementById('regUsername');
+    const regPassUser = document.getElementById('regPassUser');
+    const regPassUserConfirm = document.getElementById('regPassUserConfirm');
+    
     if (showLoginChoiceBtn) showLoginChoiceBtn.addEventListener('click', () => window.showAuthForm('loginChoice'));
     if (showRegisterBtn) showRegisterBtn.addEventListener('click', () => window.showAuthForm('register'));
     if (showLoginEmailBtn) showLoginEmailBtn.addEventListener('click', () => window.showAuthForm('loginEmail'));
@@ -2333,7 +2030,12 @@ document.addEventListener('DOMContentLoaded', function() {
     if (showRegEmailBtn) showRegEmailBtn.addEventListener('click', () => window.showRegMethod('email'));
     if (showRegUsernameBtn) showRegUsernameBtn.addEventListener('click', () => window.showRegMethod('username'));
     if (regBtn) regBtn.addEventListener('click', window.handleRegisterEmail);
-    if (regBtnUser) regBtnUser.addEventListener('click', window.handleRegisterUsername);
+    if (regBtnUser) {
+        // إزالة أي مستمع قديم وإضافة مستمع جديد
+        regBtnUser.removeEventListener('click', window.handleRegisterUsername);
+        regBtnUser.addEventListener('click', window.handleRegisterUsername);
+        console.log('✅ تم ربط زر التسجيل باليوزرنيم بنجاح');
+    }
     
     if (backToChoiceFromLogin) backToChoiceFromLogin.addEventListener('click', () => window.showAuthForm('choice'));
     if (backToLoginChoiceFromEmail) backToLoginChoiceFromEmail.addEventListener('click', () => window.showAuthForm('loginChoice'));
@@ -2355,7 +2057,40 @@ document.addEventListener('DOMContentLoaded', function() {
         window.checkStep2Completion();
     });
     if (regGrade) regGrade.addEventListener('change', window.checkStep2Completion);
-    
+    // إضافة تحقق من حقول اليوزرنيم
+if (regUsername) regUsername.addEventListener('input', window.checkStep1Completion);
+if (regPassUser) regPassUser.addEventListener('input', window.checkStep1Completion);
+if (regPassUserConfirm) regPassUserConfirm.addEventListener('input', window.checkStep1Completion);
+
+// ✅ إظهار حقول التسجيل عند اختيار الطريقة
+const step3Email = document.getElementById('step3Email');
+const step3Username = document.getElementById('step3Username');
+
+if (showRegEmailBtn) {
+    showRegEmailBtn.addEventListener('click', function() {
+        if (step3Email) {
+            step3Email.style.display = 'block';
+            step3Email.classList.add('active');
+        }
+        if (step3Username) {
+            step3Username.style.display = 'none';
+            step3Username.classList.remove('active');
+        }
+    });
+}
+
+if (showRegUsernameBtn) {
+    showRegUsernameBtn.addEventListener('click', function() {
+        if (step3Username) {
+            step3Username.style.display = 'block';
+            step3Username.classList.add('active');
+        }
+        if (step3Email) {
+            step3Email.style.display = 'none';
+            step3Email.classList.remove('active');
+        }
+    });
+}
     const phoneInputs = ['regWhatsapp', 'regParentPhone'];
     phoneInputs.forEach(id => {
         const input = document.getElementById(id);
@@ -2374,7 +2109,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // ✅ استدعاء دالة التصحيح بعد تحميل الصفحة
     setTimeout(window.debugLoginButtons, 1000);
 });
 
@@ -2383,15 +2117,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadFolders();
     loadReviews();
     window.loadPerfectScores();
-    window.loadLeaderboard();
     
     onValue(ref(db, 'quiz_results'), () => {
         window.loadPerfectScores();
-        window.loadLeaderboard();
     });
 });
 
 // تنظيف المستمعين عند إغلاق الصفحة
 window.addEventListener('beforeunload', () => {
     window.cleanupListeners();
+});
+
+window.addEventListener('popstate', () => {
+    listenerManager.removeByContext('content');
+});
+
+// ================ إعادة ربط الأحداث بعد التحميل ================
+window.addEventListener('load', function() {
+    // تأخير بسيط للتأكد من تحميل DOM بالكامل
+    setTimeout(window.debugLoginButtons, 500);
 });
