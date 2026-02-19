@@ -9,7 +9,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        /* نفس الأنماط السابقة، مع إضافة بعض التحسينات */
         body {
             background: linear-gradient(145deg, #1a2639, #0c1a2b);
             min-height: 100vh;
@@ -35,7 +34,6 @@
         
         .admin-login h2 {
             color: #ffd700;
-            text-align: center;
             margin-bottom: 30px;
         }
         
@@ -62,7 +60,6 @@
             height: 24px;
         }
 
-        /* استايلات لوحة التحكم (كما هي) */
         .ramadan-admin-panel {
             color: white;
         }
@@ -293,7 +290,6 @@
 </head>
 <body>
     <div class="admin-container" id="adminContainer">
-        <!-- شاشة تسجيل الدخول بحساب Google -->
         <div id="adminLogin" class="admin-login">
             <h2>🔐 دخول الأدمن - رمضان</h2>
             <button onclick="loginWithGoogle()">
@@ -302,7 +298,6 @@
             </button>
         </div>
         
-        <!-- لوحة التحكم (تظهر بعد تسجيل الدخول) -->
         <div id="ramadanAdminPanel" style="display: none;"></div>
     </div>
 
@@ -325,7 +320,6 @@
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
-        // قائمة السور كاملة
         const SURAHS = [
             "الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس",
             "هود", "يوسف", "الرعد", "إبراهيم", "الحجر", "النحل", "الإسراء", "الكهف", "مريم", "طه",
@@ -341,37 +335,31 @@
             "المسد", "الإخلاص", "الفلق", "الناس"
         ];
 
-        // مراقبة حالة المصادقة
         onAuthStateChanged(auth, (user) => {
             if (user) {
-                // تحقق من أن البريد هو بريد الأستاذة
                 if (user.email === "mrsmonakamel6@gmail.com") {
                     document.getElementById('adminLogin').style.display = 'none';
                     document.getElementById('ramadanAdminPanel').style.display = 'block';
-                    loadAdminPanel(); // تحميل لوحة التحكم
+                    loadAdminPanel();
                 } else {
                     alert("❌ هذا الحساب غير مصرح له بالدخول. يرجى استخدام حساب الأستاذة.");
                     signOut(auth);
                 }
             } else {
-                // لا يوجد مستخدم: إظهار شاشة الدخول
                 document.getElementById('adminLogin').style.display = 'block';
                 document.getElementById('ramadanAdminPanel').style.display = 'none';
             }
         });
 
-        // دالة تسجيل الدخول بحساب Google
         window.loginWithGoogle = async function() {
             try {
                 await signInWithPopup(auth, provider);
-                // onAuthStateChanged سيتولى الباقي
             } catch (error) {
                 console.error("Google Sign-In Error:", error);
                 alert("❌ حدث خطأ في تسجيل الدخول: " + error.message);
             }
         };
 
-        // دالة تسجيل الخروج
         window.logoutAdmin = async function() {
             await signOut(auth);
         };
@@ -379,9 +367,8 @@
         async function loadAdminPanel() {
             const panel = document.getElementById('ramadanAdminPanel');
             
-            // حساب رقم اليوم التقريبي في رمضان
             const today = new Date();
-            const ramadanStart = new Date(today.getFullYear(), 2, 11); // تقريباً 11 مارس
+            const ramadanStart = new Date(today.getFullYear(), 2, 11);
             const dayOfRamadan = Math.min(30, Math.max(1, Math.floor((today - ramadanStart) / (1000 * 60 * 60 * 24)) + 1));
             
             let html = `
@@ -479,7 +466,6 @@
             
             panel.innerHTML = html;
             
-            // عرض السور في الشبكة
             const surahsGrid = document.getElementById('surahsGrid');
             SURAHS.forEach(surah => {
                 const div = document.createElement('div');
@@ -493,7 +479,6 @@
                 surahsGrid.appendChild(div);
             });
             
-            // إضافة مستمع لرقم الآية
             const ayaInput = document.getElementById('ayaNumber');
             if (ayaInput) {
                 ayaInput.addEventListener('input', updateAnswerPreview);
@@ -502,7 +487,6 @@
             loadQuestions();
             loadStats();
             
-            // استماع للتحديثات المباشرة
             onValue(ref(db, 'ramadan_questions'), () => {
                 loadQuestions();
                 loadStats();
@@ -568,7 +552,6 @@
                 hideAddQuestionForm();
                 loadQuestions();
                 
-                // تنظيف الحقول
                 document.getElementById('questionText').value = '';
                 document.getElementById('ayaNumber').value = '';
                 document.getElementById('tafseer').value = '';
