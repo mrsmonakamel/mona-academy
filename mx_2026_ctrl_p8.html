@@ -2678,50 +2678,70 @@
 
         // ================ UPDATE COURSE ================
         window.updateCourseBasic = async function() {
-            const name = document.getElementById('editNameField')?.value.trim();
-            const grade = document.getElementById('editGradeField')?.value;
-            const imgUrl = document.getElementById('editImgField')?.value.trim();
-            const imgFile = document.getElementById('editImageFile')?.files[0];
+    const name = document.getElementById('editNameField')?.value.trim();
+    const grade = document.getElementById('editGradeField')?.value;
+    const imgUrl = document.getElementById('editImgField')?.value.trim();
+    const imgFile = document.getElementById('editImageFile')?.files[0];
+    
+    if (!activeCID || !name) {
+        showToast('يرجى إدخال اسم الكورس', 'error');
+        return;
+    }
+    
+    try {
+        startProgress();
+        const updateData = { name };
+        if (grade) updateData.grade = grade;
+        
+        // حالة 1: يوجد ملف صورة مرفوع
+        if (imgFile) {
+            showToast('🔄 جاري رفع الصورة...', 'success');
             
-            if (!activeCID || !name) {
-                showToast('يرجى إدخال اسم الكورس', 'error');
+            const formData = new FormData();
+            formData.append('key', '049eb1f0e45afcb93f3c45a1400a29ef');
+            formData.append('image', imgFile);
+            
+            const response = await fetch('https://api.imgbb.com/1/upload', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                updateData.img = data.data.url;
+                showToast('✅ تم رفع الصورة', 'success');
+            } else {
+                showToast('❌ فشل رفع الصورة', 'error');
+                stopProgress();
                 return;
             }
-            
-            try {
-                startProgress();
-                const updateData = { name };
-                if (grade) updateData.grade = grade;
-                
-                if (imgFile) {
-                    showToast('🔄 جاري رفع الصورة...', 'success');
-                    updateData.img = await uploadToImgBB(imgFile);
-                } else if (imgUrl) {
-                    if (!isValidImageUrl(imgUrl)) {
-                        showToast('❌ رابط الصورة غير صالح. يجب أن ينتهي بـ .jpg, .png, .gif, إلخ', 'error');
-                        return;
-                    }
-                    try {
-                        new URL(imgUrl);
-                        updateData.img = imgUrl;
-                    } catch {
-                        showToast('❌ رابط الصورة غير صحيح', 'error');
-                        return;
-                    }
-                }
-                
-                await update(ref(db, `folders/${activeCID}`), updateData);
-                showToast('✅ تم التحديث بنجاح');
-                
-                document.getElementById('editImgField').value = '';
-                document.getElementById('editImageFile').value = '';
-                document.getElementById('editImagePreview').style.display = 'none';
-            } catch (error) {
-                showToast('❌ حدث خطأ', 'error');
-            } finally {
-                stopProgress();
-            }
-        };
+        } 
+        // حالة 2: يوجد رابط صورة
+        else if (imgUrl) {
+            updateData.img = imgUrl;
+        }
+        
+        // حفظ التحديثات
+        await update(ref(db, `folders/${activeCID}`), updateData);
+        showToast('✅ تم تحديث الكورس بنجاح');
+        
+        // تنظيف الحقول
+        document.getElementById('editImgField').value = '';
+        document.getElementById('editImageFile').value = '';
+        document.getElementById('editImagePreview').style.display = 'none';
+        
+        // إعادة فتح المودال
+        const folderSnap = await get(ref(db, `folders/${activeCID}`));
+        openEditModal(activeCID, folderSnap.val() || {});
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showToast('❌ حدث خطأ', 'error');
+    } finally {
+        stopProgress();
+    }
+};
 
         // ================ VIDEO FUNCTIONS ================
         window.addVideoToCourse = function() {
@@ -3507,5 +3527,45 @@
             cleanupListeners();
         });
     </script>
+    <script>
+// حل بسيط لمشكلة رفع الصور من الموبايل
+document.addEventListener('DOMContentLoaded', function() {
+    // تحسين معاينة الصورة
+    const editImageFile = document.getElementById('editImageFile');
+    if (editImageFile) {
+        editImageFile.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // التحقق من الحجم (8 ميجابايت كحد أقصى)
+                if (file.size > 8 * 1024 * 1024) {
+                    alert('❌ الصورة كبيرة جداً. الحد الأقصى 8 ميجابايت');
+                    this.value = '';
+                    return;
+                }
+                
+                // معاينة الصورة
+                const preview = document.getElementById('editImagePreview');
+                const previewImg = document.getElementById('editPreviewImg');
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    previewImg.src = e.target.result;
+                    preview.style.display = 'block';
+                };
+                
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+    
+    // حل بديل: نسخ رابط الصورة تلقائياً
+    const editImgField = document.getElementById('editImgField');
+    if (editImgField) {
+        editImgField.addEventListener('click', function() {
+            this.select();
+        });
+    }
+});
+</script>
 </body>
 </html>

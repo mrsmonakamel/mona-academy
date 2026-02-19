@@ -2144,3 +2144,603 @@ footer {
 .reviews {
     order: 4;
 }
+
+/* ================ RAMADAN QUESTIONS SECTION ================ */
+.ramadan-section {
+    padding: 60px 5%;
+    background: linear-gradient(145deg, #1a2639, #0c1a2b);
+    margin: 40px 0;
+    border-radius: 50px 50px 0 0;
+    position: relative;
+    overflow: hidden;
+}
+
+.ramadan-section::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,215,0,0.1) 0%, transparent 70%);
+    animation: ramadanRotate 30s linear infinite;
+}
+
+@keyframes ramadanRotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.ramadan-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 50px;
+    position: relative;
+    z-index: 2;
+}
+
+.ramadan-header i {
+    font-size: 2.5rem;
+    color: #ffd700;
+    text-shadow: 0 0 20px rgba(255,215,0,0.5);
+    animation: ramadanTwinkle 2s infinite;
+}
+
+.ramadan-header i.fa-moon {
+    animation: ramadanMoon 3s infinite;
+}
+
+.ramadan-header i.fa-star {
+    animation: ramadanStar 2.5s infinite;
+}
+
+@keyframes ramadanTwinkle {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.1); }
+}
+
+@keyframes ramadanMoon {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(10deg); }
+}
+
+@keyframes ramadanStar {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    33% { transform: rotate(120deg) scale(1.2); }
+    66% { transform: rotate(240deg) scale(0.9); }
+}
+
+.ramadan-header h2 {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 5px 15px rgba(255,215,0,0.3);
+    margin: 0;
+    background: linear-gradient(45deg, #ffd700, #ffa500);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.ramadan-questions-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    position: relative;
+    z-index: 2;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.ramadan-question-card {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 2px solid rgba(255, 215, 0, 0.3);
+    border-radius: 30px;
+    padding: 25px;
+    cursor: pointer;
+    transition: all 0.4s;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+}
+
+.ramadan-question-card::before {
+    content: '🌙';
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    font-size: 5rem;
+    opacity: 0.1;
+    transform: rotate(15deg);
+}
+
+.ramadan-question-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    border-color: #ffd700;
+    box-shadow: 0 20px 40px rgba(255,215,0,0.2);
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.ramadan-question-card.closed {
+    opacity: 0.8;
+    border-color: #666;
+    cursor: not-allowed;
+}
+
+.ramadan-question-card.closed:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.ramadan-question-day {
+    display: inline-block;
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #1a2639;
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-weight: 900;
+    font-size: 1.1rem;
+    margin-bottom: 15px;
+}
+
+.ramadan-question-preview {
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+    line-height: 1.6;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ramadan-question-stats {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #ffd700;
+    font-size: 0.95rem;
+    margin-top: 15px;
+}
+
+.ramadan-stat-badge {
+    background: rgba(255,215,0,0.2);
+    padding: 5px 15px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ramadan-stat-badge i {
+    font-size: 0.9rem;
+}
+
+/* ================ RAMADAN MODAL ================ */
+.ramadan-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    z-index: 5000;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(10px);
+}
+
+.ramadan-modal-content {
+    background: linear-gradient(145deg, #1e2b3a, #15232e);
+    width: 90%;
+    max-width: 800px;
+    border-radius: 40px;
+    border: 2px solid #ffd700;
+    overflow: hidden;
+    animation: ramadanModalFade 0.5s;
+}
+
+@keyframes ramadanModalFade {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.ramadan-modal-header {
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    padding: 20px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ramadan-modal-header h3 {
+    color: #1a2639;
+    font-size: 1.5rem;
+    font-weight: 900;
+    margin: 0;
+}
+
+.ramadan-close-modal {
+    color: #1a2639;
+    font-size: 2rem;
+    cursor: pointer;
+    transition: 0.3s;
+    line-height: 1;
+}
+
+.ramadan-close-modal:hover {
+    transform: rotate(90deg);
+}
+
+.ramadan-modal-body {
+    padding: 30px;
+    color: white;
+}
+
+.ramadan-question-text {
+    font-size: 1.3rem;
+    line-height: 1.8;
+    margin-bottom: 15px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 20px;
+    border-right: 4px solid #ffd700;
+}
+
+.ramadan-question-reference {
+    font-size: 1.1rem;
+    color: #ffd700;
+    margin-bottom: 25px;
+    padding: 10px 20px;
+    background: rgba(255,215,0,0.1);
+    border-radius: 50px;
+    display: inline-block;
+}
+
+.ramadan-answer-form {
+    margin: 30px 0;
+    background: rgba(255,255,255,0.05);
+    padding: 25px;
+    border-radius: 30px;
+    border: 1px solid rgba(255,215,0,0.3);
+}
+
+.ramadan-input, .ramadan-textarea {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 15px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    color: white;
+    transition: 0.3s;
+}
+
+.ramadan-input:focus, .ramadan-textarea:focus {
+    border-color: #ffd700;
+    outline: none;
+    background: rgba(255,255,255,0.15);
+}
+
+.ramadan-input::placeholder, .ramadan-textarea::placeholder {
+    color: rgba(255,255,255,0.5);
+}
+
+.ramadan-btn {
+    padding: 15px 30px;
+    border: none;
+    border-radius: 15px;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    margin: 5px;
+}
+
+.ramadan-btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #1a2639;
+    width: 100%;
+    margin-top: 15px;
+}
+
+.ramadan-btn-primary:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 25px rgba(255,215,0,0.3);
+}
+
+.ramadan-btn-danger {
+    background: #ff7675;
+    color: white;
+}
+
+.ramadan-btn-danger:hover {
+    background: #ff5e5e;
+    transform: translateY(-2px);
+}
+
+.ramadan-answers-list {
+    margin-top: 30px;
+    background: rgba(255,255,255,0.05);
+    padding: 25px;
+    border-radius: 30px;
+}
+
+.ramadan-answers-list h4 {
+    color: #ffd700;
+    font-size: 1.2rem;
+    margin-bottom: 20px;
+}
+
+.ramadan-answer-item {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 20px;
+    margin-bottom: 15px;
+    border-right: 4px solid;
+    transition: 0.3s;
+}
+
+.ramadan-answer-item.correct {
+    border-right-color: #00b894;
+    background: rgba(0,184,148,0.1);
+}
+
+.ramadan-answer-item.wrong {
+    border-right-color: #ff7675;
+    background: rgba(255,118,117,0.1);
+}
+
+.ramadan-answer-name {
+    font-weight: bold;
+    color: #ffd700;
+    margin-bottom: 8px;
+    font-size: 1.1rem;
+}
+
+.ramadan-answer-text {
+    color: white;
+    margin-bottom: 10px;
+    line-height: 1.6;
+}
+
+.ramadan-answer-status {
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.ramadan-answer-status.correct {
+    color: #00b894;
+}
+
+.ramadan-answer-status.wrong {
+    color: #ff7675;
+}
+
+.ramadan-answer-time {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.5);
+    margin-top: 5px;
+}
+
+/* ================ RAMADAN ADMIN PANEL ================ */
+.ramadan-admin-panel {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 30px;
+    background: linear-gradient(145deg, #1e2b3a, #15232e);
+    border-radius: 30px;
+    color: white;
+}
+
+.ramadan-admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 40px;
+    padding-bottom: 20px;
+    border-bottom: 2px solid #ffd700;
+}
+
+.ramadan-admin-header h2 {
+    color: #ffd700;
+    font-size: 2rem;
+    font-weight: 900;
+    margin: 0;
+}
+
+.ramadan-admin-close {
+    background: #ff7675;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Cairo';
+    font-weight: bold;
+}
+
+.ramadan-admin-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.ramadan-stat-card {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.ramadan-stat-number {
+    font-size: 2rem;
+    font-weight: 900;
+    color: #ffd700;
+}
+
+.ramadan-stat-label {
+    color: white;
+    font-size: 1rem;
+    margin-top: 5px;
+}
+
+.ramadan-admin-actions {
+    display: flex;
+    gap: 10px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.ramadan-admin-btn {
+    padding: 12px 25px;
+    border: none;
+    border-radius: 10px;
+    font-family: 'Cairo';
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.3s;
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
+
+.ramadan-admin-btn:hover {
+    background: rgba(255,215,0,0.3);
+    transform: translateY(-2px);
+}
+
+.ramadan-admin-btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ffa500);
+    color: #1a2639;
+}
+
+.ramadan-admin-form {
+    background: rgba(255,255,255,0.1);
+    padding: 30px;
+    border-radius: 20px;
+    margin: 20px 0;
+    display: none;
+}
+
+.ramadan-admin-form.active {
+    display: block;
+}
+
+.ramadan-admin-form h3 {
+    color: #ffd700;
+    margin-bottom: 20px;
+}
+
+.ramadan-admin-form input,
+.ramadan-admin-form select,
+.ramadan-admin-form textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 10px 0;
+    background: rgba(255,255,255,0.1);
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 10px;
+    color: white;
+    font-family: 'Cairo';
+}
+
+.ramadan-admin-form select option {
+    background: #1e2b3a;
+    color: white;
+}
+
+.ramadan-surahs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 10px;
+    margin: 15px 0;
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 15px;
+    background: rgba(0,0,0,0.3);
+    border-radius: 15px;
+}
+
+.ramadan-surah-item {
+    background: rgba(255,255,255,0.1);
+    padding: 10px;
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.ramadan-surah-item:hover {
+    background: #ffd700;
+    color: #1a2639;
+}
+
+.ramadan-surah-item.selected {
+    background: #ffd700;
+    color: #1a2639;
+    font-weight: bold;
+}
+
+.ramadan-daily-analysis {
+    background: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 20px;
+    margin: 20px 0;
+}
+
+.ramadan-analysis-bar {
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 10px 0;
+}
+
+.ramadan-analysis-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ffa500);
+    width: 0%;
+    transition: width 0.3s;
+}
+
+/* ================ RESPONSIVE ================ */
+@media (max-width: 768px) {
+    .ramadan-header h2 {
+        font-size: 1.8rem;
+    }
+    
+    .ramadan-questions-container {
+        grid-template-columns: 1fr;
+    }
+    
+    .ramadan-modal-content {
+        width: 95%;
+    }
+    
+    .ramadan-question-text {
+        font-size: 1.1rem;
+    }
+    
+    .ramadan-admin-actions {
+        flex-direction: column;
+    }
+    
+    .ramadan-surahs-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}

@@ -2129,3 +2129,281 @@ window.addEventListener('popstate', () => {
 window.addEventListener('load', function() {
     setTimeout(window.debugLoginButtons, 500);
 });
+
+// ================ RAMADAN QUESTIONS FUNCTIONS ================
+window.loadRamadanQuestions = function() {
+    const questionsRef = ref(db, 'ramadan_questions');
+    
+    onValue(questionsRef, (snapshot) => {
+        const container = document.getElementById('ramadanQuestionsContainer');
+        if (!container) return;
+        
+        if (!snapshot.exists()) {
+            container.innerHTML = '<div class="empty-state" style="color: #ffd700;"><i class="fas fa-moon"></i><br>🌙 سيتم إضافة أسئلة رمضان قريباً</div>';
+            return;
+        }
+        
+        let html = '';
+        const today = new Date().getDate();
+        
+        const questions = [];
+        snapshot.forEach(child => {
+            questions.push({ id: child.key, ...child.val() });
+        });
+        
+        questions.sort((a, b) => a.day - b.day);
+        
+        questions.forEach(q => {
+            const isToday = q.day === today;
+            const isPast = q.day < today;
+            
+            html += `
+                <div class="ramadan-question-card ${!isToday ? 'closed' : ''}" 
+                     onclick="${isToday ? `window.openRamadanQuestion('${q.id}')` : 'alert(\'هذا السؤال غير متاح حالياً\')'}">
+                    <div class="ramadan-question-day">🌙 اليوم ${q.day}</div>
+                    <div class="ramadan-question-preview">${q.text}</div>
+                    <div class="ramadan-question-stats">
+                        <span class="ramadan-stat-badge">
+                            <i class="fas fa-book"></i> ${q.surah} - ${q.aya}
+                        </span>
+                        ${isToday ? '<span class="ramadan-stat-badge"><i class="fas fa-clock"></i> متاح الآن</span>' : ''}
+                        ${isPast ? '<span class="ramadan-stat-badge"><i class="fas fa-lock"></i> انتهى</span>' : ''}
+                    </div>
+                </div>
+            `;
+        });
+        
+        container.innerHTML = html;
+    });
+};
+
+window.openRamadanQuestion = async function(questionId) {
+    const modal = document.getElementById('ramadanAnswerModal');
+    const title = document.getElementById('ramadanQuestionTitle');
+    const text = document.getElementById('ramadanQuestionText');
+    const reference = document.getElementById('ramadanQuestionReference');
+    const answersContainer = document.getElementById('ramadanAnswersContainer');
+    const answerForm = document.querySelector('.ramadan-answer-form');
+    
+    const snapshot = await get(ref(db, `ramadan_questions/${questionId}`));
+    const question = snapshot.val();
+    
+    title.textContent = `🌙 اليوم ${question.day}`;
+    text.textContent = question.text;
+    reference.textContent = `${question.surah} - آية ${question.aya}`;
+    
+    if (question.tafseer) {
+        reference.innerHTML += `<br><small style="color: #999;">${question.tafseer}</small>`;
+    }
+    
+    // تحديث نموذج الإجابة - إزالة الاختيارات المتعددة
+    if (answerForm) {
+        answerForm.innerHTML = `
+            <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
+            
+            <div style="margin: 15px 0;">
+                <label style="color: #ffd700; display: block; margin-bottom: 8px;">اختر الإجابة الصحيحة:</label>
+                <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom: 10px;">
+                    <option value="">-- اختر السورة --</option>
+                </select>
+                
+                <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
+                
+                <div style="margin: 10px 0; color: #ffd700; font-size: 0.9rem;">
+                    <span id="ramadanAnswerPreview" style="color: #aaa;">لم يتم الاختيار بعد</span>
+                </div>
+            </div>
+            
+            <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
+        `;
+        
+        // إضافة قائمة السور
+        const surahSelect = document.getElementById('ramadanSurahSelect');
+        if (surahSelect) {
+            SURAHS = [
+                "الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس",
+                "هود", "يوسف", "الرعد", "إبراهيم", "الحجر", "النحل", "الإسراء", "الكهف", "مريم", "طه",
+                "الأنبياء", "الحج", "المؤمنون", "النور", "الفرقان", "الشعراء", "النمل", "القصص", "العنكبوت", "الروم",
+                "لقمان", "السجدة", "الأحزاب", "سبأ", "فاطر", "يس", "الصافات", "ص", "الزمر", "غافر",
+                "فصلت", "الشورى", "الزخرف", "الدخان", "الجاثية", "الأحقاف", "محمد", "الفتح", "الحجرات", "ق",
+                "الذاريات", "الطور", "النجم", "القمر", "الرحمن", "الواقعة", "الحديد", "المجادلة", "الحشر", "الممتحنة",
+                "الصف", "الجمعة", "المنافقون", "التغابن", "الطلاق", "التحريم", "الملك", "القلم", "الحاقة", "المعارج",
+                "نوح", "الجن", "المزمل", "المدثر", "القيامة", "الإنسان", "المرسلات", "النبأ", "النازعات", "عبس",
+                "التكوير", "الانفطار", "المطففين", "الانشقاق", "البروج", "الطارق", "الأعلى", "الغاشية", "الفجر", "البلد",
+                "الشمس", "الليل", "الضحى", "الشرح", "التين", "العلق", "القدر", "البينة", "الزلزلة", "العاديات",
+                "القارعة", "التكاثر", "العصر", "الهمزة", "الفيل", "قريش", "الماعون", "الكوثر", "الكافرون", "النصر",
+                "المسد", "الإخلاص", "الفلق", "الناس"
+            ];
+            
+            SURAHS.forEach(surah => {
+                const option = document.createElement('option');
+                option.value = surah;
+                option.textContent = surah;
+                surahSelect.appendChild(option);
+            });
+            
+            // إضافة حدثين للتحديث
+            surahSelect.addEventListener('change', updateRamadanAnswerPreview);
+            const ayaInput = document.getElementById('ramadanAyaInput');
+            if (ayaInput) {
+                ayaInput.addEventListener('input', updateRamadanAnswerPreview);
+            }
+        }
+    }
+    
+    modal.style.display = 'flex';
+    
+    // تحميل الإجابات
+    loadRamadanAnswers(questionId, `${question.surah} - ${question.aya}`);
+    
+    // تخزين ID السؤال والإجابة الصحيحة للإرسال
+    modal.dataset.questionId = questionId;
+    modal.dataset.correctAnswer = `${question.surah} - ${question.aya}`;
+    modal.dataset.day = question.day;
+    
+    // إعادة ربط زر الإرسال
+    const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
+    if (submitBtn) {
+        submitBtn.removeEventListener('click', window.submitRamadanAnswer);
+        submitBtn.addEventListener('click', window.submitRamadanAnswer);
+    }
+};
+
+function updateRamadanAnswerPreview() {
+    const surah = document.getElementById('ramadanSurahSelect')?.value;
+    const aya = document.getElementById('ramadanAyaInput')?.value;
+    const preview = document.getElementById('ramadanAnswerPreview');
+    
+    if (surah && aya) {
+        preview.innerHTML = `<span style="color: #00b894;">الإجابة المختارة: ${surah} - ${aya}</span>`;
+    } else if (surah) {
+        preview.innerHTML = `<span style="color: #ffd700;">${surah} - (أدخل رقم الآية)</span>`;
+    } else {
+        preview.innerHTML = 'لم يتم الاختيار بعد';
+    }
+}
+
+window.loadRamadanAnswers = function(questionId, correctAnswer) {
+    const answersRef = ref(db, 'ramadan_answers');
+    
+    onValue(answersRef, (snapshot) => {
+        const container = document.getElementById('ramadanAnswersContainer');
+        if (!container) return;
+        
+        let html = '';
+        
+        if (snapshot.exists()) {
+            const answers = [];
+            snapshot.forEach(child => {
+                const ans = child.val();
+                if (ans.questionId === questionId) {
+                    answers.push(ans);
+                }
+            });
+            
+            answers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            answers.forEach(ans => {
+                const isCorrect = ans.answer === correctAnswer;
+                html += `
+                    <div class="ramadan-answer-item ${isCorrect ? 'correct' : 'wrong'}">
+                        <div class="ramadan-answer-name">
+                            <i class="fas fa-user"></i> ${ans.name}
+                        </div>
+                        <div class="ramadan-answer-text">${ans.answer}</div>
+                        <div class="ramadan-answer-status ${isCorrect ? 'correct' : 'wrong'}">
+                            ${isCorrect ? 
+                                '<i class="fas fa-check-circle"></i> إجابة صحيحة ✓' : 
+                                '<i class="fas fa-times-circle"></i> إجابة خاطئة ✗'}
+                        </div>
+                        <div class="ramadan-answer-time">
+                            <i class="far fa-clock"></i> ${ans.date}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        if (!html) {
+            html = '<p style="color: #666; text-align: center;">لا توجد إجابات بعد. كن أول من يجيب!</p>';
+        }
+        
+        container.innerHTML = html;
+    });
+};
+
+window.submitRamadanAnswer = async function() {
+    const modal = document.getElementById('ramadanAnswerModal');
+    const questionId = modal.dataset.questionId;
+    const correctAnswer = modal.dataset.correctAnswer;
+    const day = modal.dataset.day;
+    
+    const name = document.getElementById('ramadanAnswerName').value.trim();
+    const surah = document.getElementById('ramadanSurahSelect').value;
+    const aya = document.getElementById('ramadanAyaInput').value;
+    
+    if (!name) {
+        alert('❌ يرجى إدخال الاسم');
+        return;
+    }
+    
+    if (!surah || !aya) {
+        alert('❌ يرجى اختيار السورة ورقم الآية');
+        return;
+    }
+    
+    const answer = `${surah} - ${aya}`;
+    const isCorrect = answer === correctAnswer;
+    
+    const answerData = {
+        questionId: questionId,
+        day: parseInt(day),
+        name: name,
+        answer: answer,
+        surah: surah,
+        aya: parseInt(aya),
+        isCorrect: isCorrect,
+        date: new Date().toLocaleString('ar-EG'),
+        timestamp: Date.now()
+    };
+    
+    try {
+        await push(ref(db, 'ramadan_answers'), answerData);
+        
+        // تنظيف الحقول
+        document.getElementById('ramadanAnswerName').value = '';
+        document.getElementById('ramadanSurahSelect').value = '';
+        document.getElementById('ramadanAyaInput').value = '';
+        document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
+        
+        if (isCorrect) {
+            alert('✅ إجابة صحيحة! بارك الله فيك');
+        } else {
+            alert(`❌ إجابة خاطئة. الإجابة الصحيحة هي: ${correctAnswer}`);
+        }
+    } catch (error) {
+        console.error('Error submitting answer:', error);
+        alert('❌ حدث خطأ في إرسال الإجابة');
+    }
+};
+
+// إغلاق مودال رمضان
+document.addEventListener('DOMContentLoaded', function() {
+    const closeModal = document.querySelector('.ramadan-close-modal');
+    if (closeModal) {
+        closeModal.addEventListener('click', function() {
+            document.getElementById('ramadanAnswerModal').style.display = 'none';
+        });
+    }
+    
+    // تحميل أسئلة رمضان
+    window.loadRamadanQuestions();
+});
+
+// إغلاق المودال عند الضغط خارج المحتوى
+window.addEventListener('click', function(event) {
+    const modal = document.getElementById('ramadanAnswerModal');
+    if (event.target === modal) {
+        modal.style.display = 'none';
+    }
+});
