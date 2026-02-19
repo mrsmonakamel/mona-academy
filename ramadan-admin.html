@@ -9,6 +9,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        /* نفس الأنماط السابقة، مع إضافة بعض التحسينات */
         body {
             background: linear-gradient(145deg, #1a2639, #0c1a2b);
             min-height: 100vh;
@@ -29,23 +30,13 @@
             padding: 40px;
             border-radius: 30px;
             border: 2px solid #ffd700;
+            text-align: center;
         }
         
         .admin-login h2 {
             color: #ffd700;
             text-align: center;
             margin-bottom: 30px;
-        }
-        
-        .admin-login input {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            background: rgba(255,255,255,0.1);
-            border: 2px solid rgba(255,215,0,0.3);
-            border-radius: 10px;
-            color: white;
-            font-family: 'Cairo';
         }
         
         .admin-login button {
@@ -60,9 +51,18 @@
             cursor: pointer;
             margin-top: 20px;
             font-family: 'Cairo';
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .admin-login button img {
+            width: 24px;
+            height: 24px;
         }
 
-        /* استايلات لوحة التحكم */
+        /* استايلات لوحة التحكم (كما هي) */
         .ramadan-admin-panel {
             color: white;
         }
@@ -72,6 +72,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
         }
 
         .ramadan-admin-header h2 {
@@ -80,14 +82,29 @@
             margin: 0;
         }
 
-        .ramadan-admin-close {
-            background: rgba(255,255,255,0.1);
-            border: 1px solid #ffd700;
-            color: #ffd700;
+        .header-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .ramadan-admin-close, .ramadan-admin-logout {
             padding: 10px 20px;
             border-radius: 10px;
             cursor: pointer;
             font-family: 'Cairo';
+            font-weight: bold;
+            border: none;
+        }
+
+        .ramadan-admin-close {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid #ffd700;
+            color: #ffd700;
+        }
+
+        .ramadan-admin-logout {
+            background: #ff7675;
+            color: white;
         }
 
         .ramadan-admin-stats {
@@ -276,11 +293,13 @@
 </head>
 <body>
     <div class="admin-container" id="adminContainer">
-        <!-- شاشة تسجيل الدخول -->
+        <!-- شاشة تسجيل الدخول بحساب Google -->
         <div id="adminLogin" class="admin-login">
             <h2>🔐 دخول الأدمن - رمضان</h2>
-            <input type="password" id="adminPassword" placeholder="كلمة المرور">
-            <button onclick="checkAdminPassword()">دخول</button>
+            <button onclick="loginWithGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                تسجيل الدخول بحساب Google
+            </button>
         </div>
         
         <!-- لوحة التحكم (تظهر بعد تسجيل الدخول) -->
@@ -290,6 +309,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, set, get, push, update, remove, onValue } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
@@ -297,16 +317,14 @@
             databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
             projectId: "monaacademy-cd983",
             storageBucket: "monaacademy-cd983.appspot.com",
-            messagingSenderId: "410646694761",
             appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
         };
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        
-        // كلمة مرور الأدمن (يمكن تغييرها)
-        const ADMIN_PASSWORD = "ramadan2024";
-        
+        const auth = getAuth(app);
+        const provider = new GoogleAuthProvider();
+
         // قائمة السور كاملة
         const SURAHS = [
             "الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس",
@@ -323,15 +341,39 @@
             "المسد", "الإخلاص", "الفلق", "الناس"
         ];
 
-        window.checkAdminPassword = function() {
-            const password = document.getElementById('adminPassword').value;
-            if (password === ADMIN_PASSWORD) {
-                document.getElementById('adminLogin').style.display = 'none';
-                document.getElementById('ramadanAdminPanel').style.display = 'block';
-                loadAdminPanel();
+        // مراقبة حالة المصادقة
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                // تحقق من أن البريد هو بريد الأستاذة
+                if (user.email === "mrsmonakamel6@gmail.com") {
+                    document.getElementById('adminLogin').style.display = 'none';
+                    document.getElementById('ramadanAdminPanel').style.display = 'block';
+                    loadAdminPanel(); // تحميل لوحة التحكم
+                } else {
+                    alert("❌ هذا الحساب غير مصرح له بالدخول. يرجى استخدام حساب الأستاذة.");
+                    signOut(auth);
+                }
             } else {
-                alert('❌ كلمة المرور غير صحيحة');
+                // لا يوجد مستخدم: إظهار شاشة الدخول
+                document.getElementById('adminLogin').style.display = 'block';
+                document.getElementById('ramadanAdminPanel').style.display = 'none';
             }
+        });
+
+        // دالة تسجيل الدخول بحساب Google
+        window.loginWithGoogle = async function() {
+            try {
+                await signInWithPopup(auth, provider);
+                // onAuthStateChanged سيتولى الباقي
+            } catch (error) {
+                console.error("Google Sign-In Error:", error);
+                alert("❌ حدث خطأ في تسجيل الدخول: " + error.message);
+            }
+        };
+
+        // دالة تسجيل الخروج
+        window.logoutAdmin = async function() {
+            await signOut(auth);
         };
 
         async function loadAdminPanel() {
@@ -346,7 +388,14 @@
                 <div class="ramadan-admin-panel">
                     <div class="ramadan-admin-header">
                         <h2><i class="fas fa-moon"></i> إدارة أسئلة رمضان <i class="fas fa-star"></i></h2>
-                        <button class="ramadan-admin-close" onclick="window.location.href='index.html'">العودة للرئيسية</button>
+                        <div class="header-buttons">
+                            <button class="ramadan-admin-logout" onclick="logoutAdmin()">
+                                <i class="fas fa-sign-out-alt"></i> تسجيل الخروج
+                            </button>
+                            <button class="ramadan-admin-close" onclick="window.location.href='index.html'">
+                                <i class="fas fa-home"></i> العودة للرئيسية
+                            </button>
+                        </div>
                     </div>
                     
                     <div class="ramadan-admin-stats">
@@ -498,7 +547,6 @@
                 return;
             }
             
-            // إنشاء الإجابة الصحيحة بالصيغة الجديدة
             const correctAnswerText = `${selectedSurah.textContent} - ${ayaNumber}`;
             
             const questionData = {
@@ -513,7 +561,9 @@
             };
             
             try {
-                await set(ref(db, `ramadan_questions/day_${day}`), questionData);
+                const newQuestionRef = push(ref(db, 'ramadan_questions'));
+                await set(newQuestionRef, questionData);
+                
                 alert('✅ تم حفظ السؤال بنجاح');
                 hideAddQuestionForm();
                 loadQuestions();
@@ -526,7 +576,7 @@
                 document.getElementById('selectedAnswerPreview').innerHTML = 'لم يتم اختيار سورة بعد';
             } catch (error) {
                 console.error('Error saving question:', error);
-                alert('❌ حدث خطأ في حفظ السؤال');
+                alert('❌ حدث خطأ في حفظ السؤال: ' + error.message);
             }
         };
 
@@ -591,13 +641,11 @@
             
             questionsGrid.innerHTML = html;
             
-            // تحديث العدد في الإحصائيات
             document.getElementById('totalQuestions').textContent = questions.length;
         }
 
         async function loadStats() {
             const answersSnapshot = await get(ref(db, 'ramadan_answers'));
-            const questionsSnapshot = await get(ref(db, 'ramadan_questions'));
             
             if (!answersSnapshot.exists()) {
                 document.getElementById('totalAnswers').textContent = '0';
@@ -624,7 +672,6 @@
             document.getElementById('todayAnswers').textContent = todayAnswers;
             document.getElementById('correctAnswers').textContent = correctAnswers;
             
-            // تحميل التحليل
             loadAnalysis();
         }
 
@@ -633,14 +680,12 @@
             if (!analysisContent) return;
             
             const answersSnapshot = await get(ref(db, 'ramadan_answers'));
-            const questionsSnapshot = await get(ref(db, 'ramadan_questions'));
             
             if (!answersSnapshot.exists()) {
                 analysisContent.innerHTML = '<p style="color: #666;">لا توجد إجابات بعد</p>';
                 return;
             }
             
-            // تجميع الإحصائيات حسب اليوم
             const answersByDay = {};
             const correctByDay = {};
             
@@ -685,7 +730,6 @@
                 return;
             }
             
-            // تجميع الأسئلة للوصول للإجابات الصحيحة
             const questions = {};
             if (questionsSnapshot.exists()) {
                 questionsSnapshot.forEach(child => {
@@ -698,7 +742,6 @@
                 answers.push(child.val());
             });
             
-            // إنشاء ملف CSV
             const csv = [
                 ['اليوم', 'الاسم', 'الإجابة', 'الإجابة الصحيحة', 'صحيحة؟', 'التاريخ'],
                 ...answers.map(a => [
