@@ -129,25 +129,25 @@
         <!-- PERFECT SCORES SECTION -->
         <section id="perfectScoresSection" class="perfect-section" style="display: block;">
             <div class="perfect-header">
-    <i class="fas fa-trophy"></i>
-    <h2>طلاب الدرجة النهائية 🏅</h2>
-    <i class="fas fa-star"></i>
-</div>
+                <i class="fas fa-trophy"></i>
+                <h2>طلاب الدرجة النهائية 🏅</h2>
+                <i class="fas fa-star"></i>
+            </div>
 
-<!-- زر أسئلة رمضان الجديد -->
-<div style="text-align: center; margin: 40px 0 20px;">
-    <a href="#ramadanQuestionsSection" onclick="document.getElementById('ramadanQuestionsSection').scrollIntoView({behavior: 'smooth'})" 
-       style="display: inline-flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #1a2639, #0c1a2b); 
-              color: #ffd700; padding: 20px 50px; border-radius: 60px; text-decoration: none; font-weight: 900; 
-              font-size: 1.5rem; border: 3px solid #ffd700; box-shadow: 0 10px 30px rgba(255,215,0,0.3); 
-              transition: all 0.4s; cursor: pointer;" 
-       onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 40px rgba(255,215,0,0.5)';"
-       onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(255,215,0,0.3)';">
-        <i class="fas fa-moon fa-2x" style="animation: ramadanTwinkle 2s infinite;"></i>
-        <span>🌙 أسئلة رمضان</span>
-        <i class="fas fa-star fa-2x" style="animation: ramadanStar 2.5s infinite;"></i>
-    </a>
-</div>
+            <!-- زر أسئلة رمضان الجديد -->
+            <div style="text-align: center; margin: 40px 0 20px;">
+                <a href="#ramadanQuestionsSection" onclick="document.getElementById('ramadanQuestionsSection').scrollIntoView({behavior: 'smooth'})" 
+                   style="display: inline-flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #1a2639, #0c1a2b); 
+                          color: #ffd700; padding: 20px 50px; border-radius: 60px; text-decoration: none; font-weight: 900; 
+                          font-size: 1.5rem; border: 3px solid #ffd700; box-shadow: 0 10px 30px rgba(255,215,0,0.3); 
+                          transition: all 0.4s; cursor: pointer;" 
+                   onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 40px rgba(255,215,0,0.5)';"
+                   onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(255,215,0,0.3)';">
+                    <i class="fas fa-moon fa-2x" style="animation: ramadanTwinkle 2s infinite;"></i>
+                    <span>🌙 أسئلة رمضان</span>
+                    <i class="fas fa-star fa-2x" style="animation: ramadanStar 2.5s infinite;"></i>
+                </a>
+            </div>
             <div id="perfectScoresGrid" class="perfect-grid"></div>
         </section>
 
@@ -210,7 +210,7 @@
                     <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> 
                     الدخول بواسطة جوجل
                 </button>
-                <p id="backToChoiceFromLogin" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
+                <p id="backToChoiceFromLogin" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);;">العودة للخلف</p>
             </div>
             
             <!-- نموذج تسجيل الدخول بالإيميل -->
@@ -521,53 +521,68 @@
         });
     </script>
     
-   <!-- ================ RAMADAN QUESTIONS SECTION ================ -->
-<section id="ramadanQuestionsSection" class="ramadan-section">
-    <div class="ramadan-header">
-        <i class="fas fa-moon"></i>
-        <i class="fas fa-star"></i>
-        <h2>🌙 أسئلة رمضان</h2>
-        <i class="fas fa-star"></i>
-        <i class="fas fa-moon"></i>
-    </div>
-    
-    <!-- شروط المسابقة الجديدة -->
-    <div class="ramadan-rules" style="text-align: center; color: #ffd700; margin-bottom: 30px; background: rgba(255,215,0,0.1); padding: 20px; border-radius: 30px; border: 2px solid #ffd700;">
-        <p style="font-size: 1.2rem; font-weight: bold;">📢 شروط المسابقة:</p>
-        <p>يتم الاختيار عشوائي .. ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
-        <p>شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير .. (آية ١٨٣، ١٨٤، ١٨٥)</p>
-        <p>وحظ سعيد للجميع 🌹🌹</p>
-    </div>
-    
-    <div id="ramadanQuestionsContainer" class="ramadan-questions-container">
-        <!-- الأسئلة ستظهر هنا -->
-    </div>
-</section>
+    <!-- ================ RAMADAN QUESTIONS SECTION ================ -->
+    <section id="ramadanQuestionsSection" class="ramadan-section">
+        <div class="ramadan-header">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-star"></i>
+            <h2>🌙 أسئلة رمضان</h2>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-moon"></i>
+        </div>
+        
+        <!-- شروط المسابقة الجديدة -->
+        <div class="ramadan-rules" style="text-align: center; color: #ffd700; margin-bottom: 30px; background: rgba(255,215,0,0.1); padding: 20px; border-radius: 30px; border: 2px solid #ffd700;">
+            <p style="font-size: 1.2rem; font-weight: bold;">📢 شروط المسابقة:</p>
+            <p>يتم الاختيار عشوائي .. ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
+            <p>شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير .. (آية ١٨٣، ١٨٤، ١٨٥)</p>
+            <p>وحظ سعيد للجميع 🌹🌹</p>
+        </div>
+        
+        <div id="ramadanQuestionsContainer" class="ramadan-questions-container">
+            <!-- الأسئلة ستظهر هنا -->
+        </div>
+    </section>
 
-<!-- ================ RAMADAN ANSWER MODAL ================ -->
-<div id="ramadanAnswerModal" class="ramadan-modal">
-    <div class="ramadan-modal-content">
-        <div class="ramadan-modal-header">
-            <h3 id="ramadanQuestionTitle"></h3>
-            <span class="ramadan-close-modal">&times;</span>
-        </div>
-        <div class="ramadan-modal-body">
-            <div id="ramadanQuestionText" class="ramadan-question-text"></div>
-            <div id="ramadanQuestionReference" class="ramadan-question-reference"></div>
-            
-            <div class="ramadan-answer-form">
-                <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
-                <textarea id="ramadanAnswerText" class="ramadan-textarea" rows="3" placeholder="اكتب إجابتك هنا..."></textarea>
-                <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
+    <!-- ================ RAMADAN ANSWER MODAL ================ -->
+    <div id="ramadanAnswerModal" class="ramadan-modal">
+        <div class="ramadan-modal-content">
+            <div class="ramadan-modal-header">
+                <h3 id="ramadanQuestionTitle"></h3>
+                <span class="ramadan-close-modal">&times;</span>
             </div>
-            
-            <div class="ramadan-answers-list" id="ramadanAnswersList">
-                <h4>إجابات المشاركين:</h4>
-                <div id="ramadanAnswersContainer"></div>
+            <div class="ramadan-modal-body">
+                <div id="ramadanQuestionText" class="ramadan-question-text"></div>
+                <!-- إخفاء المرجع عن المستخدم -->
+                
+                <div class="ramadan-answer-form">
+                    <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
+                    <!-- حقل كود الطالب الجديد -->
+                    <input type="text" id="ramadanStudentId" class="ramadan-input" placeholder="كود الطالب (10 أرقام)" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+                    
+                    <div style="margin: 15px 0;">
+                        <label style="color: #ffd700; display: block; margin-bottom: 8px;">اختر الإجابة الصحيحة:</label>
+                        <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom: 10px;">
+                            <option value="">-- اختر السورة --</option>
+                        </select>
+                        
+                        <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
+                        
+                        <div style="margin: 10px 0; color: #ffd700; font-size: 0.9rem;">
+                            <span id="ramadanAnswerPreview" style="color: #aaa;">لم يتم الاختيار بعد</span>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
+                </div>
+                
+                <div class="ramadan-answers-list" id="ramadanAnswersList">
+                    <h4>إجابات المشاركين:</h4>
+                    <div id="ramadanAnswersContainer"></div>
+                </div>
             </div>
         </div>
-    </div>
-</div> 
+    </div> 
     
 </body>
 </html>

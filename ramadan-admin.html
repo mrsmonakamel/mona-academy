@@ -286,6 +286,67 @@
             border-radius: 10px;
             transition: width 0.3s;
         }
+
+        /* جدول الإجابات */
+        .answers-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(255,255,255,0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .answers-table th,
+        .answers-table td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,215,0,0.2);
+        }
+
+        .answers-table th {
+            background: rgba(255,215,0,0.2);
+            color: #ffd700;
+            font-weight: bold;
+        }
+
+        .answers-table tr:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .status-correct {
+            color: #00b894;
+            font-weight: bold;
+        }
+
+        .status-wrong {
+            color: #ff7675;
+            font-weight: bold;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #00b894, #00cec9);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: 'Cairo';
+            font-weight: bold;
+            margin-bottom: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .filter-input {
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid #ffd700;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            margin-left: 10px;
+        }
     </style>
 </head>
 <body>
@@ -411,6 +472,7 @@
                         <button class="ramadan-admin-btn" onclick="exportAnswers()">
                             <i class="fas fa-download"></i> تصدير الإجابات
                         </button>
+                        <input type="text" id="studentIdFilter" class="filter-input" placeholder="فلترة بكود الطالب" onkeyup="filterAnswers()">
                     </div>
                     
                     <div id="addQuestionForm" class="ramadan-admin-form">
@@ -457,6 +519,26 @@
                         <div id="questionsGrid"></div>
                     </div>
                     
+                    <div id="answersSection" style="margin-top: 30px;">
+                        <h3 style="color: #ffd700; margin-bottom: 20px;">📝 جميع الإجابات</h3>
+                        <div style="overflow-x: auto;">
+                            <table class="answers-table" id="answersTable">
+                                <thead>
+                                    <tr>
+                                        <th>اليوم</th>
+                                        <th>الاسم</th>
+                                        <th>كود الطالب</th>
+                                        <th>الإجابة</th>
+                                        <th>الإجابة الصحيحة</th>
+                                        <th>النتيجة</th>
+                                        <th>التاريخ</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="answersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
                     <div id="analysisSection" class="ramadan-daily-analysis" style="margin-top: 30px;">
                         <h3 style="color: #ffd700; margin-bottom: 20px;">📊 تحليل الإجابات</h3>
                         <div id="analysisContent"></div>
@@ -486,6 +568,7 @@
             
             loadQuestions();
             loadStats();
+            loadAnswersTable();
             
             onValue(ref(db, 'ramadan_questions'), () => {
                 loadQuestions();
@@ -494,6 +577,7 @@
             
             onValue(ref(db, 'ramadan_answers'), () => {
                 loadStats();
+                loadAnswersTable();
             });
         }
 
@@ -658,6 +742,75 @@
             loadAnalysis();
         }
 
+        async function loadAnswersTable() {
+            const tbody = document.getElementById('answersTableBody');
+            if (!tbody) return;
+            
+            const [answersSnap, questionsSnap] = await Promise.all([
+                get(ref(db, 'ramadan_answers')),
+                get(ref(db, 'ramadan_questions'))
+            ]);
+            
+            if (!answersSnap.exists()) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">لا توجد إجابات بعد</td></tr>';
+                return;
+            }
+            
+            // تجهيز خريطة الإجابات الصحيحة لكل يوم
+            const correctAnswersMap = {};
+            if (questionsSnap.exists()) {
+                questionsSnap.forEach(child => {
+                    const q = child.val();
+                    correctAnswersMap[q.day] = q.correctAnswer;
+                });
+            }
+            
+            const answers = [];
+            answersSnap.forEach(child => {
+                answers.push(child.val());
+            });
+            
+            // ترتيب تنازلي حسب التاريخ
+            answers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            
+            let rows = '';
+            answers.forEach(ans => {
+                const correctAns = correctAnswersMap[ans.day] || 'غير معروف';
+                rows += `
+                    <tr>
+                        <td>${ans.day}</td>
+                        <td>${ans.name}</td>
+                        <td>${ans.studentId || 'غير محدد'}</td>
+                        <td>${ans.answer}</td>
+                        <td>${correctAns}</td>
+                        <td class="${ans.isCorrect ? 'status-correct' : 'status-wrong'}">
+                            ${ans.isCorrect ? '✓ صحيحة' : '✗ خاطئة'}
+                        </td>
+                        <td>${ans.date}</td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = rows;
+        }
+
+        window.filterAnswers = function() {
+            const filter = document.getElementById('studentIdFilter').value.trim().toLowerCase();
+            const rows = document.querySelectorAll('#answersTableBody tr');
+            
+            rows.forEach(row => {
+                const studentIdCell = row.cells[2];
+                if (studentIdCell) {
+                    const studentId = studentIdCell.textContent.toLowerCase();
+                    if (filter === '' || studentId.includes(filter)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                }
+            });
+        };
+
         async function loadAnalysis() {
             const analysisContent = document.getElementById('analysisContent');
             if (!analysisContent) return;
@@ -726,16 +879,17 @@
             });
             
             const csv = [
-                ['اليوم', 'الاسم', 'الإجابة', 'الإجابة الصحيحة', 'صحيحة؟', 'التاريخ'],
+                ['اليوم', 'الاسم', 'كود الطالب', 'الإجابة', 'الإجابة الصحيحة', 'صحيحة؟', 'التاريخ'],
                 ...answers.map(a => [
                     a.day, 
                     a.name, 
+                    a.studentId || '',
                     a.answer,
                     questions[a.day] || 'غير معروف',
                     a.isCorrect ? 'نعم' : 'لا', 
                     a.date
                 ])
-            ].map(row => row.join(',')).join('\n');
+            ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
             
             const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement('a');

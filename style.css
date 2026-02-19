@@ -2291,7 +2291,7 @@ footer {
     margin-bottom: 20px;
     line-height: 1.6;
     display: -webkit-box;
-    -webkit-line-clamp: 3;
+    -webkit-line-clamp: 6;        /* تم التعديل من 3 إلى 5 */
     -webkit-box-orient: vertical;
     overflow: hidden;
 }
@@ -2337,10 +2337,13 @@ footer {
     background: linear-gradient(145deg, #1e2b3a, #15232e);
     width: 90%;
     max-width: 800px;
+    max-height: 90vh;            /* جديد */
     border-radius: 40px;
     border: 2px solid #ffd700;
-    overflow: hidden;
+    overflow: hidden;             /* يخفي التمرير الزائد خارج المحتوى */
     animation: ramadanModalFade 0.5s;
+    display: flex;
+    flex-direction: column;       /* جديد */
 }
 
 @keyframes ramadanModalFade {
@@ -2384,6 +2387,8 @@ footer {
 .ramadan-modal-body {
     padding: 30px;
     color: white;
+    overflow-y: auto;             /* جديد */
+    flex: 1;                      /* جديد: يأخذ المساحة المتبقية */
 }
 
 .ramadan-question-text {
@@ -2394,6 +2399,10 @@ footer {
     background: rgba(255,255,255,0.05);
     border-radius: 20px;
     border-right: 4px solid #ffd700;
+    max-height: 300px;          /* جديد */
+    overflow-y: auto;            /* جديد */
+    white-space: pre-wrap;
+    word-wrap: break-word;
 }
 
 .ramadan-question-reference {
@@ -2743,4 +2752,9 @@ footer {
     .ramadan-surahs-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+}
+
+/* إخفاء نص الإجابة في قائمة الإجابات */
+.ramadan-answer-text {
+    display: none;
 }

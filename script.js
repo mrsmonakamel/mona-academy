@@ -2167,11 +2167,7 @@ window.loadRamadanQuestions = function() {
                 <div class="ramadan-question-card" onclick="window.openRamadanQuestion('${q.id}')">
                     <div class="ramadan-question-day">🌙 اليوم ${q.day}</div>
                     <div class="ramadan-question-preview">${q.text}</div>
-                    <div class="ramadan-question-stats">
-                        <span class="ramadan-stat-badge">
-                            <i class="fas fa-book"></i> ${q.surah} - ${q.aya}
-                        </span>
-                    </div>
+                    <!-- إخفاء الإجابة الصحيحة -->
                 </div>
             `;
         });
@@ -2184,7 +2180,6 @@ window.openRamadanQuestion = async function(questionId) {
     const modal = document.getElementById('ramadanAnswerModal');
     const title = document.getElementById('ramadanQuestionTitle');
     const text = document.getElementById('ramadanQuestionText');
-    const reference = document.getElementById('ramadanQuestionReference');
     const answersContainer = document.getElementById('ramadanAnswersContainer');
     const answerForm = document.querySelector('.ramadan-answer-form');
     
@@ -2193,36 +2188,19 @@ window.openRamadanQuestion = async function(questionId) {
     
     title.textContent = `🌙 اليوم ${question.day}`;
     text.textContent = question.text;
-    reference.textContent = `${question.surah} - آية ${question.aya}`;
-    
-    if (question.tafseer) {
-        reference.innerHTML += `<br><small style="color: #999;">${question.tafseer}</small>`;
-    }
     
     // تحديث نموذج الإجابة
     if (answerForm) {
-        answerForm.innerHTML = `
-            <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
-            
-            <div style="margin: 15px 0;">
-                <label style="color: #ffd700; display: block; margin-bottom: 8px;">اختر الإجابة الصحيحة:</label>
-                <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom: 10px;">
-                    <option value="">-- اختر السورة --</option>
-                </select>
-                
-                <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
-                
-                <div style="margin: 10px 0; color: #ffd700; font-size: 0.9rem;">
-                    <span id="ramadanAnswerPreview" style="color: #aaa;">لم يتم الاختيار بعد</span>
-                </div>
-            </div>
-            
-            <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
-        `;
+        // تعبئة حقل كود الطالب تلقائياً إذا كان المستخدم مسجل دخوله
+        const studentIdField = document.getElementById('ramadanStudentId');
+        if (studentIdField && currentUser) {
+            studentIdField.value = myShortId || '';
+        }
         
-        // إضافة قائمة السور
+        // إعادة تعبئة قائمة السور
         const surahSelect = document.getElementById('ramadanSurahSelect');
         if (surahSelect) {
+            surahSelect.innerHTML = '<option value="">-- اختر السورة --</option>';
             SURAHS.forEach(surah => {
                 const option = document.createElement('option');
                 option.value = surah;
@@ -2240,10 +2218,11 @@ window.openRamadanQuestion = async function(questionId) {
     
     modal.style.display = 'flex';
     
-    loadRamadanAnswers(questionId, `${question.surah} - ${question.aya}`);
+    // تحميل الإجابات وعرضها
+    loadRamadanAnswers(questionId, question.correctAnswer);
     
     modal.dataset.questionId = questionId;
-    modal.dataset.correctAnswer = `${question.surah} - ${question.aya}`;
+    modal.dataset.correctAnswer = question.correctAnswer;
     modal.dataset.day = question.day;
     
     const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
@@ -2294,7 +2273,7 @@ window.loadRamadanAnswers = function(questionId, correctAnswer) {
                         <div class="ramadan-answer-name">
                             <i class="fas fa-user"></i> ${ans.name}
                         </div>
-                        <div class="ramadan-answer-text">${ans.answer}</div>
+                        <!-- تم إخفاء نص الإجابة بناءً على طلب المستخدم -->
                         <div class="ramadan-answer-status ${isCorrect ? 'correct' : 'wrong'}">
                             ${isCorrect ? 
                                 '<i class="fas fa-check-circle"></i> إجابة صحيحة ✓' : 
@@ -2323,11 +2302,22 @@ window.submitRamadanAnswer = async function() {
     const day = modal.dataset.day;
     
     const name = document.getElementById('ramadanAnswerName').value.trim();
+    const studentId = document.getElementById('ramadanStudentId').value.trim(); // كود الطالب
     const surah = document.getElementById('ramadanSurahSelect').value;
     const aya = document.getElementById('ramadanAyaInput').value;
     
     if (!name) {
         alert('❌ يرجى إدخال الاسم');
+        return;
+    }
+    
+    if (!studentId) {
+        alert('❌ يرجى إدخال كود الطالب');
+        return;
+    }
+    
+    if (studentId.length !== 10) {
+        alert('❌ كود الطالب يجب أن يكون 10 أرقام');
         return;
     }
     
@@ -2343,6 +2333,7 @@ window.submitRamadanAnswer = async function() {
         questionId: questionId,
         day: parseInt(day),
         name: name,
+        studentId: studentId, // حفظ كود الطالب
         answer: answer,
         surah: surah,
         aya: parseInt(aya),
@@ -2354,7 +2345,9 @@ window.submitRamadanAnswer = async function() {
     try {
         await push(ref(db, 'ramadan_answers'), answerData);
         
+        // إعادة تعيين الحقول
         document.getElementById('ramadanAnswerName').value = '';
+        document.getElementById('ramadanStudentId').value = '';
         document.getElementById('ramadanSurahSelect').value = '';
         document.getElementById('ramadanAyaInput').value = '';
         document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
@@ -2362,7 +2355,7 @@ window.submitRamadanAnswer = async function() {
         if (isCorrect) {
             alert('✅ إجابة صحيحة! بارك الله فيك');
         } else {
-            alert(`❌ إجابة خاطئة. الإجابة الصحيحة هي: ${correctAnswer}`);
+            alert(`❌ إجابة خاطئة. حاول مرة أخرى.`);
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
