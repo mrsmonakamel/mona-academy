@@ -833,7 +833,8 @@ onAuthStateChanged(auth, async user => {
             `;
             
             if (isAdminUser) {
-                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='ramadan-admin.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">إدارة رمضان</button>`;
+                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='ramadan-admin.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">🌙 إدارة رمضان</button>`;
+                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--main); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">⚙️ لوحة الإدارة</button>`;
             }
             
             if (reviewContainer) {
@@ -1502,7 +1503,7 @@ window.startQuiz = async function(folderId, quizId) {
             
             ['a', 'b', 'c', 'd'].forEach(opt => {
                 if(q[opt]) {
-                    html += `<label class="opt-label" onclick="window.selectOption(this)">
+                    html += `<label class="opt-label" data-qidx="${idx}" data-opt="${opt}">
                         <input type="radio" name="q${idx}" value="${opt}">
                         <span>${escapeHTML(q[opt])}</span>
                     </label>`;
@@ -1529,8 +1530,26 @@ window.selectOption = function(label) {
     container.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
     label.classList.add('selected');
     const input = label.querySelector('input');
-    if (input) input.checked = true;
+    if (input) {
+        input.checked = true;
+        input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
 };
+
+// Event delegation for quiz option labels - يضمن عمل الاختيار بشكل صحيح
+document.addEventListener('click', function(e) {
+    const label = e.target.closest('.opt-label[data-qidx]');
+    if (label) {
+        const container = label.closest('.opt-container');
+        if (!container) return;
+        container.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
+        label.classList.add('selected');
+        const input = label.querySelector('input[type="radio"]');
+        if (input) {
+            input.checked = true;
+        }
+    }
+});
 
 window.submitQuiz = async function(folderId, quizId) {
     const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
@@ -2327,7 +2346,9 @@ window.submitRamadanAnswer = async function() {
     }
     
     const answer = `${surah} - ${aya}`;
-    const isCorrect = answer === correctAnswer;
+    // تطبيع الإجابة لمقارنة صحيحة
+    const normalizeAnswer = (str) => str ? str.trim().replace(/\s+-\s+/g, ' - ').replace(/\s+/g, ' ') : '';
+    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(correctAnswer);
     
     const answerData = {
         questionId: questionId,

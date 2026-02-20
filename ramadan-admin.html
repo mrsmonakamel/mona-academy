@@ -396,14 +396,25 @@
             "المسد", "الإخلاص", "الفلق", "الناس"
         ];
 
-        onAuthStateChanged(auth, (user) => {
+        onAuthStateChanged(auth, async (user) => {
             if (user) {
-                if (user.email === "mrsmonakamel6@gmail.com") {
+                const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+                let isAllowed = user.email === ADMIN_EMAIL;
+                
+                if (!isAllowed) {
+                    try {
+                        const adminsSnap = await get(ref(db, 'admins'));
+                        const admins = adminsSnap.val() || {};
+                        isAllowed = Object.values(admins).some(a => a.email === user.email);
+                    } catch(e) {}
+                }
+                
+                if (isAllowed) {
                     document.getElementById('adminLogin').style.display = 'none';
                     document.getElementById('ramadanAdminPanel').style.display = 'block';
                     loadAdminPanel();
                 } else {
-                    alert("❌ هذا الحساب غير مصرح له بالدخول. يرجى استخدام حساب الأستاذة.");
+                    alert("❌ هذا الحساب غير مصرح له بالدخول.");
                     signOut(auth);
                 }
             } else {
@@ -647,6 +658,68 @@
             }
         };
 
+        window.editQuestion = async function(questionId) {
+            const snap = await get(ref(db, `ramadan_questions/${questionId}`));
+            if (!snap.exists()) { alert('❌ السؤال غير موجود'); return; }
+            const q = snap.val();
+            
+            // إظهار فورم الإضافة وملئه ببيانات السؤال
+            document.getElementById('addQuestionForm').classList.add('active');
+            document.getElementById('questionDay').value = q.day;
+            document.getElementById('questionText').value = q.text;
+            document.getElementById('ayaNumber').value = q.aya;
+            if (q.tafseer) document.getElementById('tafseer').value = q.tafseer;
+            
+            // اختيار السورة الصحيحة
+            document.querySelectorAll('.ramadan-surah-item').forEach(el => {
+                el.classList.remove('selected');
+                if (el.textContent === q.surah) el.classList.add('selected');
+            });
+            updateAnswerPreview();
+            
+            // تغيير زر الحفظ ليحدّث بدل الإضافة
+            const saveBtn = document.querySelector('#addQuestionForm .ramadan-admin-btn-primary');
+            if (saveBtn) {
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> تحديث السؤال';
+                saveBtn.onclick = async function() {
+                    const day = document.getElementById('questionDay').value;
+                    const text = document.getElementById('questionText').value;
+                    const selectedSurah = document.querySelector('.ramadan-surah-item.selected');
+                    const ayaNumber = document.getElementById('ayaNumber').value;
+                    const tafseer = document.getElementById('tafseer').value;
+                    
+                    if (!day || !text || !selectedSurah || !ayaNumber) {
+                        alert('❌ يرجى ملء جميع الحقول المطلوبة');
+                        return;
+                    }
+                    
+                    const correctAnswerText = `${selectedSurah.textContent} - ${ayaNumber}`;
+                    try {
+                        await update(ref(db, `ramadan_questions/${questionId}`), {
+                            day: parseInt(day),
+                            text: text,
+                            correctAnswer: correctAnswerText,
+                            surah: selectedSurah.textContent,
+                            aya: parseInt(ayaNumber),
+                            tafseer: tafseer || '',
+                            updatedAt: new Date().toLocaleString('ar-EG')
+                        });
+                        alert('✅ تم تحديث السؤال بنجاح');
+                        hideAddQuestionForm();
+                        // إعادة زر الحفظ لوضعه الأصلي
+                        saveBtn.innerHTML = '<i class="fas fa-save"></i> حفظ السؤال';
+                        saveBtn.onclick = saveQuestion;
+                        loadQuestions();
+                    } catch(err) {
+                        alert('❌ حدث خطأ: ' + err.message);
+                    }
+                };
+            }
+            
+            // scroll للفورم
+            document.getElementById('addQuestionForm').scrollIntoView({ behavior: 'smooth' });
+        };
+
         window.deleteQuestion = async function(questionId) {
             if (!confirm('هل أنت متأكد من حذف هذا السؤال؟')) return;
             
@@ -685,9 +758,14 @@
                     <div class="question-card">
                         <div class="question-header">
                             <span class="question-day">📅 اليوم ${q.day}</span>
-                            <button class="ramadan-admin-btn" onclick="deleteQuestion('${q.id}')" style="padding: 5px 15px;">
-                                <i class="fas fa-trash"></i> حذف
-                            </button>
+                            <div style="display:flex; gap:8px;">
+                                <button class="ramadan-admin-btn" onclick="editQuestion('${q.id}')" style="padding: 5px 15px; background: rgba(108,92,231,0.3); border-color: #6c5ce7; color: #a29bfe;">
+                                    <i class="fas fa-edit"></i> تعديل
+                                </button>
+                                <button class="ramadan-admin-btn" onclick="deleteQuestion('${q.id}')" style="padding: 5px 15px;">
+                                    <i class="fas fa-trash"></i> حذف
+                                </button>
+                            </div>
                         </div>
                         <div class="question-text">${q.text}</div>
                         <div class="question-answer">

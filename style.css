@@ -1221,18 +1221,21 @@ header {
     color: var(--text-primary);
 }
 
-.opt-label.selected {
-    background: #f0eeff;
-    border-color: var(--main);
-    color: var(--main);
-    transform: translateX(-5px);
-}
-
 .opt-label input {
     width: 20px;
     height: 20px;
     accent-color: var(--main);
     pointer-events: none;
+    flex-shrink: 0;
+}
+
+/* تحسين ظهور الاختيار المحدد */
+.opt-label.selected {
+    background: #f0eeff;
+    border-color: var(--main);
+    color: var(--main);
+    transform: translateX(-5px);
+    box-shadow: 0 2px 8px rgba(108,92,231,0.15);
 }
 
 .opt-label:hover {
