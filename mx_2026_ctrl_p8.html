@@ -2866,16 +2866,17 @@
                     <input type="text" class="oC" placeholder="الخيار C">
                     <input type="text" class="oD" placeholder="الخيار D">
                 </div>
-                <select class="q-correct" style="margin-top:10px; width:100%;">
+                <select class="q-correct-mcq" style="margin-top:10px; width:100%;">
                     <option value="a">الإجابة: A</option>
                     <option value="b">الإجابة: B</option>
                     <option value="c">الإجابة: C</option>
                     <option value="d">الإجابة: D</option>
                 </select>` : `
-                <select class="q-correct" style="margin-top:10px; width:100%;">
+                <select class="q-correct-tf" style="margin-top:10px; width:100%;">
                     <option value="a">الإجابة: صح</option>
                     <option value="b">الإجابة: خطأ</option>
                 </select>`}
+                <input type="hidden" class="q-type-hidden" value="${type}">
             `;
             container.appendChild(q);
         };
@@ -2900,15 +2901,17 @@
                 const qText = card.querySelector('.q-text')?.value.trim();
                 if (!qText) return;
                 
-                const correct = card.querySelector('.q-correct')?.value;
+                const qType = card.querySelector('.q-type-hidden')?.value || 'mcq';
                 const oA = card.querySelector('.oA')?.value.trim();
                 const oB = card.querySelector('.oB')?.value.trim();
                 
-                if (oA && oB) {
+                if (qType === 'mcq' && oA && oB) {
+                    const correct = card.querySelector('.q-correct-mcq')?.value || 'a';
                     const oC = card.querySelector('.oC')?.value.trim() || '';
                     const oD = card.querySelector('.oD')?.value.trim() || '';
                     questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
                 } else {
+                    const correct = card.querySelector('.q-correct-tf')?.value || 'a';
                     questions[`q${qIndex}`] = { text: qText, a: 'صح', b: 'خطأ', correct };
                 }
                 qIndex++;
@@ -3137,20 +3140,20 @@
                 </div>
                 
                 <div class="tf-options" style="display: ${!isMcq ? 'block' : 'none'};">
-                    <select class="q-correct reg-input">
+                    <select class="q-correct-tf reg-input">
                         <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>صح</option>
                         <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>خطأ</option>
                     </select>
                 </div>
                 
-                ${isMcq ? `
-                <select class="q-correct reg-input" style="margin-top: 15px;">
+                <div class="mcq-correct-wrapper" style="display: ${isMcq ? 'block' : 'none'}; margin-top: 15px;">
+                <select class="q-correct-mcq reg-input">
                     <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>الإجابة: A</option>
                     <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>الإجابة: B</option>
                     <option value="c" ${questionData?.correct === 'c' ? 'selected' : ''}>الإجابة: C</option>
                     <option value="d" ${questionData?.correct === 'd' ? 'selected' : ''}>الإجابة: D</option>
                 </select>
-                ` : ''}
+                </div>
             `;
             
             container.appendChild(card);
@@ -3160,13 +3163,16 @@
             const card = select.closest('.edit-question-card');
             const mcqDiv = card.querySelector('.mcq-options');
             const tfDiv = card.querySelector('.tf-options');
+            const mcqCorrectWrapper = card.querySelector('.mcq-correct-wrapper');
             
             if (select.value === 'mcq') {
                 mcqDiv.style.display = 'grid';
                 tfDiv.style.display = 'none';
+                if (mcqCorrectWrapper) mcqCorrectWrapper.style.display = 'block';
             } else {
                 mcqDiv.style.display = 'none';
                 tfDiv.style.display = 'block';
+                if (mcqCorrectWrapper) mcqCorrectWrapper.style.display = 'none';
             }
         };
 
@@ -3192,16 +3198,17 @@
                 const qText = card.querySelector('.q-text')?.value.trim();
                 if (!qText) return;
                 
-                const correct = card.querySelector('.q-correct')?.value;
                 const isMcq = card.querySelector('.q-type')?.value === 'mcq';
                 
                 if (isMcq) {
+                    const correct = card.querySelector('.q-correct-mcq')?.value || 'a';
                     const oA = card.querySelector('.oA')?.value.trim() || '';
                     const oB = card.querySelector('.oB')?.value.trim() || '';
                     const oC = card.querySelector('.oC')?.value.trim() || '';
                     const oD = card.querySelector('.oD')?.value.trim() || '';
                     questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
                 } else {
+                    const correct = card.querySelector('.q-correct-tf')?.value || 'a';
                     questions[`q${qIndex}`] = { text: qText, a: 'صح', b: 'خطأ', correct };
                 }
                 qIndex++;
@@ -3282,13 +3289,14 @@
             
             try {
                 startProgress();
-                await update(ref(db, `quizzes/${courseId}/${examId}`), {
+                // استخدام set بدلاً من update لضمان حذف الأسئلة القديمة
+                await set(ref(db, `quizzes/${courseId}/${examId}`), {
                     name,
                     questions,
                     updatedAt: new Date().toLocaleString('ar-EG')
                 });
                 
-                showToast('✅ تم الحفظ');
+                showToast('✅ تم الحفظ بنجاح - التعديلات ستظهر للطلاب فوراً');
                 closeExamModal();
                 
                 if (activeCID === courseId) {
@@ -3296,7 +3304,8 @@
                     openEditModal(courseId, folderSnap.val() || {});
                 }
             } catch (error) {
-                showToast('❌ حدث خطأ', 'error');
+                console.error('Save exam error:', error);
+                showToast('❌ حدث خطأ في الحفظ: ' + error.message, 'error');
             } finally {
                 stopProgress();
             }

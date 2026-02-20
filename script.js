@@ -1475,7 +1475,7 @@ window.startQuiz = async function(folderId, quizId) {
             return;
         }
         
-        const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
+        const quizSnap = await get(ref(db, `quizzes/${folderId}/${quizId}`));
         if(!quizSnap.exists()) {
             window.showToast('❌ خطأ في تحميل الامتحان', 'error');
             return;
@@ -1552,7 +1552,7 @@ document.addEventListener('click', function(e) {
 });
 
 window.submitQuiz = async function(folderId, quizId) {
-    const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
+    const quizSnap = await get(ref(db, `quizzes/${folderId}/${quizId}`));
     if (!quizSnap.exists()) {
         window.showToast('❌ حدث خطأ في تحميل الامتحان', 'error');
         return;
@@ -1589,10 +1589,8 @@ window.submitQuiz = async function(folderId, quizId) {
             total: total,
             percentage: percentage,
             completedAt: new Date().toLocaleString('ar-EG'),
-            answers: userAnswers,
-            correctAnswers: Object.fromEntries(
-                Object.keys(questions).map(qKey => [qKey, questions[qKey].correct])
-            )
+            answers: userAnswers
+            // لا نحفظ الإجابات الصحيحة في بيانات الطالب للأمان
         });
 
         await push(ref(db, 'quiz_results'), {
@@ -1627,7 +1625,7 @@ window.viewQuizResult = async function(folderId, quizId) {
     
     try {
         const [quizSnap, resultSnap] = await Promise.all([
-            get(child(dbRef, `quizzes/${folderId}/${quizId}`)),
+            get(ref(db, `quizzes/${folderId}/${quizId}`)),
             get(child(dbRef, `students/${currentUser.uid}/examResults/${quizId}`))
         ]);
 
@@ -1644,7 +1642,10 @@ window.viewQuizResult = async function(folderId, quizId) {
         const resultData = resultSnap.val();
         const questions = quizData.questions || {};
         const userAnswers = resultData.answers || {};
-        const correctAnswers = resultData.correctAnswers || {};
+        // استخدام الإجابات الصحيحة من Firebase مباشرة (تعكس التعديلات الأخيرة)
+        const correctAnswers = Object.fromEntries(
+            Object.keys(questions).map(qKey => [qKey, questions[qKey].correct])
+        );
 
         const quizTitle = document.getElementById('quizTitle');
         const quizOverlay = document.getElementById('quizOverlay');
