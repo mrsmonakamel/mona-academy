@@ -2785,3 +2785,428 @@ footer {
     from { opacity: 0; transform: translateY(-8px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+/* ================ MOBILE ENHANCEMENTS (ADDED) ================ */
+
+/* --- General Mobile Fixes --- */
+@media (max-width: 768px) {
+
+    /* Body & Layout */
+    body {
+        font-size: 15px;
+    }
+
+    /* Header */
+    header {
+        padding: 10px 4%;
+        gap: 8px;
+    }
+
+    .logo-text {
+        font-size: 1.1rem;
+    }
+
+    .header-controls {
+        gap: 8px;
+    }
+
+    .auth-btn, .dashboard-btn, .logout-btn {
+        padding: 7px 14px;
+        font-size: 0.85rem;
+    }
+
+    /* Hero Section */
+    .hero {
+        padding: 40px 4%;
+        text-align: center;
+        flex-direction: column;
+        align-items: center;
+        gap: 25px;
+        border-radius: 0 0 30px 30px;
+    }
+
+    .hero-content {
+        min-width: unset;
+        width: 100%;
+    }
+
+    .hero-content h1 {
+        font-size: 1.7rem;
+        line-height: 1.4;
+    }
+
+    .hero-content p {
+        font-size: 1rem;
+    }
+
+    .btn-hero {
+        padding: 12px 28px;
+        font-size: 1rem;
+        display: block;
+        width: fit-content;
+        margin: 0 auto;
+    }
+
+    .hero-image {
+        margin: 0 auto;
+    }
+
+    .hero-image img {
+        width: 180px;
+        height: 180px;
+        border-width: 6px;
+    }
+
+    /* About Section */
+    .about-section {
+        padding: 40px 4%;
+    }
+
+    .about-content h2 {
+        font-size: 1.5rem;
+    }
+
+    .about-content p {
+        font-size: 0.95rem;
+    }
+
+    /* Features Section */
+    .features {
+        padding: 50px 4%;
+    }
+
+    .features h2 {
+        font-size: 1.7rem;
+        margin-bottom: 40px;
+    }
+
+    .features-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+
+    .feat-card {
+        padding: 25px 20px;
+    }
+
+    /* Courses Section */
+    .courses {
+        padding: 30px 4%;
+    }
+
+    .course-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    .folder-card h3 {
+        font-size: 1rem;
+        padding: 12px 12px 4px;
+    }
+
+    .folder-card img {
+        height: 130px;
+    }
+
+    /* Content Grid */
+    .content-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Perfect Section */
+    .perfect-section {
+        padding: 40px 4%;
+        border-radius: 30px;
+        margin: 20px 3%;
+    }
+
+    .perfect-header h2 {
+        font-size: 1.6rem;
+    }
+
+    .perfect-header i {
+        font-size: 2rem;
+    }
+
+    .perfect-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .perfect-card {
+        padding: 18px;
+    }
+
+    /* Ramadan button */
+    .ramadan-section {
+        padding: 40px 4%;
+        border-radius: 30px 30px 0 0;
+        margin: 20px 0 0;
+    }
+
+    /* Dashboard */
+    #studentDashboard {
+        padding: 20px 4%;
+    }
+
+    .dashboard-header {
+        padding: 20px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+    }
+
+    .student-welcome h1 {
+        font-size: 1.4rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+    }
+
+    /* Content Area */
+    #contentArea {
+        padding: 20px 4%;
+    }
+
+    /* Quiz */
+    #quizOverlay {
+        padding: 10px;
+    }
+
+    .quiz-header {
+        padding: 10px;
+    }
+
+    .q-text {
+        font-size: 1rem;
+    }
+
+    .q-form-card {
+        padding: 15px;
+    }
+
+    .opt-label {
+        padding: 12px;
+        font-size: 0.9rem;
+    }
+
+    /* Section titles */
+    .section-title {
+        font-size: 1.4rem;
+    }
+
+    .section-title-large {
+        font-size: 1.6rem;
+        margin: 30px 0 20px;
+    }
+
+    /* Toast notifications - right side on mobile */
+    .toast-container {
+        left: 10px;
+        right: 10px;
+        top: 15px;
+    }
+
+    .toast-message {
+        max-width: 100%;
+        border-radius: 15px;
+    }
+
+    /* Reviews */
+    .reviews {
+        padding: 40px 4%;
+    }
+
+    .reviews-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Footer */
+    footer {
+        padding: 25px 4%;
+    }
+
+    .social-btn {
+        display: block;
+        width: 100%;
+        text-align: center;
+        margin: 5px 0;
+    }
+
+    /* Leaderboard */
+    .leaderboard-section {
+        padding: 40px 4%;
+    }
+
+    .leaderboard-top3 {
+        gap: 8px;
+    }
+
+    .top-card {
+        min-width: 120px;
+        padding: 15px 10px;
+    }
+
+    .top-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 1.5rem;
+    }
+
+    .top-name {
+        font-size: 0.9rem;
+    }
+
+    .top-points {
+        font-size: 1.3rem;
+    }
+
+    .top-badge {
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+
+    .leaderboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    /* Modal */
+    .modal-content {
+        width: 95%;
+        padding: 20px 15px;
+        border-radius: 20px;
+        max-height: 90vh;
+    }
+
+    /* Subscription */
+    .subscription-content {
+        padding: 25px 15px;
+        border-radius: 20px;
+    }
+
+    .sub-option {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    /* Ramadan questions */
+    .ramadan-questions-container {
+        grid-template-columns: 1fr;
+    }
+
+    .ramadan-modal-content {
+        width: 95%;
+        max-height: 90vh;
+    }
+
+    .ramadan-modal-body {
+        padding: 15px;
+    }
+
+    .ramadan-question-text {
+        font-size: 1rem;
+        padding: 15px;
+    }
+
+    .ramadan-answer-form {
+        padding: 15px;
+    }
+
+    /* Ramadan button inline styles override */
+    #perfectScoresSection a[href="#ramadanQuestionsSection"] {
+        padding: 14px 25px !important;
+        font-size: 1.1rem !important;
+        border-radius: 40px !important;
+    }
+}
+
+/* --- Small phones (< 480px) --- */
+@media (max-width: 480px) {
+
+    .logo-text {
+        font-size: 1rem;
+    }
+
+    .hero-content h1 {
+        font-size: 1.4rem;
+    }
+
+    .hero-image img {
+        width: 140px;
+        height: 140px;
+    }
+
+    .course-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .folder-card img {
+        height: 160px;
+    }
+
+    .auth-btn, .dashboard-btn, .logout-btn {
+        font-size: 0.8rem;
+        padding: 6px 10px;
+    }
+
+    .student-id-badge {
+        font-size: 0.7rem;
+        padding: 5px 10px;
+    }
+
+    .top-card.first {
+        transform: scale(1.03);
+    }
+
+    .perfect-section {
+        border-radius: 20px;
+        margin: 15px 2%;
+    }
+
+    .ramadan-section {
+        border-radius: 20px 20px 0 0;
+    }
+
+    .features-grid {
+        gap: 15px;
+    }
+
+    .feat-card .num-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+
+    .feat-card h3 {
+        font-size: 1.1rem;
+    }
+}
+
+/* --- Extra: smooth scroll & overflow fix --- */
+html {
+    -webkit-overflow-scrolling: touch;
+}
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Fix ramadan star button on mobile */
+@media (max-width: 600px) {
+    #perfectScoresSection > div > a {
+        padding: 14px 20px !important;
+        font-size: 1rem !important;
+    }
+}
