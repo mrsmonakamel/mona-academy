@@ -772,6 +772,20 @@ window.loginGoogle = async function() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
+        
+        // التحقق أولاً إذا كان المستخدم مديراً (ليس بالضرورة طالباً)
+        const adminsSnap = await get(ref(db, 'admins'));
+        const admins = adminsSnap.val() || {};
+        const isAdmin = user.email === ADMIN_EMAIL || 
+                        Object.values(admins).some(a => a.email && a.email.toLowerCase() === user.email.toLowerCase());
+        
+        if (isAdmin) {
+            window.closeLogin();
+            window.showToast('✅ مرحباً بك في لوحة الإدارة!', 'success');
+            return;
+        }
+        
+        // إذا لم يكن مديراً، التحقق من وجوده كطالب
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         
         if(!userSnap.exists()) {
@@ -804,10 +818,14 @@ onAuthStateChanged(auth, async user => {
     if (user) {
         window.startProgress();
         try {
+            // ✅ التحقق من صلاحيات المدير أولاً (قبل التحقق من بيانات الطالب)
             const isAdmin = user.email === ADMIN_EMAIL;
             const adminsSnap = await get(ref(db, 'admins'));
             const admins = adminsSnap.val() || {};
-            const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+            // مقارنة الإيميل بدون حساسية للحروف الكبيرة والصغيرة
+            const isAddedAdmin = admins && Object.values(admins).some(a => 
+                a.email && a.email.toLowerCase() === user.email.toLowerCase()
+            );
             isAdminUser = isAdmin || isAddedAdmin;
             
             const userSnap = await get(child(dbRef, `students/${user.uid}`));
@@ -819,18 +837,32 @@ onAuthStateChanged(auth, async user => {
                 displayName = data.name || user.displayName || '';
                 currentStudentGrade = data.grade;
             } else {
+                // المستخدم ليس طالباً (ربما مدير مضاف)
                 currentStudentGrade = null;
                 myShortId = "";
             }
             
-            statusDiv.innerHTML = `
-                <span class="student-id-badge" style="margin-left: 10px;">
-                    <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
-                </span>
-                <div class="hamburger-menu" onclick="window.toggleMenu()">
-                    <i class="fas fa-bars"></i>
-                </div>
-            `;
+            // ✅ عرض badge المدير أو badge كود الطالب حسب النوع
+            if (isAdminUser && !myShortId) {
+                // مدير مضاف ليس طالباً
+                statusDiv.innerHTML = `
+                    <span class="student-id-badge" style="margin-left: 10px; background: var(--main); color: white;">
+                        <i class="fas fa-user-shield"></i> مدير
+                    </span>
+                    <div class="hamburger-menu" onclick="window.toggleMenu()">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                `;
+            } else {
+                statusDiv.innerHTML = `
+                    <span class="student-id-badge" style="margin-left: 10px;">
+                        <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
+                    </span>
+                    <div class="hamburger-menu" onclick="window.toggleMenu()">
+                        <i class="fas fa-bars"></i>
+                    </div>
+                `;
+            }
             
             if (isAdminUser) {
                 statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='ramadan-admin.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">🌙 إدارة رمضان</button>`;
@@ -838,7 +870,11 @@ onAuthStateChanged(auth, async user => {
             }
             
             if (reviewContainer) {
-                reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button type="button" onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
+                if (myShortId || isAdminUser) {
+                    reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button type="button" onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
+                } else {
+                    reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
+                }
             }
             
             updateMenuItems(true);
@@ -1248,10 +1284,10 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
         resultsSnap = results[2];
         
         if (resultsSnap.exists()) {
-            const results = resultsSnap.val();
-            Object.keys(results).forEach(quizId => {
-                if (results[quizId].courseId === folderId) {
-                    examResultsMap[quizId] = results[quizId];
+            const examData = resultsSnap.val();
+            Object.keys(examData).forEach(quizId => {
+                if (examData[quizId].courseId === folderId) {
+                    examResultsMap[quizId] = examData[quizId];
                 }
             });
         }
@@ -1271,8 +1307,11 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     
     grid.innerHTML = "";
 
+    // ===== جمع الفيديوهات والامتحانات في مصفوفات =====
+    let videosArray = [];
+    let quizzesArray = [];
+
     if (vSnap.exists()) {
-        const videosArray = [];
         vSnap.forEach(v => {
             videosArray.push({
                 id: v.key,
@@ -1280,10 +1319,51 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 order: v.val().order || 999
             });
         });
-        
         videosArray.sort((a, b) => a.order - b.order);
-        
-        videosArray.forEach(videoData => {
+    }
+
+    if (qSnap.exists()) {
+        qSnap.forEach(q => {
+            quizzesArray.push({
+                id: q.key,
+                ...q.val(),
+                order: q.val().order || 999
+            });
+        });
+        quizzesArray.sort((a, b) => a.order - b.order);
+    }
+
+    // ===== بناء أزرار الفلترة حسب المراحل =====
+    const stageFilterBar = document.getElementById('stageFilterBar');
+    const stageFilterBtns = document.getElementById('stageFilterBtns');
+    
+    // جمع المراحل الفريدة من الفيديوهات
+    const stages = new Set();
+    videosArray.forEach(v => {
+        if (v.stage) stages.add(v.stage.trim());
+    });
+    quizzesArray.forEach(q => {
+        if (q.stage) stages.add(q.stage.trim());
+    });
+
+    let activeStage = 'all';
+
+    function renderContentByStage(stage) {
+        grid.innerHTML = "";
+        activeStage = stage;
+
+        // تحديث حالة الأزرار
+        if (stageFilterBtns) {
+            stageFilterBtns.querySelectorAll('button').forEach(btn => {
+                btn.style.background = btn.dataset.stage === stage ? 'var(--main)' : '#f0eeff';
+                btn.style.color = btn.dataset.stage === stage ? 'white' : 'var(--main)';
+            });
+        }
+
+        const filteredVideos = stage === 'all' ? videosArray : videosArray.filter(v => (v.stage || '').trim() === stage);
+        const filteredQuizzes = stage === 'all' ? quizzesArray : quizzesArray.filter(q => (q.stage || '').trim() === stage);
+
+        filteredVideos.forEach(videoData => {
             const videoUrl = videoData.url || '';
             let vidId = "error";
             const match = videoUrl.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
@@ -1313,6 +1393,14 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             badge.textContent = 'فيديو شرح';
             detailsDiv.appendChild(badge);
             
+            if (videoData.stage) {
+                const stageBadge = document.createElement('span');
+                stageBadge.className = 'badge';
+                stageBadge.style.cssText = 'background:#e0d7ff; color:var(--dark); margin-right:4px; font-size:0.72rem;';
+                stageBadge.textContent = videoData.stage;
+                detailsDiv.appendChild(stageBadge);
+            }
+            
             const title = document.createElement('h3');
             title.textContent = videoData.title || 'فيديو';
             detailsDiv.appendChild(title);
@@ -1327,21 +1415,8 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             
             grid.appendChild(card);
         });
-    }
 
-    if (qSnap.exists()) {
-        const quizzesArray = [];
-        qSnap.forEach(q => {
-            quizzesArray.push({
-                id: q.key,
-                ...q.val(),
-                order: q.val().order || 999
-            });
-        });
-        
-        quizzesArray.sort((a, b) => a.order - b.order);
-        
-        quizzesArray.forEach(quizData => {
+        filteredQuizzes.forEach(quizData => {
             const quizId = quizData.id;
             const isCompleted = examResultsMap[quizId] ? true : false;
             
@@ -1355,11 +1430,17 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             }
             
             const iconDiv = document.createElement('div');
-            iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;';
+            iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;';
             const icon = document.createElement('i');
             icon.className = 'fas fa-file-signature fa-3x';
             icon.style.cssText = 'color: var(--main);';
             iconDiv.appendChild(icon);
+            if (quizData.stage) {
+                const stageLbl = document.createElement('span');
+                stageLbl.style.cssText = 'font-size:0.75rem; color:var(--dark); background:#e0d7ff; padding:2px 8px; border-radius:20px;';
+                stageLbl.textContent = quizData.stage;
+                iconDiv.appendChild(stageLbl);
+            }
             card.appendChild(iconDiv);
             
             const detailsDiv = document.createElement('div');
@@ -1410,11 +1491,44 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             
             grid.appendChild(card);
         });
+
+        if (grid.children.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذه المرحلة</p>";
+        }
     }
 
-    if (grid.children.length === 0) {
-        grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذا الكورس بعد</p>";
+    // ===== بناء شريط الفلترة =====
+    if (stages.size > 0 && stageFilterBar && stageFilterBtns) {
+        stageFilterBar.style.display = 'block';
+        stageFilterBtns.innerHTML = '';
+
+        // زر "الكل"
+        const allBtn = document.createElement('button');
+        allBtn.type = 'button';
+        allBtn.dataset.stage = 'all';
+        allBtn.textContent = '📚 الكل';
+        allBtn.style.cssText = 'padding:8px 18px; border-radius:25px; border:2px solid var(--main); background:var(--main); color:white; font-weight:bold; cursor:pointer; font-family:Cairo; font-size:0.9rem; transition:all 0.2s;';
+        allBtn.addEventListener('click', () => renderContentByStage('all'));
+        stageFilterBtns.appendChild(allBtn);
+
+        const stageIcons = ['🔵','🟢','🟡','🟠','🔴','🟣','⚪'];
+        let iconIdx = 0;
+        stages.forEach(stage => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.stage = stage;
+            btn.textContent = `${stageIcons[iconIdx % stageIcons.length]} ${stage}`;
+            iconIdx++;
+            btn.style.cssText = 'padding:8px 18px; border-radius:25px; border:2px solid var(--main); background:#f0eeff; color:var(--main); font-weight:bold; cursor:pointer; font-family:Cairo; font-size:0.9rem; transition:all 0.2s;';
+            btn.addEventListener('click', () => renderContentByStage(stage));
+            stageFilterBtns.appendChild(btn);
+        });
+    } else if (stageFilterBar) {
+        stageFilterBar.style.display = 'none';
     }
+
+    // عرض المحتوى الافتراضي (الكل)
+    renderContentByStage('all');
 };
 
 // ================ OPEN VIDEO ================
@@ -1497,15 +1611,28 @@ window.startQuiz = async function(folderId, quizId) {
         
         Object.keys(questions).forEach((qKey, idx) => {
             const q = questions[qKey];
+            
+            // ✅ تحديد نوع السؤال: TF أو MCQ
+            const isTF = !q.c && (
+                (q.a === 'True' || q.a === 'False') ||
+                (q.a === 'صح' || q.a === 'خطأ')
+            );
+            
             html += `<div class="q-form-card">
                 <span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>
                 <div class="opt-container">`;
             
             ['a', 'b', 'c', 'd'].forEach(opt => {
                 if(q[opt]) {
+                    // ✅ عرض True/False بدل صح/خطأ للطلاب
+                    let displayText = q[opt];
+                    if (isTF) {
+                        if (opt === 'a') displayText = 'True';
+                        else if (opt === 'b') displayText = 'False';
+                    }
                     html += `<label class="opt-label" data-qidx="${idx}" data-opt="${opt}">
                         <input type="radio" name="q${idx}" value="${opt}">
-                        <span>${escapeHTML(q[opt])}</span>
+                        <span>${escapeHTML(displayText)}</span>
                     </label>`;
                 }
             });
@@ -1666,6 +1793,12 @@ window.viewQuizResult = async function(folderId, quizId) {
             const correctAnswer = correctAnswers[qKey] || questions[qKey].correct;
             const isCorrect = userAnswer === correctAnswer || 
                              (correctAnswer && userAnswer && userAnswer.toString() === correctAnswer.toString());
+            
+            // ✅ تحديد نوع السؤال: TF إذا كان الخيار a هو True أو صح (للتوافق مع القديم)
+            const isTF = !q.c && (
+                (q.a === 'True' || q.a === 'False') ||
+                (q.a === 'صح' || q.a === 'خطأ')
+            );
 
             html += `<div class="q-form-card" style="border-right-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">`;
             html += `<span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>`;
@@ -1680,9 +1813,17 @@ window.viewQuizResult = async function(folderId, quizId) {
                     if (userAnswer === opt && !isCorrect) {
                         style = 'background: #f8d7da; border-color: var(--danger);';
                     }
+                    
+                    // ✅ عرض True/False بدل صح/خطأ
+                    let displayText = q[opt];
+                    if (isTF) {
+                        if (opt === 'a') displayText = 'True';
+                        else if (opt === 'b') displayText = 'False';
+                    }
+                    
                     html += `<label class="opt-label" style="${style}">`;
                     html += `<input type="radio" name="q${idx}" value="${opt}" ${userAnswer === opt ? 'checked' : ''} disabled>`;
-                    html += `<span>${escapeHTML(q[opt])}</span>`;
+                    html += `<span>${escapeHTML(displayText)}</span>`;
                     if (correctAnswer === opt) {
                         html += ` <span style="color: var(--success); font-size: 0.85rem;">(الإجابة الصحيحة)</span>`;
                     }

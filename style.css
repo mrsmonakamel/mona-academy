@@ -2761,3 +2761,27 @@ footer {
 .ramadan-answer-text {
     display: none;
 }
+/* ================ STAGE FILTER BAR ================ */
+#stageFilterBar {
+    background: var(--card-bg);
+    padding: 18px 20px;
+    border-radius: 20px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
+    animation: fadeIn 0.3s ease;
+}
+
+#stageFilterBtns button {
+    transition: all 0.25s ease;
+    font-family: 'Cairo', sans-serif;
+}
+
+#stageFilterBtns button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(108, 92, 231, 0.25);
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+}
