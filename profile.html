@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#6c5ce7">
+    <title>ملفي الشخصي - Mona Academy</title>
+    
+    <!-- Preconnect and Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mona Academy">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+</head>
+<body>
+    <!-- Progress Indicator -->
+    <div id="progressIndicator" class="progress-indicator"></div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi-slash"></i>
+        أنت غير متصل بالإنترنت - بعض الميزات قد لا تعمل
+    </div>
+    
+        <header>
+        <div class="logo-text" id="logoText" onclick="window.location.href='index.html'">MS. MONA KAMEL</div>
+        <div class="header-controls">
+            <div class="dark-mode-toggle" onclick="window.toggleDarkMode()">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </div>
+            <div id="authStatus"></div>
+        </div>
+    </header>
+    
+        <!-- Main Content -->
+    <div class="profile-container">
+        <!-- Cover Photo -->
+        <div class="profile-cover">
+            <div class="profile-cover-overlay"></div>
+        </div>
+        
+        <!-- Profile Header -->
+        <div class="profile-header-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar" id="profileAvatar">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <button class="edit-avatar-btn" onclick="showAvatarUpload()" title="تغيير الصورة">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            
+            <div class="profile-title">
+                <h1 id="profileName">...</h1>
+                <p id="profileEmail">...</p>
+                <span class="profile-grade" id="profileGrade">...</span>
+            </div>
+            
+            <div class="profile-stats-header">
+                <div class="stat-item">
+                    <span class="stat-value" id="profilePoints">0</span>
+                    <span class="stat-label">نقطة</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileBadgesCount">0</span>
+                    <span class="stat-label">شارة</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileVideosCount">0</span>
+                    <span class="stat-label">فيديو</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileExamsCount">0</span>
+                    <span class="stat-label">امتحان</span>
+                </div>
+            </div>
+        </div>
+        
+                <!-- Profile Tabs -->
+        <div class="profile-tabs-container">
+            <button class="profile-tab-btn active" onclick="switchProfileTab('badges')">
+                <i class="fas fa-medal"></i>
+                <span>الشارات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('stats')">
+                <i class="fas fa-chart-line"></i>
+                <span>الإحصائيات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('history')">
+                <i class="fas fa-history"></i>
+                <span>سجل النشاط</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('settings')">
+                <i class="fas fa-cog"></i>
+                <span>الإعدادات</span>
+            </button>
+        </div>
+        
+        
+                <!-- Badges Tab -->
+        <div id="badgesTab" class="profile-tab-content active">
+            <div class="badges-summary">
+                <div class="total-points-card">
+                    <i class="fas fa-star"></i>
+                    <div>
+                        <span class="total-points-label">إجمالي النقاط</span>
+                        <span class="total-points-value" id="totalPoints">0</span>
+                    </div>
+                </div>
+                <div class="badges-levels">
+                    <div class="level-badge bronze">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="bronzeCount">0</span>
+                    </div>
+                    <div class="level-badge silver">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="silverCount">0</span>
+                    </div>
+                    <div class="level-badge gold">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="goldCount">0</span>
+                    </div>
+                    <div class="level-badge platinum">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="platinumCount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="userBadges" class="badges-grid">
+                <!-- هنا هتظهر الشارات -->
+            </div>
+        </div>
+        
+                <!-- Stats Tab -->
+        <div id="statsTab" class="profile-tab-content">
+            <div class="stats-grid-modern">
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe)">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">الفيديوهات</span>
+                        <span class="stats-number" id="statVideos">0</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #00b894, #00cec9)">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">الامتحانات</span>
+                        <span class="stats-number" id="statExams">0</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #f1c40f, #f39c12)">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">متوسط الدرجات</span>
+                        <span class="stats-number" id="statAvgScore">0%</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #e74c3c, #ff7675)">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">أيام متتالية</span>
+                        <span class="stats-number" id="statStreak">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-pie"></i> توزيع الشارات</h3>
+                    <canvas id="badgesChart"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-line"></i> تقدم الدرجات</h3>
+                    <canvas id="scoresChart"></canvas>
+                </div>
+            </div>
+
+            <div class="achievements-section">
+                <h3><i class="fas fa-trophy"></i> أبرز الإنجازات</h3>
+                <div id="achievementsList" class="achievements-grid"></div>
+            </div>
+        </div>
+        
+                <!-- History Tab -->
+        <div id="historyTab" class="profile-tab-content">
+            <div class="timeline-filter">
+                <button class="filter-btn active" onclick="filterHistory('all')">الكل</button>
+                <button class="filter-btn" onclick="filterHistory('video')">فيديوهات</button>
+                <button class="filter-btn" onclick="filterHistory('exam')">امتحانات</button>
+                <button class="filter-btn" onclick="filterHistory('badge')">شارات</button>
+            </div>
+            
+            <div class="timeline" id="activityTimeline">
+                <!-- هنا هتظهر الأنشطة -->
+            </div>
+        </div>
+        
+        
+            <!-- Settings Tab -->
+        <div id="settingsTab" class="profile-tab-content">
+            <div class="settings-section">
+                <h3><i class="fas fa-user-edit"></i> تعديل البيانات الشخصية</h3>
+                
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>الاسم الرباعي</label>
+                        <input type="text" id="settingsName" class="settings-input" placeholder="الاسم الكامل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رقم الواتساب</label>
+                        <div class="phone-input-group">
+                            <select id="settingsCountryCode" class="country-code-select">
+                                <option value="+20">+20 (مصر)</option>
+                                <option value="+966">+966 (السعودية)</option>
+                                <option value="+971">+971 (الإمارات)</option>
+                                <option value="+974">+974 (قطر)</option>
+                                <option value="+965">+965 (الكويت)</option>
+                                <option value="+973">+973 (البحرين)</option>
+                                <option value="+968">+968 (عمان)</option>
+                                <option value="+962">+962 (الأردن)</option>
+                            </select>
+                            <input type="tel" id="settingsWhatsapp" class="settings-input" placeholder="1234567890">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رقم ولي الأمر (اختياري)</label>
+                        <div class="phone-input-group">
+                            <select id="settingsParentCountryCode" class="country-code-select">
+                                <option value="+20">+20 (مصر)</option>
+                                <option value="+966">+966 (السعودية)</option>
+                                <option value="+971">+971 (الإمارات)</option>
+                            </select>
+                            <input type="tel" id="settingsParentPhone" class="settings-input" placeholder="1234567890">
+                        </div>
+                    </div>
+                    
+                    <!-- ✅ حقل معرف التليجرام الجديد - هذا هو المهم -->
+                    <div class="form-group">
+                        <label>معرف تليجرام لولي الأمر (لإرسال التقارير)</label>
+                        <div>
+                            <input type="text" id="settingsTelegramChatId" class="settings-input" placeholder="مثلاً 123456789">
+                            <small class="hint-text">أرسل أي كلمة للبوت @EduTrackBot هيجيلك الرقم ده</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>المرحلة الدراسية</label>
+                        <select id="settingsGrade" class="settings-input">
+                            <option value="">-- اختر المرحلة --</option>
+                            <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                            <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                            <option value="السادس الابتدائي">السادس الابتدائي</option>
+                            <option value="الأول الإعدادي">الأول الإعدادي</option>
+                            <option value="الثاني الإعدادي">الثاني الإعدادي</option>
+                            <option value="الثالث الإعدادي">الثالث الإعدادي</option>
+                            <option value="الأول الثانوي">الأول الثانوي</option>
+                            <option value="الثاني الثانوي">الثاني الثانوي</option>
+                            <option value="الثالث الثانوي">الثالث الثانوي</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-actions">
+                    <button class="btn-save" onclick="saveProfileChanges()">
+                        <i class="fas fa-save"></i> حفظ التغييرات
+                    </button>
+                    <button class="btn-cancel" onclick="resetProfileChanges()">
+                        <i class="fas fa-undo"></i> إلغاء
+                    </button>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3><i class="fas fa-shield-alt"></i> الأمان والخصوصية</h3>
+                
+                <div class="security-item">
+                    <div class="security-info">
+                        <i class="fas fa-lock"></i>
+                        <div>
+                            <h4>تغيير كلمة المرور</h4>
+                            <p>قم بتحديث كلمة المرور الخاصة بك</p>
+                        </div>
+                    </div>
+                    <button class="btn-security" onclick="showChangePasswordModal()">
+                        <i class="fas fa-edit"></i> تغيير
+                    </button>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-info">
+                        <i class="fas fa-id-card"></i>
+                        <div>
+                            <h4>كود الطالب</h4>
+                            <p>الكود الخاص بك للاشتراك في الكورسات</p>
+                        </div>
+                    </div>
+                    <span class="student-code" id="settingsStudentId">********</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3><i class="fas fa-lock"></i> تغيير كلمة المرور</h3>
+            
+            <div class="form-group">
+                <label>كلمة المرور الحالية</label>
+                <input type="password" id="currentPassword" class="settings-input">
+            </div>
+            
+            <div class="form-group">
+                <label>كلمة المرور الجديدة</label>
+                <input type="password" id="newPassword" class="settings-input">
+            </div>
+            
+            <div class="form-group">
+                <label>تأكيد كلمة المرور الجديدة</label>
+                <input type="password" id="confirmNewPassword" class="settings-input">
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-save" onclick="changePassword()">
+                    <i class="fas fa-check"></i> تأكيد
+                </button>
+                <button class="btn-cancel" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div id="avatarUploadModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3><i class="fas fa-camera"></i> تغيير الصورة الشخصية</h3>
+            
+            <div class="avatar-preview" id="avatarPreview">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            
+            <input type="file" id="avatarFile" accept="image/*" style="display: none;">
+            
+            <button class="btn-select-image" onclick="document.getElementById('avatarFile').click()">
+                <i class="fas fa-image"></i> اختيار صورة
+            </button>
+            
+            <div class="modal-actions">
+                <button class="btn-save" onclick="uploadAvatar()">
+                    <i class="fas fa-upload"></i> رفع
+                </button>
+                <button class="btn-cancel" onclick="closeAvatarModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    
+        <!-- Footer -->
+    <footer>
+        <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></p>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="script.js"></script>
+    <script src="notifications.js"></script>
+    <script src="badges.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+        <script>
+        // PWA Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.log('❌ Service Worker failed:', err));
+            });
+        }
+
+        // Dark Mode
+        function initDarkMode() {
+            const savedMode = localStorage.getItem('darkMode');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            
+            if (savedMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                if (darkModeIcon) {
+                    darkModeIcon.classList.remove('fa-moon');
+                    darkModeIcon.classList.add('fa-sun');
+                }
+            }
+        }
+        initDarkMode();
+
+        // Tab Switching
+        window.switchProfileTab = function(tab) {
+            document.querySelectorAll('.profile-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.profile-tab-content').forEach(content => content.classList.remove('active'));
+            
+            document.querySelector(`[onclick="switchProfileTab('${tab}')"]`).classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+        };
+
+        window.filterHistory = function(type) {
+            // هتتعمل بعدين
+        };
+
+        window.showAvatarUpload = function() {
+            document.getElementById('avatarUploadModal').style.display = 'flex';
+        };
+
+        window.closeAvatarModal = function() {
+            document.getElementById('avatarUploadModal').style.display = 'none';
+        };
+
+        window.showChangePasswordModal = function() {
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        };
+
+        window.closePasswordModal = function() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+        };
+    </script>
+    
+        <script>
+        // دوال حفظ وإلغاء التغييرات في الملف الشخصي
+        window.saveProfileChanges = async function() {
+            const name = document.getElementById('settingsName')?.value.trim();
+            const countryCode = document.getElementById('settingsCountryCode')?.value;
+            const whatsapp = document.getElementById('settingsWhatsapp')?.value.trim();
+            const parentCountryCode = document.getElementById('settingsParentCountryCode')?.value;
+            const parentPhone = document.getElementById('settingsParentPhone')?.value.trim();
+            const telegramChatId = document.getElementById('settingsTelegramChatId')?.value.trim();
+            const grade = document.getElementById('settingsGrade')?.value;
+
+            if (!name) {
+                window.showToast('❌ يرجى إدخال الاسم', 'error');
+                return;
+            }
+
+            const fullWhatsapp = countryCode + (whatsapp || '');
+            const fullParentPhone = parentCountryCode + (parentPhone || '');
+
+            const updateData = {
+                name: name,
+                whatsapp: fullWhatsapp || '',
+                parentPhone: fullParentPhone || '',
+                grade: grade
+            };
+
+            if (telegramChatId) {
+                if (!/^\d+$/.test(telegramChatId)) {
+                    window.showToast('❌ معرف تليجرام يجب أن يكون أرقاماً فقط', 'error');
+                    return;
+                }
+                updateData.telegramChatId = telegramChatId;
+            }
+
+            window.startProgress();
+            try {
+                await update(ref(db, `students/${currentUser.uid}`), updateData);
+                window.showToast('✅ تم حفظ التغييرات', 'success');
+                // إعادة تحميل البيانات
+                if (typeof window.loadProgressVisuals === 'function') {
+                    window.loadProgressVisuals();
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                window.showToast('❌ حدث خطأ', 'error');
+            } finally {
+                window.stopProgress();
+            }
+        };
+
+        window.resetProfileChanges = function() {
+            if (currentUser) {
+                get(child(dbRef, `students/${currentUser.uid}`)).then(snap => {
+                    if (snap.exists()) {
+                        const data = snap.val();
+                        document.getElementById('settingsName').value = data.name || '';
+                        document.getElementById('settingsWhatsapp').value = (data.whatsapp || '').replace(/^\+\d+/, '');
+                        document.getElementById('settingsParentPhone').value = (data.parentPhone || '').replace(/^\+\d+/, '');
+                        document.getElementById('settingsGrade').value = data.grade || '';
+                        document.getElementById('settingsTelegramChatId').value = data.telegramChatId || '';
+                    }
+                });
+            }
+        };
+    </script>
+    
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="badges.js?v=1.0"></script>
+    <script src="progress-visual.js?v=1.0"></script>
+    <script src="parent-reporter.js?v=1.0"></script>
+
+    <script>
+        // انتظار تحميل currentUser
+        const checkUserInterval = setInterval(() => {
+            if (window.currentUser) {
+                clearInterval(checkUserInterval);
+                // تأخير بسيط لضمان تحميل باقي العناصر
+                setTimeout(() => {
+                    if (typeof window.loadProgressVisuals === 'function') {
+                        window.loadProgressVisuals();
+                    }
+                    if (typeof window.loadUserBadges === 'function') {
+                        window.loadUserBadges(window.currentUser.uid);
+                    }
+                }, 500);
+            }
+        }, 100);
+    </script>
+    
+</body>
+</html>
+

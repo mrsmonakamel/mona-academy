@@ -1364,6 +1364,78 @@
                 overflow: visible;
             }
         }
+        
+        /* ================ SEARCH ENHANCEMENTS ================ */
+  .advanced-search-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    padding-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.tab-btn {
+    background: none;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Cairo';
+    font-weight: 600;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px;
+}
+
+.tab-btn:hover {
+    background: var(--hover-bg);
+    color: var(--primary);
+}
+
+.tab-btn.active {
+    background: var(--primary-gradient);
+    color: white;
+}
+
+.tab-btn i {
+    font-size: 1.1rem;
+}
+
+.search-tab {
+    animation: fadeIn 0.3s ease;
+}
+
+.search-count {
+    background: var(--primary-light);
+    color: white;
+    padding: 2px 8px;
+    border-radius: 50px;
+    font-size: 0.8rem;
+}
+
+/* تحسينات البحث */
+#studentSearch, #resultSearch, #logSearch, #notificationSearch, #perfectScoreSearch {
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+#studentSearch:focus, #resultSearch:focus, #logSearch:focus, #notificationSearch:focus, #perfectScoreSearch:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+/* نتائج البحث */
+.search-result-highlight {
+    background-color: rgba(255, 215, 0, 0.2);
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: bold;
+}
+        
     </style>
 </head>
 <body>
@@ -1406,9 +1478,6 @@
             <div class="nav-link touch-feedback" onclick="showSection('examsSection', this)">
                 <i class="fas fa-edit"></i> مصنع الاختبارات
             </div>
-            <div class="nav-link touch-feedback" onclick="showSection('importExamSection', this)">
-                <i class="fas fa-file-import"></i> استيراد الامتحانات <span style="font-size:0.7rem; background:#f1c40f; color:#333; padding:2px 7px; border-radius:50px; margin-right:5px;">تجريبي</span>
-            </div>
             <div class="nav-link touch-feedback" onclick="showSection('studentSearchSection', this)">
                 <i class="fas fa-search"></i> بحث متقدم
             </div>
@@ -1443,6 +1512,22 @@
                 <i class="fas fa-chart-line"></i> التحليلات
             </div>
             
+            <div class="nav-link touch-feedback" onclick="showSection('maintenanceSection', this)">
+    <i class="fas fa-tools"></i> وضع الصيانة
+</div>
+
+<div class="nav-link touch-feedback" onclick="showSection('assignmentsSection', this)">
+    <i class="fas fa-book"></i> إدارة الواجبات
+</div>
+
+         <div class="nav-link touch-feedback" onclick="showSection('parentReportsSection', this)">
+             <i class="fas fa-paper-plane"></i> تقارير أولياء الأمور
+         </div>
+         <div class="nav-link touch-feedback" onclick="showSection('importExamSection', this)" style="border: 1px solid rgba(108,92,231,0.4);">
+             <i class="fas fa-file-import"></i> استيراد الامتحانات
+             <span style="background: #ffd700; color: #1a1a1a; font-size: 0.6rem; padding: 2px 6px; border-radius: 50px; font-weight: 900; margin-right: auto;">تجريبي</span>
+         </div>
+            
             <div class="sidebar-footer">
                 <a href="index.html" class="nav-link touch-feedback" style="color: var(--secondary);">
                     <i class="fas fa-home"></i> العودة للموقع
@@ -1451,6 +1536,9 @@
                     <i class="fas fa-power-off"></i> خروج
                 </div>
             </div>
+                     <div class="nav-link touch-feedback" onclick="showSection('maintenanceSection', this)">
+             <i class="fas fa-tools"></i> وضع الصيانة
+         </div>
         </aside>
 
         <!-- Main Content -->
@@ -1496,6 +1584,12 @@
                         <i class="fas fa-save"></i> حفظ الكورس
                     </button>
                 </div>
+                
+                <!-- إضافة حقل رابط واتساب -->
+<div style="margin-top: 20px;">
+    <label style="display: block; margin-bottom: 10px; font-weight: bold;">رابط مجموعة واتساب (اختياري):</label>
+    <input type="url" id="cWhatsappLink" class="reg-input" placeholder="https://chat.whatsapp.com/..." dir="ltr">
+</div>
                 
                 <div id="coursesGrid" class="grid-system">
                     <div class="skeleton"></div>
@@ -1545,7 +1639,7 @@
                             <i class="fas fa-list"></i> سؤال اختيارات
                         </button>
                         <button class="btn btn-warning touch-feedback" onclick="addNewQuestion('tf')" style="flex:1; min-width: 150px;">
-                            <i class="fas fa-check-circle"></i> صح/خطأ
+                            <i class="fas fa-check-circle"></i> True/False
                         </button>
                     </div>
                     
@@ -1554,102 +1648,52 @@
                     </button>
                 </div>
             </section>
-
-            <!-- ===== IMPORT EXAM SECTION ===== -->
-            <section id="importExamSection" class="admin-section">
-
-                <!-- طريقة الاستخدام -->
-                <div class="card" style="background: linear-gradient(135deg, #1a1233, #2d1b69); color: white; border: none;">
-                    <h3 style="color: #ffd700; margin-bottom: 15px;"><i class="fas fa-info-circle"></i> طريقة الاستخدام</h3>
-                    <p style="margin-bottom: 12px; line-height: 2; font-size: 0.9rem;">
-                        اكتب أو الصق الأسئلة في الصندوق بالشكل التالي:
-                    </p>
-                    <div style="background: rgba(0,0,0,0.35); border-radius: 12px; padding: 14px; font-size: 0.82rem; line-height: 2.2; direction: ltr; text-align: left; border-right: 3px solid #ffd700; white-space: pre-line; color: #dfe6e9;">نص السؤال
-A: الخيار الأول
-B: الخيار الثاني
-C: الخيار الثالث
-D: الخيار الرابع
-B
-
-نص السؤال التاني
-A: الخيار الأول
-B: الخيار الثاني
-C: الخيار الثالث
-D: الخيار الرابع
-C</div>
-                    <div style="margin-top: 15px; background: rgba(255,215,0,0.1); border: 1px solid #ffd700; border-radius: 10px; padding: 12px; font-size: 0.85rem; line-height: 2;">
-                        <p><strong style="color:#ffd700;">⚠️ مهم جداً — القواعد:</strong></p>
-                        <p>✅ لازم يكون في <strong style="color:#ffd700;">سطر فاضي واحد</strong> بين كل سؤال والتاني</p>
-                        <p>✅ الإجابة الصح: اكتب الحرف لوحده <strong style="color:#ffd700;">B</strong> أو بنجمة <strong style="color:#ffd700;">* B</strong> — الاتنين شغالين</p>
-                        <p>✅ سؤال صح/خطأ: اكتب <strong style="color:#ffd700;">صح</strong> أو <strong style="color:#ffd700;">خطأ</strong> في السطر الأخير</p>
-                        <p>✅ الخيارات لازم تبدأ بـ <strong style="color:#ffd700;">A:</strong> أو <strong style="color:#ffd700;">A-</strong> أو <strong style="color:#ffd700;">A.</strong></p>
-                        <p>❌ لو نسيت السطر الفاضي بين الأسئلة مش هيشتغل</p>
-                    </div>
-                    <div style="margin-top: 12px; background: rgba(0,184,148,0.15); border: 1px solid #00b894; border-radius: 10px; padding: 12px; font-size: 0.85rem; line-height: 2;">
-                        <p><strong style="color:#00b894;">💡 تيب: لو بتستخدم AI عشان تحول صور الامتحان:</strong></p>
-                        <p>ابعت الصورة وقوله:</p>
-                        <p style="background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; font-size: 0.8rem; direction: ltr; text-align: left;">"Convert questions to: Question, A: B: C: D: then correct letter alone. Empty line between questions."</p>
-                    </div>
-                </div>
-
-                <!-- الفورم -->
+            
+                        <!-- Assignments Section -->
+            <section id="assignmentsSection" class="admin-section">
                 <div class="card">
-                    <h3 style="margin-bottom: 20px;"><i class="fas fa-file-import"></i> استيراد امتحان جديد</h3>
-
-                    <label style="font-weight: bold; margin-bottom: 8px; display: block;">اختر الكورس:</label>
-                    <select id="importFolderSelect" class="mt-1" style="margin-bottom: 16px;"></select>
-
-                    <label style="font-weight: bold; margin-bottom: 8px; display: block;">عنوان الامتحان:</label>
-                    <input type="text" id="importExamTitle" placeholder="مثال: امتحان Unit 3 - Used To" class="mt-1" style="margin-bottom: 16px;">
-
-                    <label style="font-weight: bold; margin-bottom: 8px; display: block;">الأسئلة:</label>
-                    <textarea id="importRawText" placeholder="الصق الأسئلة هنا..." style="width:100%; min-height: 260px; padding: 14px; border: 2px solid #e0ddf7; border-radius: 14px; font-family: 'Cairo', sans-serif; font-size: 0.88rem; line-height: 1.9; resize: vertical; outline: none; background: #fafafa;"></textarea>
-
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
-                        <button class="btn btn-secondary touch-feedback" onclick="importLoadExample()" style="flex:1; min-width:140px;">
-                            <i class="fas fa-magic"></i> مثال توضيحي
-                        </button>
-                        <button class="btn btn-warning touch-feedback" onclick="importPreview()" style="flex:1; min-width:140px;">
-                            <i class="fas fa-eye"></i> معاينة الأسئلة
-                        </button>
+                    <h3><i class="fas fa-book"></i> إدارة الواجبات</h3>
+                    
+                    <div class="form-group">
+                        <label>اختر الكورس</label>
+                        <select id="assignmentCourseSelect" class="reg-input"></select>
                     </div>
-
-                    <div id="importErrorBox" style="display:none; background:#ffe2e2; border:2px solid #ff7675; border-radius:12px; padding:12px; margin-top:14px; color:#c0392b; font-size:0.88rem;"></div>
-                </div>
-
-                <!-- معاينة -->
-                <div id="importPreviewSection" style="display:none;">
-                    <div class="card">
-                        <div style="display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-bottom: 20px;">
-                            <div style="background:#f0eefc; border-radius:14px; padding:14px; text-align:center; border:2px solid #e0ddf7;">
-                                <div style="font-size:1.8rem; font-weight:900; color:var(--primary);" id="impStatTotal">0</div>
-                                <div style="font-size:0.72rem; color:#636e72; font-weight:600;">إجمالي</div>
-                            </div>
-                            <div style="background:#f0eefc; border-radius:14px; padding:14px; text-align:center; border:2px solid #e0ddf7;">
-                                <div style="font-size:1.8rem; font-weight:900; color:var(--primary);" id="impStatMcq">0</div>
-                                <div style="font-size:0.72rem; color:#636e72; font-weight:600;">اختيارات</div>
-                            </div>
-                            <div style="background:#f0eefc; border-radius:14px; padding:14px; text-align:center; border:2px solid #e0ddf7;">
-                                <div style="font-size:1.8rem; font-weight:900; color:var(--primary);" id="impStatTf">0</div>
-                                <div style="font-size:0.72rem; color:#636e72; font-weight:600;">صح/خطأ</div>
-                            </div>
-                        </div>
-                        <div id="importPreviewContainer"></div>
-                        <button class="btn btn-main touch-feedback" style="margin-top:20px;" onclick="importPublish()">
-                            <i class="fas fa-cloud-upload-alt"></i> نشر الامتحان
-                        </button>
+                    
+                    <div class="form-group">
+                        <label>عنوان الواجب</label>
+                        <input type="text" id="assignmentTitle" class="reg-input" placeholder="مثلاً: الواجب الأول">
                     </div>
-                </div>
-
-                <div id="importSuccessBox" style="display:none; background:#d4f7ef; border:2px solid #00b894; border-radius:14px; padding:20px; text-align:center; margin-top:10px;">
-                    <div style="font-size:3rem; margin-bottom:10px;">🎉</div>
-                    <h3 style="color:#00a080; margin-bottom:8px;">تم نشر الامتحان بنجاح!</h3>
-                    <p style="color:#636e72; margin-bottom:16px;">الامتحان متاح الآن للطلاب.</p>
-                    <button class="btn btn-main touch-feedback" onclick="importReset()" style="max-width:250px; margin:0 auto;">
-                        <i class="fas fa-plus"></i> استيراد امتحان جديد
+                    
+                    <div class="form-group">
+                        <label>وصف الواجب</label>
+                        <textarea id="assignmentDesc" rows="3" class="reg-input" placeholder="شرح الواجب..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تاريخ التسليم</label>
+                        <input type="date" id="assignmentDueDate" class="reg-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>إجمالي الدرجات</label>
+                        <input type="number" id="assignmentTotalPoints" class="reg-input" value="100">
+                    </div>
+                    
+                    <hr>
+                    <h4>الأسئلة</h4>
+                    <div id="assignmentQuestionsArea"></div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px;">
+                        <button class="btn btn-secondary" onclick="addAssignmentQuestion('mcq')">+ سؤال اختيارات</button>
+                        <button class="btn btn-warning" onclick="addAssignmentQuestion('tf')">+ True/False</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('essay')">+ سؤال مقالي</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('file')">+ رفع ملف</button>
+                    </div>
+                    
+                    <button class="btn btn-main" style="margin-top: 20px;" onclick="saveAssignment()">
+                        <i class="fas fa-save"></i> حفظ الواجب
                     </button>
                 </div>
-
             </section>
 
             <!-- Student Search Section -->
@@ -1893,6 +1937,196 @@ C</div>
                     <div id="adminLeaderboard" class="leaderboard-table"></div>
                 </div>
             </section>
+
+            <!-- Maintenance Mode Section -->
+            <section id="maintenanceSection" class="admin-section">
+                <div class="card">
+                    <h3><i class="fas fa-tools"></i> إعدادات وضع الصيانة</h3>
+                    
+                    <div class="form-group">
+                        <label>تفعيل وضع الصيانة</label>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="maintenanceEnabled" style="width: auto;">
+                            <span>الموقع سيكون غير متاح للمستخدمين العاديين</span>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رسالة الصيانة (تظهر للمستخدمين)</label>
+                        <textarea id="maintenanceMessage" rows="3" placeholder="الموقع تحت الصيانة حالياً، يرجى المحاولة لاحقاً..." class="reg-input"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button class="btn btn-main touch-feedback" onclick="saveMaintenanceSettings()">
+                            <i class="fas fa-save"></i> حفظ الإعدادات
+                        </button>
+                        <button class="btn btn-secondary touch-feedback" onclick="loadMaintenanceSettings()">
+                            <i class="fas fa-sync-alt"></i> تحديث
+                        </button>
+                    </div>
+                    
+                    <div id="maintenanceStatus" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 10px; display: none;">
+                        <strong>آخر تحديث:</strong> <span id="maintenanceUpdatedAt"></span>
+                    </div>
+                </div>
+            </section>    
+                     <!-- Parent Reports Section -->
+         <section id="parentReportsSection" class="admin-section">
+             <div class="card">
+                 <div class="section-header">
+                     <h2><i class="fas fa-telegram" style="color: #0088cc;"></i> تقارير أولياء الأمور عبر تليجرام</h2>
+                     <button class="btn btn-main touch-feedback" onclick="sendBulkReports()">
+                         <i class="fas fa-paper-plane"></i> إرسال تقارير لجميع الطلاب
+                     </button>
+                 </div>
+
+                 <div class="table-container">
+                     <table>
+                         <thead>
+                             <tr>
+                                 <th>الطالب</th>
+                                 <th>معرف تليجرام</th>
+                                 <th>الإجراء</th>
+                             </tr>
+                         </thead>
+                         <tbody id="parentReportsList">
+                             <tr><td colspan="3" class="empty-state">جاري التحميل...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+             </div>
+         </section>
+                     <!-- Assignments Section -->
+            <section id="assignmentsSection" class="admin-section">
+                <div class="card">
+                    <h3><i class="fas fa-book"></i> إدارة الواجبات</h3>
+                    
+                    <div class="form-group">
+                        <label>اختر الكورس</label>
+                        <select id="assignmentCourseSelect" class="reg-input"></select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>عنوان الواجب</label>
+                        <input type="text" id="assignmentTitle" class="reg-input" placeholder="مثلاً: الواجب الأول">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>وصف الواجب</label>
+                        <textarea id="assignmentDesc" rows="3" class="reg-input" placeholder="شرح الواجب..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تاريخ التسليم</label>
+                        <input type="date" id="assignmentDueDate" class="reg-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>إجمالي الدرجات</label>
+                        <input type="number" id="assignmentTotalPoints" class="reg-input" value="100">
+                    </div>
+                    
+                    <hr>
+                    <h4>الأسئلة</h4>
+                    <div id="assignmentQuestionsArea"></div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="addAssignmentQuestion('mcq')">+ سؤال اختيارات</button>
+                        <button class="btn btn-warning" onclick="addAssignmentQuestion('tf')">+ True/False</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('essay')">+ سؤال مقالي</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('file')">+ رفع ملف</button>
+                    </div>
+                    
+                    <button class="btn btn-main" style="margin-top: 20px;" onclick="saveAssignment()">
+                        <i class="fas fa-save"></i> حفظ الواجب
+                    </button>
+                </div>
+            </section>
+            <!-- Import Exam Section -->
+            <section id="importExamSection" class="admin-section">
+                <div class="card">
+                    <div class="section-header">
+                        <h2><i class="fas fa-file-import" style="color: var(--primary);"></i> استيراد امتحان جديد</h2>
+                    </div>
+
+                    <div style="background: linear-gradient(135deg, #f8f7ff, #eef0ff); border: 2px solid #d4d0ff; border-radius: 16px; padding: 20px; margin-bottom: 25px;">
+                        <p style="font-weight: 800; color: var(--primary); margin-bottom: 12px;">⚠️ موجيد — القواعد:</p>
+                        <ul style="list-style: none; padding: 0; color: #444; line-height: 2;">
+                            <li>✅ لازم يكون في <strong>سطر فاضي واحد</strong> بين كل سؤال والتاني</li>
+                            <li>✅ الإجابة الصح: اكتب الحرف لوحده <b>B</b> أو بنجمة <b>* B</b> — الاتنين شغالين</li>
+                            <li>✅ سؤال True/False: اكتب <b>True</b> أو <b>False</b> في السطر الأخير</li>
+                            <li>✅ الخيارات لازم تبدأ بـ <b>A:</b> أو <b>A-</b> أو <b>A.</b> أو <b>A)</b></li>
+                            <li>❌ لو نسيت السطر الفاضي بين الأسئلة مش هيشتغل</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #fffbe6; border: 1.5px solid #ffd700; border-radius: 12px; padding: 15px; margin-bottom: 25px;">
+                        <p style="color: #b8860b; font-weight: 700;">💡 تيب: لو بتستخدم AI عشان تحول صور الامتحان:</p>
+                        <p style="color: #555; margin-top: 8px;">ابعت الصورة وقوله:</p>
+                        <code style="display: block; background: #fff8dc; padding: 12px; border-radius: 8px; margin-top: 8px; font-size: 0.85rem; direction: ltr;">"Convert questions to: Question, A: B: C: D: then correct letter alone. Empty line between questions."</code>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-weight: 700;">اختر الكورس:</label>
+                        <select id="importFolderSelect" class="reg-input"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-weight: 700;">عنوان الامتحان:</label>
+                        <input type="text" id="importExamTitle" class="reg-input" placeholder="مثلاً: Unit 1 Exam">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-weight: 700;">الصق الأسئلة هنا:</label>
+                        <textarea id="importRawText" rows="12" class="reg-input" style="font-family: monospace; font-size: 0.9rem; direction: ltr;" placeholder="Champions win medals after hard training.&#10;A: use to&#10;B: used to&#10;C: are used to&#10;D: using&#10;B&#10;&#10;The Nile is the longest river in Africa.&#10;True"></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                        <button class="btn btn-main touch-feedback" onclick="importPreview()" style="flex: 2;">
+                            <i class="fas fa-eye"></i> معاينة الأسئلة
+                        </button>
+                        <button class="btn touch-feedback" onclick="importLoadExample()" style="flex: 1; background: #f0eeff; color: var(--primary); border: 1px solid var(--primary);">
+                            <i class="fas fa-lightbulb"></i> مثال
+                        </button>
+                        <button class="btn btn-danger touch-feedback" onclick="importReset()" style="flex: 1;">
+                            <i class="fas fa-redo"></i> مسح
+                        </button>
+                    </div>
+
+                    <div id="importErrorBox" style="display:none; background:#fff0f0; border:2px solid var(--danger); border-radius:12px; padding:14px; color:var(--danger); margin-bottom:15px; font-weight:600;"></div>
+                    <div id="importSuccessBox" style="display:none; background:#f0fff8; border:2px solid #00b894; border-radius:12px; padding:14px; color:#00b894; margin-bottom:15px; font-weight:700; font-size:1.1rem; text-align:center;">
+                        ✅ تم نشر الامتحان بنجاح!
+                    </div>
+                </div>
+
+                <!-- قسم المعاينة -->
+                <div id="importPreviewSection" style="display:none;" class="card">
+                    <div class="section-header">
+                        <h3><i class="fas fa-list-check" style="color: var(--secondary);"></i> معاينة الأسئلة</h3>
+                    </div>
+
+                    <div style="display: flex; gap: 15px; margin-bottom: 20px; flex-wrap: wrap;">
+                        <div style="background: #f0eeff; border-radius: 12px; padding: 12px 20px; text-align: center; flex: 1; min-width: 100px;">
+                            <div style="font-size: 1.8rem; font-weight: 900; color: var(--primary);" id="impStatTotal">0</div>
+                            <div style="color: #666; font-size: 0.85rem;">إجمالي الأسئلة</div>
+                        </div>
+                        <div style="background: #e8f5f0; border-radius: 12px; padding: 12px 20px; text-align: center; flex: 1; min-width: 100px;">
+                            <div style="font-size: 1.8rem; font-weight: 900; color: #00b894;" id="impStatMcq">0</div>
+                            <div style="color: #666; font-size: 0.85rem;">اختيارات متعددة</div>
+                        </div>
+                        <div style="background: #fff8e1; border-radius: 12px; padding: 12px 20px; text-align: center; flex: 1; min-width: 100px;">
+                            <div style="font-size: 1.8rem; font-weight: 900; color: #f39c12;" id="impStatTf">0</div>
+                            <div style="color: #666; font-size: 0.85rem;">True / False</div>
+                        </div>
+                    </div>
+
+                    <div id="importPreviewContainer"></div>
+
+                    <button class="btn btn-secondary touch-feedback" onclick="importPublish()" style="width: 100%; margin-top: 20px; font-size: 1.1rem;">
+                        <i class="fas fa-cloud-upload-alt"></i> نشر الامتحان
+                    </button>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -1932,6 +2166,9 @@ C</div>
                     <img id="editPreviewImg" src="" alt="معاينة الصورة">
                 </div>
                 
+                <label style="font-weight: bold;">رابط مجموعة واتساب:</label>
+<input type="url" id="editWhatsappLink" class="reg-input" placeholder="https://chat.whatsapp.com/..." dir="ltr" style="margin-bottom: 15px;">
+                
                 <button class="btn btn-main touch-feedback" id="saveBasicBtn" onclick="updateCourseBasic()" style="margin-top: 15px;">
                     <i class="fas fa-save"></i> حفظ البيانات
                 </button>
@@ -1943,10 +2180,7 @@ C</div>
                 <input type="text" id="vTitle" placeholder="عنوان الفيديو">
                 <input type="text" id="vUrl" placeholder="رابط اليوتيوب" dir="ltr">
             </div>
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
-                <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)">
-                <input type="text" id="vStage" placeholder="المرحلة / الوحدة (مثال: الوحدة الأولى)">
-            </div>
+            <input type="number" id="vOrder" placeholder="الترتيب (1, 2, ..)" style="margin-top: 15px;">
             
             <button class="btn btn-secondary touch-feedback" style="margin-top:15px; width:100%;" onclick="addVideoToCourse()">
                 <i class="fas fa-video"></i> إضافة الفيديو
@@ -1989,10 +2223,7 @@ C</div>
             <input type="text" id="editVideoUrl" dir="ltr" style="margin-bottom: 20px;">
             
             <label style="font-weight: bold;">الترتيب:</label>
-            <input type="number" id="editVideoOrder" style="margin-bottom: 15px;">
-            
-            <label style="font-weight: bold;">المرحلة / الوحدة:</label>
-            <input type="text" id="editVideoStage" placeholder="مثال: الوحدة الأولى، الترم الأول" style="margin-bottom: 25px;">
+            <input type="number" id="editVideoOrder" style="margin-bottom: 25px;">
             
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-main touch-feedback" onclick="saveVideoChanges()" style="flex: 2;">
@@ -2034,7 +2265,7 @@ C</div>
                         <i class="fas fa-plus"></i> اختيارات
                     </button>
                     <button class="btn btn-warning btn-sm touch-feedback" onclick="addEditQuestion('tf')">
-                        <i class="fas fa-plus"></i> صح/خطأ
+                        <i class="fas fa-plus"></i> True/False
                     </button>
                 </div>
             </div>
@@ -2073,7 +2304,7 @@ C</div>
     <script type="module">
         // ================ FIREBASE IMPORTS ================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, onValue, push, update, remove, set, get, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, child, onValue, push, update, remove, set, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // ================ CONFIG ================
@@ -2089,8 +2320,24 @@ C</div>
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
+        const dbRef = ref(db);
 
-        // ================ CONSTANTS ================
+        // ======= window exports للملفات الخارجية مثل parent-reporter.js =======
+        window.db = db;
+        window.dbRef = dbRef;
+        window.ref = ref;
+        window.get = get;
+        window.push = push;
+        window.set = set;
+        window.update = update;
+        window.remove = remove;
+        window.onValue = onValue;
+        window.child = child;
+        // escapeHTML للملفات الخارجية
+        window.escapeHTML = function(str) {
+            if (str == null) return '';
+            return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+        };
         const IMGBB_API_KEY = "049eb1f0e45afcb93f3c45a1400a29ef";
         const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
         
@@ -2199,10 +2446,7 @@ C</div>
         // ================ CLEANUP ================
         function cleanupListeners() {
             dataListeners.forEach((listener, key) => {
-                // ✅ استخدام دالة unsubscribe مباشرة
-                if (typeof listener?.unsubscribe === 'function') {
-                    listener.unsubscribe();
-                } else if (listener?.ref && listener?.callback) {
+                if (listener?.ref && listener?.callback) {
                     off(listener.ref, 'value', listener.callback);
                 }
             });
@@ -2291,12 +2535,10 @@ C</div>
             
             const addListener = (name, refPath, callback) => {
                 const dbRef = ref(db, refPath);
-                // ✅ onValue يرجع دالة unsubscribe مباشرة
-                const unsubscribe = onValue(dbRef, (snapshot) => {
+                const listener = onValue(dbRef, (snapshot) => {
                     callback(snapshot.val() || {});
                 });
-                // ✅ حفظ دالة الـ unsubscribe مع الـ ref للتنظيف لاحقاً
-                dataListeners.set(name, { ref: dbRef, unsubscribe });
+                dataListeners.set(name, { ref: dbRef, callback: listener });
             };
 
             addListener('students', 'students', (data) => {
@@ -2636,6 +2878,7 @@ C</div>
             const grade = document.getElementById('cGrade')?.value;
             const imgUrl = document.getElementById('cImgUrl')?.value.trim();
             const imgFile = document.getElementById('cImageFile')?.files[0];
+            const whatsappLink = document.getElementById('cWhatsappLink')?.value.trim() || '';
             
             if (!name) {
                 showToast('يرجى إدخال اسم الكورس', 'error');
@@ -2646,6 +2889,7 @@ C</div>
                 showToast('يرجى اختيار المرحلة الدراسية', 'error');
                 return;
             }
+      
             
             let imageData = 'mona.jpg';
             
@@ -2677,6 +2921,7 @@ C</div>
                     name, 
                     img: imageData,
                     grade,
+                    whatsappGroupLink: whatsappLink,
                     avgRating: 0, 
                     reviewCount: 0 
                 });
@@ -2697,6 +2942,7 @@ C</div>
         // ================ OPEN EDIT MODAL ================
         window.openEditModal = async function(id, folderData) {
             activeCID = id;
+            document.getElementById('editWhatsappLink').value = folderData.whatsappGroupLink || '';
             document.getElementById('editNameField').value = folderData.name || '';
             document.getElementById('editGradeField').value = folderData.grade || '';
             document.getElementById('editImgField').value = '';
@@ -2789,102 +3035,92 @@ C</div>
 
         // ================ UPDATE COURSE ================
         window.updateCourseBasic = async function() {
-    const name = document.getElementById('editNameField')?.value.trim();
-    const grade = document.getElementById('editGradeField')?.value;
-    const imgUrl = document.getElementById('editImgField')?.value.trim();
-    const imgFile = document.getElementById('editImageFile')?.files[0];
-    
-    if (!activeCID || !name) {
-        showToast('يرجى إدخال اسم الكورس', 'error');
-        return;
-    }
-    
-    try {
-        startProgress();
-        const updateData = { name };
-        if (grade) updateData.grade = grade;
-        
-        // حالة 1: يوجد ملف صورة مرفوع
-        if (imgFile) {
-            showToast('🔄 جاري رفع الصورة...', 'success');
+            const name = document.getElementById('editNameField')?.value.trim();
+            const grade = document.getElementById('editGradeField')?.value;
+            const imgUrl = document.getElementById('editImgField')?.value.trim();
+            const imgFile = document.getElementById('editImageFile')?.files[0];
+            const whatsappLink = document.getElementById('editWhatsappLink')?.value.trim() || '';
             
-            const formData = new FormData();
-            formData.append('key', '049eb1f0e45afcb93f3c45a1400a29ef');
-            formData.append('image', imgFile);
-            
-            const response = await fetch('https://api.imgbb.com/1/upload', {
-                method: 'POST',
-                body: formData
-            });
-            
-            const data = await response.json();
-            
-            if (data.success) {
-                updateData.img = data.data.url;
-                showToast('✅ تم رفع الصورة', 'success');
-            } else {
-                showToast('❌ فشل رفع الصورة', 'error');
-                stopProgress();
+            if (!activeCID || !name) {
+                showToast('يرجى إدخال اسم الكورس', 'error');
                 return;
             }
-        } 
-        // حالة 2: يوجد رابط صورة
-        else if (imgUrl) {
-            updateData.img = imgUrl;
-        }
-        
-        // حفظ التحديثات
-        await update(ref(db, `folders/${activeCID}`), updateData);
-        showToast('✅ تم تحديث الكورس بنجاح');
-        
-        // تنظيف الحقول
-        document.getElementById('editImgField').value = '';
-        document.getElementById('editImageFile').value = '';
-        document.getElementById('editImagePreview').style.display = 'none';
-        
-        // إعادة فتح المودال
-        const folderSnap = await get(ref(db, `folders/${activeCID}`));
-        openEditModal(activeCID, folderSnap.val() || {});
-        
-    } catch (error) {
-        console.error('Error:', error);
-        showToast('❌ حدث خطأ', 'error');
-    } finally {
-        stopProgress();
-    }
-};
+            
+            try {
+                startProgress();
+                const updateData = { name };
+                if (grade) updateData.grade = grade;
+                
+                updateData.whatsappGroupLink = whatsappLink;
+                
+                if (imgFile) {
+                    showToast('🔄 جاري رفع الصورة...', 'success');
+                    updateData.img = await uploadToImgBB(imgFile);
+                } else if (imgUrl) {
+                    if (!isValidImageUrl(imgUrl)) {
+                        showToast('❌ رابط الصورة غير صالح. يجب أن ينتهي بـ .jpg, .png, .gif, إلخ', 'error');
+                        return;
+                    }
+                    try {
+                        new URL(imgUrl);
+                        updateData.img = imgUrl;
+                    } catch {
+                        showToast('❌ رابط الصورة غير صحيح', 'error');
+                        return;
+                    }
+                }
+                
+                await update(ref(db, `folders/${activeCID}`), updateData);
+                showToast('✅ تم التحديث بنجاح');
+                
+                document.getElementById('editImgField').value = '';
+                document.getElementById('editImageFile').value = '';
+                document.getElementById('editImagePreview').style.display = 'none';
+            } catch (error) {
+                showToast('❌ حدث خطأ', 'error');
+            } finally {
+                stopProgress();
+            }
+        };
 
         // ================ VIDEO FUNCTIONS ================
         window.addVideoToCourse = function() {
-            const title = document.getElementById('vTitle')?.value.trim();
-            const url = document.getElementById('vUrl')?.value.trim();
-            const order = document.getElementById('vOrder')?.value;
-            const stage = document.getElementById('vStage')?.value.trim() || '';
-            
-            if (!activeCID) {
-                showToast('لم يتم تحديد الكورس', 'error');
-                return;
-            }
-            if (!title || !url) {
-                showToast('يرجى إدخال عنوان الفيديو والرابط', 'error');
-                return;
-            }
-            
-            const videoData = { title, url, order: parseInt(order) || 0 };
-            if (stage) videoData.stage = stage;
-            
-            push(ref(db, `folders/${activeCID}/videos`), videoData).then(() => {
-                showToast('✅ تم إضافة الفيديو');
-                document.getElementById('vTitle').value = '';
-                document.getElementById('vUrl').value = '';
-                document.getElementById('vOrder').value = '';
-                document.getElementById('vStage').value = '';
-                openEditModal(activeCID, { 
-                    name: document.getElementById('editNameField')?.value || '',
-                    grade: document.getElementById('editGradeField')?.value || ''
-                });
-            }).catch(() => showToast('❌ حدث خطأ', 'error'));
-        };
+    const title = document.getElementById('vTitle')?.value.trim();
+    const url = document.getElementById('vUrl')?.value.trim();
+    const order = document.getElementById('vOrder')?.value;
+    
+    if (!activeCID) {
+        showToast('لم يتم تحديد الكورس', 'error');
+        return;
+    }
+    if (!title || !url) {
+        showToast('يرجى إدخال عنوان الفيديو والرابط', 'error');
+        return;
+    }
+    
+    push(ref(db, `folders/${activeCID}/videos`), { 
+        title, 
+        url, 
+        order: parseInt(order) || 0 
+    }).then(() => {
+        showToast('✅ تم إضافة الفيديو');
+        
+        // ===== إرسال إشعار للمشتركين =====
+        if (typeof window.notifyNewVideo === 'function') {
+            const courseName = document.getElementById('editNameField')?.value || '';
+            window.notifyNewVideo(activeCID, courseName, title);
+        }
+        // =================================
+        
+        document.getElementById('vTitle').value = '';
+        document.getElementById('vUrl').value = '';
+        document.getElementById('vOrder').value = '';
+        openEditModal(activeCID, { 
+            name: document.getElementById('editNameField')?.value || '',
+            grade: document.getElementById('editGradeField')?.value || ''
+        });
+    }).catch(() => showToast('❌ حدث خطأ', 'error'));
+};
 
         window.openEditVideoModal = function(courseId, videoId, videoData) {
             document.getElementById('editVideoCourseId').value = courseId;
@@ -2892,7 +3128,6 @@ C</div>
             document.getElementById('editVideoTitle').value = videoData.title || '';
             document.getElementById('editVideoUrl').value = videoData.url || '';
             document.getElementById('editVideoOrder').value = videoData.order || 0;
-            document.getElementById('editVideoStage').value = videoData.stage || '';
             document.getElementById('editVideoModal').style.display = 'flex';
         };
 
@@ -2906,7 +3141,6 @@ C</div>
             const title = document.getElementById('editVideoTitle')?.value.trim();
             const url = document.getElementById('editVideoUrl')?.value.trim();
             const order = parseInt(document.getElementById('editVideoOrder')?.value) || 0;
-            const stage = document.getElementById('editVideoStage')?.value.trim() || '';
 
             if (!title || !url) {
                 showToast('يرجى إدخال البيانات', 'error');
@@ -2915,9 +3149,9 @@ C</div>
 
             try {
                 startProgress();
-                const updateData = { title, url, order };
-                if (stage) updateData.stage = stage;
-                await update(ref(db, `folders/${courseId}/videos/${videoId}`), updateData);
+                await update(ref(db, `folders/${courseId}/videos/${videoId}`), {
+                    title, url, order
+                });
                 showToast('✅ تم التحديث');
                 closeVideoModal();
                 const folderSnap = await get(ref(db, `folders/${courseId}`));
@@ -2980,72 +3214,79 @@ C</div>
                     <input type="text" class="oC" placeholder="الخيار C">
                     <input type="text" class="oD" placeholder="الخيار D">
                 </div>
-                <select class="q-correct-mcq" style="margin-top:10px; width:100%;">
+                <select class="q-correct" style="margin-top:10px; width:100%;">
                     <option value="a">الإجابة: A</option>
                     <option value="b">الإجابة: B</option>
                     <option value="c">الإجابة: C</option>
                     <option value="d">الإجابة: D</option>
                 </select>` : `
-                <select class="q-correct-tf" style="margin-top:10px; width:100%;">
-                    <option value="a">الإجابة: True (صح)</option>
-                    <option value="b">الإجابة: False (خطأ)</option>
+                <select class="q-correct" style="margin-top:10px; width:100%;">
+                    <option value="a">الإجابة: True ✅</option>
+                    <option value="b">الإجابة: False ❌</option>
                 </select>`}
-                <input type="hidden" class="q-type-hidden" value="${type}">
             `;
             container.appendChild(q);
         };
 
         window.saveFinalExam = function() {
-            const folderId = document.getElementById('exFolderSelect')?.value;
-            const title = document.getElementById('exTitle')?.value.trim();
-            
-            if (!folderId) {
-                showToast('اختر الكورس', 'error');
-                return;
-            }
-            if (!title) {
-                showToast('أدخل عنوان الاختبار', 'error');
-                return;
-            }
-            
-            let questions = {};
-            let qIndex = 0;
-            
-            document.querySelectorAll('#questionsArea .card').forEach(card => {
-                const qText = card.querySelector('.q-text')?.value.trim();
-                if (!qText) return;
-                
-                const qType = card.querySelector('.q-type-hidden')?.value || 'mcq';
-                const oA = card.querySelector('.oA')?.value.trim();
-                const oB = card.querySelector('.oB')?.value.trim();
-                
-                if (qType === 'mcq' && oA && oB) {
-                    const correct = card.querySelector('.q-correct-mcq')?.value || 'a';
-                    const oC = card.querySelector('.oC')?.value.trim() || '';
-                    const oD = card.querySelector('.oD')?.value.trim() || '';
-                    questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
-                } else {
-                    const correct = card.querySelector('.q-correct-tf')?.value || 'a';
-                    questions[`q${qIndex}`] = { text: qText, a: 'True', b: 'False', correct };
-                }
-                qIndex++;
-            });
-            
-            if (qIndex === 0) {
-                showToast('أضف سؤالاً على الأقل', 'error');
-                return;
-            }
-            
-            push(ref(db, `quizzes/${folderId}`), { 
-                name: title, 
-                questions,
-                createdAt: new Date().toLocaleString('ar-EG')
-            }).then(() => {
-                showToast('✅ تم نشر الامتحان');
-                document.getElementById('questionsArea').innerHTML = '';
-                document.getElementById('exTitle').value = '';
-            }).catch(() => showToast('❌ حدث خطأ', 'error'));
-        };
+    const folderId = document.getElementById('exFolderSelect')?.value;
+    const title = document.getElementById('exTitle')?.value.trim();
+    
+    if (!folderId) {
+        showToast('اختر الكورس', 'error');
+        return;
+    }
+    if (!title) {
+        showToast('أدخل عنوان الاختبار', 'error');
+        return;
+    }
+    
+    let questions = {};
+    let qIndex = 0;
+    
+    document.querySelectorAll('#questionsArea .card').forEach(card => {
+        const qText = card.querySelector('.q-text')?.value.trim();
+        if (!qText) return;
+        
+        const correct = card.querySelector('.q-correct')?.value;
+        const oA = card.querySelector('.oA')?.value.trim();
+        const oB = card.querySelector('.oB')?.value.trim();
+        
+        if (oA && oB) {
+            const oC = card.querySelector('.oC')?.value.trim() || '';
+            const oD = card.querySelector('.oD')?.value.trim() || '';
+            questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
+        } else {
+            questions[`q${qIndex}`] = { text: qText, a: 'True', b: 'False', correct };
+        }
+        qIndex++;
+    });
+    
+    if (Object.keys(questions).length === 0) {
+        showToast('أضف سؤالاً على الأقل', 'error');
+        return;
+    }
+    
+    push(ref(db, `quizzes/${folderId}`), { 
+        name: title, 
+        questions,
+        createdAt: new Date().toLocaleString('ar-EG')
+    }).then(() => {
+        showToast('✅ تم نشر الامتحان');
+        
+        // ===== إرسال إشعار للمشتركين =====
+        if (typeof window.notifyNewExam === 'function') {
+            const selectEl = document.getElementById('exFolderSelect');
+            const selectedOption = selectEl.options[selectEl.selectedIndex];
+            const courseName = selectedOption ? selectedOption.text.split(' (')[0] : '';
+            window.notifyNewExam(folderId, courseName, title);
+        }
+        // =================================
+        
+        document.getElementById('questionsArea').innerHTML = '';
+        document.getElementById('exTitle').value = '';
+    }).catch(() => showToast('❌ حدث خطأ', 'error'));
+};
 
         function fillDropdowns(folders) {
             const select = document.getElementById('exFolderSelect');
@@ -3224,11 +3465,7 @@ C</div>
             if (!container) return;
             
             const qIndex = index ?? container.children.length;
-            // ✅ التعرف على أسئلة صح/خطأ: سواء كانت True/False أو صح/خطأ (للتوافق مع القديم)
-            const isMcq = questionData && (
-                Object.keys(questionData).includes('c') || 
-                (questionData.a && questionData.a !== 'True' && questionData.a !== 'False' && questionData.a !== 'صح' && questionData.a !== 'خطأ')
-            );
+            const isMcq = questionData && Object.keys(questionData).includes('c');
             
             const card = document.createElement('div');
             card.className = 'edit-question-card';
@@ -3247,7 +3484,7 @@ C</div>
                 
                 <select class="q-type reg-input" style="margin-bottom: 15px;" onchange="changeQuestionType(this)">
                     <option value="mcq" ${isMcq ? 'selected' : ''}>اختيار من متعدد</option>
-                    <option value="tf" ${!isMcq ? 'selected' : ''}>صح/خطأ</option>
+                    <option value="tf" ${!isMcq ? 'selected' : ''}>True/False (صح/خطأ)</option>
                 </select>
                 
                 <div class="mcq-options" style="display: ${isMcq ? 'grid' : 'none'};">
@@ -3258,20 +3495,20 @@ C</div>
                 </div>
                 
                 <div class="tf-options" style="display: ${!isMcq ? 'block' : 'none'};">
-                    <select class="q-correct-tf reg-input">
-                        <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>True (صح)</option>
-                        <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>False (خطأ)</option>
+                    <select class="q-correct reg-input">
+                        <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>صح</option>
+                        <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>خطأ</option>
                     </select>
                 </div>
                 
-                <div class="mcq-correct-wrapper" style="display: ${isMcq ? 'block' : 'none'}; margin-top: 15px;">
-                <select class="q-correct-mcq reg-input">
+                ${isMcq ? `
+                <select class="q-correct reg-input" style="margin-top: 15px;">
                     <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>الإجابة: A</option>
                     <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>الإجابة: B</option>
                     <option value="c" ${questionData?.correct === 'c' ? 'selected' : ''}>الإجابة: C</option>
                     <option value="d" ${questionData?.correct === 'd' ? 'selected' : ''}>الإجابة: D</option>
                 </select>
-                </div>
+                ` : ''}
             `;
             
             container.appendChild(card);
@@ -3281,16 +3518,13 @@ C</div>
             const card = select.closest('.edit-question-card');
             const mcqDiv = card.querySelector('.mcq-options');
             const tfDiv = card.querySelector('.tf-options');
-            const mcqCorrectWrapper = card.querySelector('.mcq-correct-wrapper');
             
             if (select.value === 'mcq') {
                 mcqDiv.style.display = 'grid';
                 tfDiv.style.display = 'none';
-                if (mcqCorrectWrapper) mcqCorrectWrapper.style.display = 'block';
             } else {
                 mcqDiv.style.display = 'none';
                 tfDiv.style.display = 'block';
-                if (mcqCorrectWrapper) mcqCorrectWrapper.style.display = 'none';
             }
         };
 
@@ -3316,18 +3550,17 @@ C</div>
                 const qText = card.querySelector('.q-text')?.value.trim();
                 if (!qText) return;
                 
+                const correct = card.querySelector('.q-correct')?.value;
                 const isMcq = card.querySelector('.q-type')?.value === 'mcq';
                 
                 if (isMcq) {
-                    const correct = card.querySelector('.q-correct-mcq')?.value || 'a';
                     const oA = card.querySelector('.oA')?.value.trim() || '';
                     const oB = card.querySelector('.oB')?.value.trim() || '';
                     const oC = card.querySelector('.oC')?.value.trim() || '';
                     const oD = card.querySelector('.oD')?.value.trim() || '';
                     questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
                 } else {
-                    const correct = card.querySelector('.q-correct-tf')?.value || 'a';
-                    questions[`q${qIndex}`] = { text: qText, a: 'True', b: 'False', correct };
+                    questions[`q${qIndex}`] = { text: qText, a: 'صح', b: 'خطأ', correct };
                 }
                 qIndex++;
             });
@@ -3373,8 +3606,8 @@ C</div>
                 } else {
                     previewHtml += `
                         <div class="preview-tf">
-                            <div class="preview-tf-option ${q.correct === 'a' ? 'correct' : ''}">True (صح)</div>
-                            <div class="preview-tf-option ${q.correct === 'b' ? 'correct' : ''}">False (خطأ)</div>
+                            <div class="preview-tf-option ${q.correct === 'a' ? 'correct' : ''}">صح</div>
+                            <div class="preview-tf-option ${q.correct === 'b' ? 'correct' : ''}">خطأ</div>
                         </div>
                     `;
                 }
@@ -3407,14 +3640,13 @@ C</div>
             
             try {
                 startProgress();
-                // استخدام set بدلاً من update لضمان حذف الأسئلة القديمة
-                await set(ref(db, `quizzes/${courseId}/${examId}`), {
+                await update(ref(db, `quizzes/${courseId}/${examId}`), {
                     name,
                     questions,
                     updatedAt: new Date().toLocaleString('ar-EG')
                 });
                 
-                showToast('✅ تم الحفظ بنجاح - التعديلات ستظهر للطلاب فوراً');
+                showToast('✅ تم الحفظ');
                 closeExamModal();
                 
                 if (activeCID === courseId) {
@@ -3422,8 +3654,7 @@ C</div>
                     openEditModal(courseId, folderSnap.val() || {});
                 }
             } catch (error) {
-                console.error('Save exam error:', error);
-                showToast('❌ حدث خطأ في الحفظ: ' + error.message, 'error');
+                showToast('❌ حدث خطأ', 'error');
             } finally {
                 stopProgress();
             }
@@ -3649,139 +3880,777 @@ C</div>
             }, 2000);
         });
 
-        // ================ IMPORT EXAM FUNCTIONS ================
-        function fillImportDropdown(folders) {
-            const select = document.getElementById('importFolderSelect');
-            if (!select) return;
-            select.innerHTML = '<option value="">اختر الكورس</option>';
-            Object.entries(folders).forEach(([id, f]) => {
-                const opt = document.createElement('option');
-                opt.value = id;
-                opt.textContent = f.name || id;
-                select.appendChild(opt);
-            });
-        }
+        // ================ CLEANUP ================
+        window.addEventListener('beforeunload', () => {
+            cleanupListeners();
+        });
+        
+       // ================ SEARCH ENHANCEMENTS ================
 
-        function importParseQuestions(text) {
-            const blocks = text.split(/\n[ \t]*\n/).filter(b => b.trim());
-            const questions = [];
-            for (const block of blocks) {
-                const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
-                if (lines.length < 2) continue;
-                const questionText = lines[0];
-                let answerLine = lines.find(l => /^\*/.test(l));
-                if (!answerLine) {
-                    const last = lines[lines.length - 1];
-                    if (/^[ABCDabcd]$/.test(last.trim()) || last.trim() === 'صح' || last.trim() === 'خطأ' || last.trim().toLowerCase() === 'true' || last.trim().toLowerCase() === 'false') {
-                        answerLine = last;
+// بحث فوري في الجداول
+function setupInstantSearch() {
+    const searchInputs = [
+        { id: 'studentSearch', tableId: 'studentList', columns: [0,1,2,3] }, // اسم, كود, مرحلة, واتساب
+        { id: 'resultSearch', tableId: 'resultsList', columns: [0,1,2,5] }, // طالب, كود, امتحان, تاريخ
+        { id: 'logSearch', tableId: 'logsList', columns: [0,1,2,3] }, // طالب, كود, كورس, وقت
+        { id: 'notificationSearch', tableId: 'notificationsList', columns: [0,1,2,3] },
+        { id: 'perfectScoreSearch', tableId: 'perfectScoresList', columns: [0,1,2,4] }
+    ];
+    
+    searchInputs.forEach(({ id, tableId, columns }) => {
+        const input = document.getElementById(id);
+        if (!input) return;
+        
+        input.addEventListener('keyup', function(e) {
+            const searchTerm = this.value.toLowerCase().trim();
+            const tbody = document.getElementById(tableId);
+            if (!tbody) return;
+            
+            const rows = tbody.getElementsByTagName('tr');
+            let visibleCount = 0;
+            
+            for (let row of rows) {
+                if (row.classList.contains('empty-state') || row.classList.contains('no-results-row')) continue;
+                
+                let found = false;
+                const cells = row.getElementsByTagName('td');
+                
+                // لو المش user محدد الأعمدة، دور في كل الأعمدة
+                if (!columns) {
+                    for (let cell of cells) {
+                        if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                            found = true;
+                            break;
+                        }
+                    }
+                } else {
+                    // دور في الأعمدة المحددة بس
+                    for (let idx of columns) {
+                        if (cells[idx] && cells[idx].textContent.toLowerCase().includes(searchTerm)) {
+                            found = true;
+                            break;
+                        }
                     }
                 }
-                if (!answerLine) continue;
-                const rawAnswer = answerLine.replace(/^\*\s*/, '').trim().toLowerCase();
-                if (['صح', 'خطأ', 'true', 'false'].includes(rawAnswer)) {
-                    questions.push({ type: 'tf', text: questionText, correct: ['صح', 'true'].includes(rawAnswer) ? 'a' : 'b' });
-                    continue;
-                }
-                const optA = lines.find(l => /^A[:\.\-\)]/i.test(l));
-                const optB = lines.find(l => /^B[:\.\-\)]/i.test(l));
-                const optC = lines.find(l => /^C[:\.\-\)]/i.test(l));
-                const optD = lines.find(l => /^D[:\.\-\)]/i.test(l));
-                if (!optA || !optB || !['a','b','c','d'].includes(rawAnswer)) continue;
-                const clean = opt => opt ? opt.replace(/^[ABCD][:\.\-\)]\s*/i, '').trim() : '';
-                questions.push({ type: 'mcq', text: questionText, a: clean(optA), b: clean(optB), c: clean(optC), d: clean(optD), correct: rawAnswer });
+                
+                row.style.display = found ? '' : 'none';
+                if (found) visibleCount++;
             }
-            return questions;
+            
+            // عرض رسالة "لا توجد نتائج" لو مفيش نتايج
+            let noResultsRow = tbody.querySelector('.no-results-row');
+            if (visibleCount === 0 && rows.length > 0) {
+                if (!noResultsRow) {
+                    noResultsRow = document.createElement('tr');
+                    noResultsRow.className = 'no-results-row';
+                    const colspan = tbody.parentElement?.querySelector('thead tr')?.children.length || 7;
+                    noResultsRow.innerHTML = `<td colspan="${colspan}" class="empty-state"><i class="fas fa-search"></i><br>لا توجد نتائج للبحث "${escapeHTML(searchTerm)}"</td>`;
+                    tbody.appendChild(noResultsRow);
+                }
+            } else if (noResultsRow) {
+                noResultsRow.remove();
+            }
+            
+            // عرض عدد النتائج
+            const resultCount = document.getElementById(`${id}Count`);
+            if (resultCount) {
+                resultCount.textContent = visibleCount;
+            }
+        });
+        
+        // إضافة عداد النتائج
+        const countSpan = document.createElement('span');
+        countSpan.id = `${id}Count`;
+        countSpan.className = 'search-count';
+        countSpan.style.cssText = 'margin-right: 10px; color: var(--text-muted); font-size: 0.85rem;';
+        input.parentNode?.insertBefore(countSpan, input.nextSibling);
+    });
+}
+
+// بحث متقدم مع فلترة متعددة
+window.advancedSearch = function() {
+    const modal = document.getElementById('advancedSearchModal');
+    if (modal) {
+        loadAdvancedSearchFilters();
+        modal.style.display = 'flex';
+    }
+};
+
+// تحميل فلترات البحث المتقدم
+async function loadAdvancedSearchFilters() {
+    try {
+        // تحميل قائمة الكورسات للفلترة
+        const foldersSelect = document.getElementById('advSearchCourse');
+        if (foldersSelect) {
+            foldersSelect.innerHTML = '<option value="">كل الكورسات</option>';
+            Object.entries(allFolders).forEach(([id, f]) => {
+                foldersSelect.innerHTML += `<option value="${id}">${escapeHTML(f.name)}</option>`;
+            });
         }
+        
+        // تحميل قائمة المراحل
+        const gradesSelect = document.getElementById('advSearchGrade');
+        if (gradesSelect) {
+            const grades = [...new Set(Object.values(allStudents).map(s => s.grade).filter(Boolean))];
+            gradesSelect.innerHTML = '<option value="">كل المراحل</option>';
+            grades.forEach(grade => {
+                gradesSelect.innerHTML += `<option value="${grade}">${escapeHTML(grade)}</option>`;
+            });
+        }
+        
+    } catch (error) {
+        console.error('Error loading filters:', error);
+    }
+}
 
-        window._importParsed = [];
+// تنفيذ البحث المتقدم
+window.performAdvancedSearch = async function() {
+    const searchTerm = document.getElementById('advancedSearch')?.value.toLowerCase().trim();
+    const courseFilter = document.getElementById('advSearchCourse')?.value;
+    const gradeFilter = document.getElementById('advSearchGrade')?.value;
+    const dateFrom = document.getElementById('advSearchDateFrom')?.value;
+    const dateTo = document.getElementById('advSearchDateTo')?.value;
+    
+    startProgress();
+    
+    try {
+        const results = {
+            students: [],
+            exams: [],
+            courses: [],
+            activities: []
+        };
+        
+        // بحث في الطلاب
+        Object.entries(allStudents).forEach(([uid, student]) => {
+            let match = true;
+            
+            // فلترة حسب كلمة البحث
+            if (searchTerm) {
+                match = (student.name && student.name.toLowerCase().includes(searchTerm)) ||
+                        (student.shortId && student.shortId.toLowerCase().includes(searchTerm)) ||
+                        (student.email && student.email.toLowerCase().includes(searchTerm)) ||
+                        (student.whatsapp && student.whatsapp.includes(searchTerm));
+            }
+            
+            // فلترة حسب المرحلة
+            if (match && gradeFilter) {
+                match = student.grade === gradeFilter;
+            }
+            
+            if (match) {
+                results.students.push({ uid, ...student });
+            }
+        });
+        
+        // بحث في نتائج الامتحانات
+        Object.entries(allResults).forEach(([id, result]) => {
+            let match = true;
+            
+            if (searchTerm) {
+                match = (result.student && result.student.toLowerCase().includes(searchTerm)) ||
+                        (result.studentId && result.studentId.toLowerCase().includes(searchTerm)) ||
+                        (result.quiz && result.quiz.toLowerCase().includes(searchTerm));
+            }
+            
+            // فلترة حسب التاريخ
+            if (match && dateFrom && result.time) {
+                const resultDate = new Date(result.time.split(' ').reverse().join('-'));
+                const fromDate = new Date(dateFrom);
+                match = resultDate >= fromDate;
+            }
+            
+            if (match && dateTo && result.time) {
+                const resultDate = new Date(result.time.split(' ').reverse().join('-'));
+                const toDate = new Date(dateTo);
+                toDate.setDate(toDate.getDate() + 1);
+                match = resultDate <= toDate;
+            }
+            
+            if (match) {
+                results.exams.push({ id, ...result });
+            }
+        });
+        
+        // بحث في الكورسات
+        Object.entries(allFolders).forEach(([id, course]) => {
+            let match = true;
+            
+            if (searchTerm) {
+                match = course.name && course.name.toLowerCase().includes(searchTerm);
+            }
+            
+            if (match && courseFilter) {
+                match = id === courseFilter;
+            }
+            
+            if (match) {
+                results.courses.push({ id, ...course });
+            }
+        });
+        
+        // عرض النتائج
+        showAdvancedSearchResults(results);
+        
+    } catch (error) {
+        console.error('Advanced search error:', error);
+        showToast('❌ حدث خطأ في البحث', 'error');
+    } finally {
+        stopProgress();
+    }
+};
 
-        window.importPreview = function() {
-            const raw = document.getElementById('importRawText').value.trim();
-            const errBox = document.getElementById('importErrorBox');
-            const prevSec = document.getElementById('importPreviewSection');
-            errBox.style.display = 'none';
-            prevSec.style.display = 'none';
-            document.getElementById('importSuccessBox').style.display = 'none';
-            if (!raw) { errBox.textContent = '❌ الحقل فارغ! اكتب أو الصق الأسئلة أولاً.'; errBox.style.display = 'block'; return; }
-            const qs = importParseQuestions(raw);
-            if (qs.length === 0) {
-                errBox.innerHTML = '❌ لم يُعثر على أسئلة.<br>تأكد إن في <strong>سطر فاضي</strong> بين كل سؤال والتاني.';
-                errBox.style.display = 'block';
+// عرض نتائج البحث المتقدم
+// عرض نتائج البحث المتقدم
+function showAdvancedSearchResults(results) {
+    const container = document.getElementById('advancedSearchResults');
+    if (!container) return;
+    
+    let html = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="margin:0;"><i class="fas fa-search" style="color: var(--primary);"></i> نتائج البحث</h4>
+            <button class="btn btn-secondary btn-sm" onclick="window.exportSearchResults()" style="display: inline-flex; align-items: center; gap: 5px;">
+                <i class="fas fa-download"></i> تصدير النتائج
+            </button>
+        </div>
+        
+        <div class="advanced-search-tabs">
+            <button class="tab-btn active" onclick="switchSearchTab('students')">
+                <i class="fas fa-users"></i> الطلاب (${results.students.length})
+            </button>
+            <button class="tab-btn" onclick="switchSearchTab('exams')">
+                <i class="fas fa-file-alt"></i> الامتحانات (${results.exams.length})
+            </button>
+            <button class="tab-btn" onclick="switchSearchTab('courses')">
+                <i class="fas fa-book"></i> الكورسات (${results.courses.length})
+            </button>
+        </div>
+        
+        <div id="searchTabStudents" class="search-tab active">
+    `;
+    
+    if (results.students.length > 0) {
+        html += '<div class="table-container"><table><thead><tr><th>الاسم</th><th>الكود</th><th>المرحلة</th><th>واتساب</th><th>النقاط</th><th></th></tr></thead><tbody>';
+        results.students.slice(0, 20).forEach(s => {
+            html += `<tr>
+                <td><strong>${escapeHTML(s.name)}</strong></td>
+                <td><span class="student-id-display">${escapeHTML(s.shortId)}</span></td>
+                <td><span class="badge-grade">${escapeHTML(s.grade || 'غير محدد')}</span></td>
+                <td>${escapeHTML(s.whatsapp || '—')}</td>
+                <td>${s.points || 0}</td>
+                <td><button class="btn-view btn-icon" onclick="viewStudentDetails('${s.uid}')" title="عرض التفاصيل"><i class="fas fa-eye"></i></button></td>
+            </tr>`;
+        });
+        if (results.students.length > 20) {
+            html += `<tr><td colspan="6" style="color: var(--primary); text-align: center;">... و ${results.students.length - 20} آخرين</td></tr>`;
+        }
+        html += '</tbody></table></div>';
+    } else {
+        html += '<div class="empty-state"><i class="fas fa-user-slash"></i><br>لا يوجد طلاب</div>';
+    }
+    
+    html += `</div>
+    
+    <div id="searchTabExams" class="search-tab" style="display: none;">`;
+    
+    if (results.exams.length > 0) {
+        html += '<div class="table-container"><table><thead><tr><th>الطالب</th><th>الكود</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead><tbody>';
+        results.exams.slice(0, 20).forEach(e => {
+            const percentage = Math.round((e.score / e.total) * 100);
+            html += `<tr>
+                <td>${escapeHTML(e.student)}</td>
+                <td><span class="student-id-display">${escapeHTML(e.studentId)}</span></td>
+                <td>${escapeHTML(e.quiz)}</td>
+                <td><span class="progress-badge">${e.score}/${e.total} (${percentage}%)</span></td>
+                <td>${escapeHTML(e.time || '')}</td>
+            </tr>`;
+        });
+        if (results.exams.length > 20) {
+            html += `<tr><td colspan="5" style="color: var(--primary); text-align: center;">... و ${results.exams.length - 20} آخرين</td></tr>`;
+        }
+        html += '</tbody></table></div>';
+    } else {
+        html += '<div class="empty-state"><i class="fas fa-file-alt"></i><br>لا توجد نتائج</div>';
+    }
+    
+    html += `</div>
+    
+    <div id="searchTabCourses" class="search-tab" style="display: none;">`;
+    
+    if (results.courses.length > 0) {
+        html += '<div class="grid-system" style="margin-top: 20px;">';
+        results.courses.forEach(c => {
+            const stars = '★'.repeat(Math.min(5, Math.round(c.avgRating || 0))) + '☆'.repeat(5 - Math.min(5, Math.round(c.avgRating || 0)));
+            html += `<div class="card" style="text-align: center;">
+                <img src="${escapeHTML(c.img || 'mona.jpg')}" style="width: 80px; height: 80px; border-radius: 15px; object-fit: cover; margin: 0 auto 10px;" onerror="this.src='mona.jpg'">
+                <h4>${escapeHTML(c.name)}</h4>
+                <span class="badge-grade">${escapeHTML(c.grade || 'غير محدد')}</span>
+                <div style="color: var(--gold); margin: 10px 0;">${stars}</div>
+            </div>`;
+        });
+        html += '</div>';
+    } else {
+        html += '<div class="empty-state"><i class="fas fa-book-open"></i><br>لا توجد كورسات</div>';
+    }
+    
+    html += `</div>`;
+    
+    container.innerHTML = html;
+    container.style.display = 'block';
+}
+
+// التبديل بين تبويبات البحث
+window.switchSearchTab = function(tab) {
+    document.querySelectorAll('.search-tab').forEach(t => t.style.display = 'none');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(`searchTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).style.display = 'block';
+    event.target.classList.add('active');
+};
+
+// تصدير نتائج البحث
+window.exportSearchResults = function() {
+    const results = document.querySelector('#advancedSearchResults .active .table-container');
+    if (!results) {
+        showToast('لا توجد نتائج للتصدير', 'error');
+        return;
+    }
+    
+    let csv = [];
+    const rows = results.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const rowData = [];
+        row.querySelectorAll('td').forEach(cell => {
+            rowData.push(cell.textContent.trim());
+        });
+        csv.push(rowData.join(','));
+    });
+    
+    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `search_results_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    
+    showToast('✅ تم تصدير النتائج');
+};
+
+// ================ إضافة واجهة البحث المتقدم ================
+function addAdvancedSearchUI() {
+    // إضافة زر البحث المتقدم في قسم البحث
+    const searchSection = document.querySelector('#studentSearchSection .card:first-child .flex');
+    if (searchSection) {
+        const advSearchBtn = document.createElement('button');
+        advSearchBtn.className = 'btn btn-secondary btn-sm touch-feedback';
+        advSearchBtn.innerHTML = '<i class="fas fa-sliders-h"></i> بحث متقدم';
+        advSearchBtn.onclick = window.advancedSearch;
+        advSearchBtn.style.marginRight = '10px';
+        searchSection.appendChild(advSearchBtn);
+    }
+    
+    // إنشاء مودال البحث المتقدم
+    const modalHtml = `
+        <div id="advancedSearchModal" class="modal">
+            <div class="modal-content" style="max-width: 800px;">
+                <button class="close-modal-btn" onclick="document.getElementById('advancedSearchModal').style.display='none'">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <h3 style="color: var(--primary); margin-bottom: 25px;">
+                    <i class="fas fa-search"></i> بحث متقدم
+                </h3>
+                
+                <div class="grid-system" style="grid-template-columns: 1fr 1fr;">
+                    <input type="text" id="advancedSearch" placeholder="كلمة البحث..." class="reg-input">
+                    
+                    <select id="advSearchCourse" class="reg-input">
+                        <option value="">كل الكورسات</option>
+                    </select>
+                    
+                    <select id="advSearchGrade" class="reg-input">
+                        <option value="">كل المراحل</option>
+                    </select>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <input type="date" id="advSearchDateFrom" class="reg-input" placeholder="من تاريخ">
+                        <input type="date" id="advSearchDateTo" class="reg-input" placeholder="إلى تاريخ">
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button class="btn btn-main touch-feedback" onclick="window.performAdvancedSearch()" style="flex: 2;">
+                        <i class="fas fa-search"></i> بحث
+                    </button>
+                    <button class="btn btn-secondary touch-feedback" onclick="window.exportSearchResults()" style="flex: 1;">
+                        <i class="fas fa-download"></i> تصدير
+                    </button>
+                    <button class="btn btn-danger touch-feedback" onclick="document.getElementById('advancedSearchModal').style.display='none'" style="flex: 1;">
+                        <i class="fas fa-times"></i> إلغاء
+                    </button>
+                </div>
+                
+                <div id="advancedSearchResults" style="margin-top: 25px; display: none;"></div>
+            </div>
+        </div>
+    `;
+    
+    document.body.insertAdjacentHTML('beforeend', modalHtml);
+}
+
+// استدعاء الدوال بعد تحميل الصفحة
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        setupInstantSearch();
+        addAdvancedSearchUI();
+    }, 2000);
+}); 
+
+                // وظائف الصيانة
+        window.loadMaintenanceSettings = async function() {
+            const status = await window.getMaintenanceStatus();
+            document.getElementById('maintenanceEnabled').checked = status.enabled;
+            document.getElementById('maintenanceMessage').value = status.message || '';
+            if (status.updatedAt) {
+                document.getElementById('maintenanceStatus').style.display = 'block';
+                document.getElementById('maintenanceUpdatedAt').textContent = new Date(status.updatedAt).toLocaleString('ar-EG');
+            }
+        };
+
+        window.saveMaintenanceSettings = async function() {
+            const enabled = document.getElementById('maintenanceEnabled').checked;
+            const message = document.getElementById('maintenanceMessage').value.trim();
+            if (enabled && !message) {
+                showToast('❌ يرجى إدخال رسالة الصيانة', 'error');
                 return;
             }
-            window._importParsed = qs;
-            document.getElementById('impStatTotal').textContent = qs.length;
-            document.getElementById('impStatMcq').textContent = qs.filter(q => q.type === 'mcq').length;
-            document.getElementById('impStatTf').textContent = qs.filter(q => q.type === 'tf').length;
-            let html = '';
-            qs.forEach((q, i) => {
-                html += `<div style="background:#f8f7ff;border:2px solid #00b894;border-radius:14px;padding:14px;margin-bottom:10px;">
-                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-                        <span style="width:26px;height:26px;background:var(--primary);color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:0.78rem;">${i+1}</span>
-                        <span style="font-size:0.72rem;padding:3px 8px;border-radius:50px;font-weight:700;background:${q.type==='mcq'?'#e8e6fd':'#d4f7ef'};color:${q.type==='mcq'?'var(--primary)':'#00a080'}">${q.type==='mcq'?'🔘 اختيارات':'✅ صح/خطأ'}</span>
-                    </div>
-                    <div style="font-weight:700;margin-bottom:8px;">${escapeHTML(q.text)}</div>`;
-                if (q.type === 'mcq') {
-                    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
-                    ['a','b','c','d'].forEach(l => {
-                        if (!q[l]) return;
-                        const isc = q.correct === l;
-                        html += `<div style="padding:6px 10px;border-radius:10px;background:${isc?'#d4f7ef':'white'};font-size:0.8rem;border:1.5px solid ${isc?'#00b894':'#e0ddf7'};display:flex;align-items:center;gap:5px;${isc?'font-weight:700;':''}">
-                            <b style="color:var(--primary)">${l.toUpperCase()}:</b> ${escapeHTML(q[l])} ${isc?'<i class="fas fa-check" style="color:#00b894;margin-right:auto;"></i>':''}
-                        </div>`;
-                    });
-                    html += '</div>';
-                } else {
-                    html += `<div style="font-size:0.85rem;color:#00b894;font-weight:700;margin-top:6px;">الإجابة: ${q.correct==='a'?'✅ True (صح)':'❌ False (خطأ)'}</div>`;
-                }
-                html += '</div>';
-            });
-            document.getElementById('importPreviewContainer').innerHTML = html;
-            prevSec.style.display = 'block';
-            prevSec.scrollIntoView({ behavior: 'smooth' });
-        };
-
-        window.importPublish = function() {
-            const folderId = document.getElementById('importFolderSelect').value;
-            const title = document.getElementById('importExamTitle').value.trim();
-            const errBox = document.getElementById('importErrorBox');
-            errBox.style.display = 'none';
-            if (!folderId) { errBox.textContent = '❌ اختر الكورس أولاً'; errBox.style.display = 'block'; return; }
-            if (!title)    { errBox.textContent = '❌ اكتب عنوان الامتحان'; errBox.style.display = 'block'; return; }
-            if (!window._importParsed.length) { errBox.textContent = '❌ لا توجد أسئلة'; errBox.style.display = 'block'; return; }
-            const questions = {};
-            window._importParsed.forEach((q, i) => {
-                questions[`q${i}`] = q.type === 'mcq'
-                    ? { text: q.text, a: q.a, b: q.b, c: q.c||'', d: q.d||'', correct: q.correct }
-                    : { text: q.text, a: 'True', b: 'False', correct: q.correct };
-            });
             startProgress();
-            push(ref(db, `quizzes/${folderId}`), { name: title, questions, createdAt: new Date().toLocaleString('ar-EG') })
-            .then(() => {
-                stopProgress();
-                document.getElementById('importPreviewSection').style.display = 'none';
-                document.getElementById('importSuccessBox').style.display = 'block';
-                document.getElementById('importSuccessBox').scrollIntoView({ behavior: 'smooth' });
-                showToast('✅ تم نشر الامتحان بنجاح');
-            }).catch(err => {
-                stopProgress();
-                errBox.textContent = '❌ فشل النشر: ' + err.message;
-                errBox.style.display = 'block';
+            await window.updateMaintenanceMode(enabled, message);
+            stopProgress();
+            showToast('✅ تم الحفظ', 'success');
+            loadMaintenanceSettings();
+        };
+        
+             // تحميل قائمة الطلاب مع معرف تليجرام
+     async function loadParentReportsList() {
+         const studentsSnap = await get(child(dbRef, 'students'));
+         if (!studentsSnap.exists()) {
+             document.getElementById('parentReportsList').innerHTML = '<tr><td colspan="3" class="empty-state">لا يوجد طلاب</td></tr>';
+             return;
+         }
+
+         let html = '';
+         studentsSnap.forEach(student => {
+             const data = student.val();
+             if (data.telegramChatId) {
+                 html += `<tr>
+                     <td>${escapeHTML(data.name)}</td>
+                     <td><span class="badge-grade">${escapeHTML(data.telegramChatId)}</span></td>
+                     <td>
+                         <button class="btn btn-secondary btn-sm" onclick="sendReportToParent('${student.key}')">
+                             <i class="fas fa-paper-plane"></i> إرسال التقرير
+                         </button>
+                     </td>
+                 </tr>`;
+             }
+         });
+
+         if (html === '') {
+             html = '<tr><td colspan="3" class="empty-state">لا يوجد أولياء أمور مسجلين</td></tr>';
+         }
+         document.getElementById('parentReportsList').innerHTML = html;
+     }
+
+     // استدعاء التحميل عند فتح القسم
+     document.querySelector('[onclick="showSection(\'parentReportsSection\', this)"]').addEventListener('click', function() {
+         setTimeout(loadParentReportsList, 200);
+     });
+     
+    // تحميل قائمة الكورسات في اختيار الواجبات
+async function loadAssignmentCourses() {
+    const foldersSnap = await get(child(dbRef, 'folders'));
+    const select = document.getElementById('assignmentCourseSelect');
+    select.innerHTML = '<option value="">اختر الكورس</option>';
+    foldersSnap.forEach(folder => {
+        select.innerHTML += `<option value="${folder.key}">${escapeHTML(folder.val().name)}</option>`;
+    });
+}
+
+// إضافة سؤال جديد للواجب
+window.addAssignmentQuestion = function(type) {
+    const area = document.getElementById('assignmentQuestionsArea');
+    const qIndex = area.children.length;
+    
+    let questionHtml = `
+        <div class="card" style="margin-bottom: 15px; position: relative;">
+            <i class="fas fa-trash" style="position: absolute; left: 10px; top: 10px; color: var(--danger); cursor: pointer;" onclick="this.parentElement.remove()"></i>
+            <input type="text" class="q-text reg-input" placeholder="نص السؤال" style="margin-bottom: 10px;">
+            <select class="q-type reg-input" style="margin-bottom: 10px;" onchange="changeQuestionType(this)">
+                <option value="mcq" ${type==='mcq'?'selected':''}>اختيار من متعدد</option>
+                <option value="tf" ${type==='tf'?'selected':''}>True/False (صح/خطأ)</option>
+                <option value="essay" ${type==='essay'?'selected':''}>مقالي</option>
+                <option value="file" ${type==='file'?'selected':''}>رفع ملف</option>
+            </select>
+            <div class="q-points">
+                <label>الدرجة: <input type="number" class="q-points-input" value="10" style="width: 80px;"></label>
+            </div>
+    `;
+    
+    if (type === 'mcq') {
+        questionHtml += `
+            <div class="mcq-options" style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div><label>A</label><input type="text" class="oA reg-input" placeholder="الخيار A"></div>
+                <div><label>B</label><input type="text" class="oB reg-input" placeholder="الخيار B"></div>
+                <div><label>C</label><input type="text" class="oC reg-input" placeholder="الخيار C"></div>
+                <div><label>D</label><input type="text" class="oD reg-input" placeholder="الخيار D"></div>
+            </div>
+            <select class="q-correct reg-input" style="margin-top: 10px;">
+                <option value="a">الإجابة الصحيحة: A</option>
+                <option value="b">الإجابة الصحيحة: B</option>
+                <option value="c">الإجابة الصحيحة: C</option>
+                <option value="d">الإجابة الصحيحة: D</option>
+            </select>
+        `;
+    } else if (type === 'tf') {
+        questionHtml += `
+            <select class="q-correct reg-input">
+                <option value="true">الإجابة الصحيحة: صح</option>
+                <option value="false">الإجابة الصحيحة: خطأ</option>
+            </select>
+        `;
+    } else if (type === 'essay') {
+        questionHtml += `<p class="hint-text">هذا السؤال سيقوم المعلم بتصحيحه يدوياً</p>`;
+    } else if (type === 'file') {
+        questionHtml += `<p class="hint-text">سيقوم الطالب برفع ملف، وسيقوم المعلم بتصحيحه</p>`;
+    }
+    
+    questionHtml += `</div>`;
+    area.insertAdjacentHTML('beforeend', questionHtml);
+};
+
+// تغيير نوع السؤال (بسيط حالياً)
+window.changeQuestionType = function(select) {
+    // هتتكمل بعدين
+};
+
+// حفظ الواجب في قاعدة البيانات
+window.saveAssignment = async function() {
+    const courseId = document.getElementById('assignmentCourseSelect').value;
+    const title = document.getElementById('assignmentTitle').value.trim();
+    const desc = document.getElementById('assignmentDesc').value.trim();
+    const dueDate = document.getElementById('assignmentDueDate').value;
+    const totalPoints = parseInt(document.getElementById('assignmentTotalPoints').value);
+    
+    if (!courseId || !title || !dueDate) {
+        alert('يرجى إدخال جميع البيانات المطلوبة');
+        return;
+    }
+    
+    let questions = {};
+    let qIndex = 0;
+    
+    document.querySelectorAll('#assignmentQuestionsArea .card').forEach(card => {
+        const qText = card.querySelector('.q-text')?.value.trim();
+        if (!qText) return;
+        
+        const qType = card.querySelector('.q-type').value;
+        const points = parseInt(card.querySelector('.q-points-input').value) || 10;
+        
+        if (qType === 'mcq') {
+            const oA = card.querySelector('.oA').value.trim();
+            const oB = card.querySelector('.oB').value.trim();
+            const oC = card.querySelector('.oC').value.trim();
+            const oD = card.querySelector('.oD').value.trim();
+            const correct = card.querySelector('.q-correct').value;
+            
+            questions[`q${qIndex}`] = {
+                type: qType,
+                text: qText,
+                points: points,
+                options: { a: oA, b: oB, c: oC, d: oD },
+                correctAnswer: correct
+            };
+        } else if (qType === 'tf') {
+            const correct = card.querySelector('.q-correct').value;
+            questions[`q${qIndex}`] = {
+                type: qType,
+                text: qText,
+                points: points,
+                correctAnswer: correct
+            };
+        } else {
+            questions[`q${qIndex}`] = {
+                type: qType,
+                text: qText,
+                points: points
+            };
+        }
+        qIndex++;
+    });
+    
+    if (qIndex === 0) {
+        alert('أضف سؤالاً على الأقل');
+        return;
+    }
+    
+    const assignmentData = {
+        title: title,
+        description: desc,
+        dueDate: dueDate,
+        totalPoints: totalPoints,
+        questions: questions,
+        createdAt: new Date().toISOString()
+    };
+    
+    await push(ref(db, `assignments/${courseId}`), assignmentData);
+    alert('✅ تم حفظ الواجب بنجاح');
+    
+    // تنظيف الحقول
+    document.getElementById('assignmentTitle').value = '';
+    document.getElementById('assignmentDesc').value = '';
+    document.getElementById('assignmentDueDate').value = '';
+    document.getElementById('assignmentQuestionsArea').innerHTML = '';
+};
+
+// استدعاء تحميل الكورسات عند فتح القسم
+document.querySelector('[onclick="showSection(\'assignmentsSection\', this)"]').addEventListener('click', function() {
+    setTimeout(loadAssignmentCourses, 200);
+});
+
+// ================ IMPORT EXAM ================
+function fillImportDropdown(folders) {
+    const select = document.getElementById('importFolderSelect');
+    if (!select) return;
+    select.innerHTML = '<option value="">-- اختر الكورس --</option>';
+    Object.entries(folders).forEach(([id, f]) => {
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = f.name || id;
+        select.appendChild(opt);
+    });
+}
+
+function importParseQuestions(text) {
+    const blocks = text.split(/\n[ \t]*\n/).filter(b => b.trim());
+    const questions = [];
+    for (const block of blocks) {
+        const lines = block.trim().split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 2) continue;
+        const questionText = lines[0];
+        let answerLine = lines.find(l => /^\*/.test(l));
+        if (!answerLine) {
+            const last = lines[lines.length - 1];
+            if (/^[ABCDabcd]$/.test(last.trim()) || ['True','False','true','false'].includes(last.trim())) {
+                answerLine = last;
+            }
+        }
+        if (!answerLine) continue;
+        const rawAnswer = answerLine.replace(/^\*\s*/, '').trim().toLowerCase();
+        if (['true','false'].includes(rawAnswer)) {
+            questions.push({ type: 'tf', text: questionText, correct: rawAnswer === 'true' ? 'a' : 'b' });
+            continue;
+        }
+        const optA = lines.find(l => /^A[:\.\-\)]/i.test(l));
+        const optB = lines.find(l => /^B[:\.\-\)]/i.test(l));
+        const optC = lines.find(l => /^C[:\.\-\)]/i.test(l));
+        const optD = lines.find(l => /^D[:\.\-\)]/i.test(l));
+        if (!optA || !optB || !['a','b','c','d'].includes(rawAnswer)) continue;
+        const clean = opt => opt ? opt.replace(/^[ABCD][:\.\-\)]\s*/i, '').trim() : '';
+        questions.push({ type: 'mcq', text: questionText, a: clean(optA), b: clean(optB), c: clean(optC), d: clean(optD), correct: rawAnswer });
+    }
+    return questions;
+}
+
+window._importParsed = [];
+
+window.importPreview = function() {
+    const raw = document.getElementById('importRawText').value.trim();
+    const errBox = document.getElementById('importErrorBox');
+    const prevSec = document.getElementById('importPreviewSection');
+    errBox.style.display = 'none';
+    prevSec.style.display = 'none';
+    document.getElementById('importSuccessBox').style.display = 'none';
+    if (!raw) { errBox.textContent = '❌ الحقل فارغ! اكتب أو الصق الأسئلة أولاً.'; errBox.style.display = 'block'; return; }
+    const qs = importParseQuestions(raw);
+    if (qs.length === 0) {
+        errBox.innerHTML = '❌ لم يُعثر على أسئلة.<br>تأكد إن في <strong>سطر فاضي</strong> بين كل سؤال والتاني.';
+        errBox.style.display = 'block';
+        return;
+    }
+    window._importParsed = qs;
+    document.getElementById('impStatTotal').textContent = qs.length;
+    document.getElementById('impStatMcq').textContent = qs.filter(q => q.type === 'mcq').length;
+    document.getElementById('impStatTf').textContent = qs.filter(q => q.type === 'tf').length;
+    let html = '';
+    qs.forEach((q, i) => {
+        html += `<div style="background:#f8f7ff;border:2px solid #00b894;border-radius:14px;padding:14px;margin-bottom:10px;">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                <span style="width:26px;height:26px;background:var(--primary);color:white;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:0.78rem;">${i+1}</span>
+                <span style="font-size:0.72rem;padding:3px 8px;border-radius:50px;font-weight:700;background:${q.type==='mcq'?'#e8e6fd':'#d4f7ef'};color:${q.type==='mcq'?'var(--primary)':'#00a080'}">${q.type==='mcq'?'🔘 اختيارات':'✅ True/False'}</span>
+            </div>
+            <div style="font-weight:700;margin-bottom:8px;">${escapeHTML(q.text)}</div>`;
+        if (q.type === 'mcq') {
+            html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">';
+            ['a','b','c','d'].forEach(l => {
+                if (!q[l]) return;
+                const isc = q.correct === l;
+                html += `<div style="padding:6px 10px;border-radius:10px;background:${isc?'#d4f7ef':'white'};font-size:0.8rem;border:1.5px solid ${isc?'#00b894':'#e0ddf7'};display:flex;align-items:center;gap:5px;${isc?'font-weight:700;':''}">
+                    <b style="color:var(--primary)">${l.toUpperCase()}:</b> ${escapeHTML(q[l])} ${isc?'<i class="fas fa-check" style="color:#00b894;margin-right:auto;"></i>':''}
+                </div>`;
             });
-        };
+            html += '</div>';
+        } else {
+            html += `<div style="font-size:0.85rem;color:#00b894;font-weight:700;margin-top:6px;">الإجابة: ${q.correct==='a'?'✅ True':'❌ False'}</div>`;
+        }
+        html += '</div>';
+    });
+    document.getElementById('importPreviewContainer').innerHTML = html;
+    prevSec.style.display = 'block';
+    prevSec.scrollIntoView({ behavior: 'smooth' });
+};
 
-        window.importReset = function() {
-            window._importParsed = [];
-            document.getElementById('importRawText').value = '';
-            document.getElementById('importExamTitle').value = '';
-            document.getElementById('importFolderSelect').value = '';
-            document.getElementById('importPreviewSection').style.display = 'none';
-            document.getElementById('importSuccessBox').style.display = 'none';
-            document.getElementById('importErrorBox').style.display = 'none';
-        };
+window.importPublish = function() {
+    const folderId = document.getElementById('importFolderSelect').value;
+    const title = document.getElementById('importExamTitle').value.trim();
+    const errBox = document.getElementById('importErrorBox');
+    errBox.style.display = 'none';
+    if (!folderId) { errBox.textContent = '❌ اختر الكورس أولاً'; errBox.style.display = 'block'; return; }
+    if (!title)    { errBox.textContent = '❌ اكتب عنوان الامتحان'; errBox.style.display = 'block'; return; }
+    if (!window._importParsed.length) { errBox.textContent = '❌ لا توجد أسئلة'; errBox.style.display = 'block'; return; }
+    const questions = {};
+    window._importParsed.forEach((q, i) => {
+        questions[`q${i}`] = q.type === 'mcq'
+            ? { text: q.text, a: q.a, b: q.b, c: q.c||'', d: q.d||'', correct: q.correct }
+            : { text: q.text, a: 'True', b: 'False', correct: q.correct };
+    });
+    startProgress();
+    push(ref(db, `quizzes/${folderId}`), { name: title, questions, createdAt: new Date().toLocaleString('ar-EG') })
+    .then(() => {
+        stopProgress();
+        document.getElementById('importPreviewSection').style.display = 'none';
+        document.getElementById('importSuccessBox').style.display = 'block';
+        document.getElementById('importSuccessBox').scrollIntoView({ behavior: 'smooth' });
+        showToast('✅ تم نشر الامتحان بنجاح');
+    }).catch(err => {
+        stopProgress();
+        errBox.textContent = '❌ فشل النشر: ' + err.message;
+        errBox.style.display = 'block';
+    });
+};
 
-        window.importLoadExample = function() {
-            document.getElementById('importRawText').value =
+window.importReset = function() {
+    window._importParsed = [];
+    document.getElementById('importRawText').value = '';
+    document.getElementById('importExamTitle').value = '';
+    document.getElementById('importFolderSelect').value = '';
+    document.getElementById('importPreviewSection').style.display = 'none';
+    document.getElementById('importSuccessBox').style.display = 'none';
+    document.getElementById('importErrorBox').style.display = 'none';
+};
+
+window.importLoadExample = function() {
+    document.getElementById('importRawText').value =
 `Champions win medals after hard training.
 A: use to
 B: used to
@@ -3797,60 +4666,20 @@ D: do
 D
 
 The Nile is the longest river in Africa.
-صح
+True
 
 Fish can live on land.
-خطأ`;
-        };
+False`;
+};
 
-        // ✅ تحميل الكورسات لقائمة الاستيراد
-        onValue(ref(db, 'folders'), (snapshot) => {
-            const data = snapshot.val() || {};
-            if (data) fillImportDropdown(data);
-        });
-        // ================ END IMPORT EXAM ================
-
-        // ================ CLEANUP ================
-    </script>
-    <script>
-// حل بسيط لمشكلة رفع الصور من الموبايل
-document.addEventListener('DOMContentLoaded', function() {
-    // تحسين معاينة الصورة
-    const editImageFile = document.getElementById('editImageFile');
-    if (editImageFile) {
-        editImageFile.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                // التحقق من الحجم (8 ميجابايت كحد أقصى)
-                if (file.size > 8 * 1024 * 1024) {
-                    alert('❌ الصورة كبيرة جداً. الحد الأقصى 8 ميجابايت');
-                    this.value = '';
-                    return;
-                }
-                
-                // معاينة الصورة
-                const preview = document.getElementById('editImagePreview');
-                const previewImg = document.getElementById('editPreviewImg');
-                const reader = new FileReader();
-                
-                reader.onload = function(e) {
-                    previewImg.src = e.target.result;
-                    preview.style.display = 'block';
-                };
-                
-                reader.readAsDataURL(file);
-            }
-        });
-    }
-    
-    // حل بديل: نسخ رابط الصورة تلقائياً
-    const editImgField = document.getElementById('editImgField');
-    if (editImgField) {
-        editImgField.addEventListener('click', function() {
-            this.select();
-        });
-    }
+// تحميل الكورسات لقائمة الاستيراد
+onValue(ref(db, 'folders'), (snapshot) => {
+    const data = snapshot.val() || {};
+    if (data) fillImportDropdown(data);
 });
-</script>
+// ================ END IMPORT EXAM ================
+        
+    </script>
+    <script src="parent-reporter.js?v=1.0"></script>
 </body>
 </html>

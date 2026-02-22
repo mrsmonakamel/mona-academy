@@ -1,6 +1,6 @@
 // ================ FIREBASE IMPORTS ================
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getDatabase, ref, get, child, push, onValue, set, update, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+import { getDatabase, ref, get, child, push, onValue, set, update, off, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 import { getAuth, signInWithEmailAndPassword, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 // ================ FIREBASE CONFIG ================
@@ -19,10 +19,26 @@ const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 const dbRef = ref(db);
 
+// ================ EXPOSE FIREBASE FUNCTIONS GLOBALLY ================
+window.db = db;
+window.auth = auth;
+window.dbRef = dbRef;
+window.ref = ref;
+window.get = get;
+window.child = child;
+window.push = push;
+window.update = update;
+window.set = set;
+window.remove = remove;
+window.onValue = onValue;
+
 // ================ GLOBAL VARIABLES ================
 let currentUser = null;
 let myShortId = "";
 let isAdminUser = false;
+// export للملفات الخارجية
+Object.defineProperty(window, 'currentUser', { get: () => currentUser });
+Object.defineProperty(window, 'isAdminUser', { get: () => isAdminUser });
 let currentFolderId = null;
 let currentFolderName = "";
 let currentStudentGrade = null;
@@ -102,6 +118,9 @@ function escapeHTML(str) {
         .replace(/'/g, '&#039;');
 }
 
+// تصدير escapeHTML للملفات الخارجية
+window.escapeHTML = escapeHTML;
+
 // ================ TOAST NOTIFICATION ================
 window.showToast = function(message, type = 'success', duration = 3000) {
     let container = document.getElementById('toastContainer');
@@ -161,10 +180,15 @@ setInterval(clearExpiredCache, 60000);
 // ================ PHONE VALIDATION ================
 function validatePhoneNumber(phone, countryCode = '') {
     if (!phone) return false;
+    // تنظيف الرقم من المسافات
     const cleanPhone = phone.replace(/\s+/g, '');
+    // التأكد أن الرقم يتكون من أرقام فقط
     if (!/^\d+$/.test(cleanPhone)) return false;
+    // التحقق من الطول الكلي مع كود الدولة
     const fullNumber = countryCode + cleanPhone;
+    // كود الدولة + 8-15 رقم
     const phoneRegex = /^\+[0-9]{9,16}$/;
+    // التحقق من عدم تكرار الأرقام
     const isRepeated = /^(.)\1{7,}$/.test(cleanPhone);
     
     return phoneRegex.test(fullNumber) && !isRepeated;
@@ -772,20 +796,6 @@ window.loginGoogle = async function() {
     try {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
-        
-        // التحقق أولاً إذا كان المستخدم مديراً (ليس بالضرورة طالباً)
-        const adminsSnap = await get(ref(db, 'admins'));
-        const admins = adminsSnap.val() || {};
-        const isAdmin = user.email === ADMIN_EMAIL || 
-                        Object.values(admins).some(a => a.email && a.email.toLowerCase() === user.email.toLowerCase());
-        
-        if (isAdmin) {
-            window.closeLogin();
-            window.showToast('✅ مرحباً بك في لوحة الإدارة!', 'success');
-            return;
-        }
-        
-        // إذا لم يكن مديراً، التحقق من وجوده كطالب
         const userSnap = await get(child(dbRef, `students/${user.uid}`));
         
         if(!userSnap.exists()) {
@@ -818,14 +828,10 @@ onAuthStateChanged(auth, async user => {
     if (user) {
         window.startProgress();
         try {
-            // ✅ التحقق من صلاحيات المدير أولاً (قبل التحقق من بيانات الطالب)
             const isAdmin = user.email === ADMIN_EMAIL;
             const adminsSnap = await get(ref(db, 'admins'));
             const admins = adminsSnap.val() || {};
-            // مقارنة الإيميل بدون حساسية للحروف الكبيرة والصغيرة
-            const isAddedAdmin = admins && Object.values(admins).some(a => 
-                a.email && a.email.toLowerCase() === user.email.toLowerCase()
-            );
+            const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
             isAdminUser = isAdmin || isAddedAdmin;
             
             const userSnap = await get(child(dbRef, `students/${user.uid}`));
@@ -837,50 +843,57 @@ onAuthStateChanged(auth, async user => {
                 displayName = data.name || user.displayName || '';
                 currentStudentGrade = data.grade;
             } else {
-                // المستخدم ليس طالباً (ربما مدير مضاف)
                 currentStudentGrade = null;
                 myShortId = "";
             }
             
-            // ✅ عرض badge المدير أو badge كود الطالب حسب النوع
-            if (isAdminUser && !myShortId) {
-                // مدير مضاف ليس طالباً
-                statusDiv.innerHTML = `
-                    <span class="student-id-badge" style="margin-left: 10px; background: var(--main); color: white;">
-                        <i class="fas fa-user-shield"></i> مدير
-                    </span>
-                    <div class="hamburger-menu" onclick="window.toggleMenu()">
-                        <i class="fas fa-bars"></i>
-                    </div>
-                `;
-            } else {
-                statusDiv.innerHTML = `
-                    <span class="student-id-badge" style="margin-left: 10px;">
-                        <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
-                    </span>
-                    <div class="hamburger-menu" onclick="window.toggleMenu()">
-                        <i class="fas fa-bars"></i>
-                    </div>
-                `;
-            }
+            statusDiv.innerHTML = `
+                <span class="student-id-badge" style="margin-left: 10px;">
+                    <i class="fas fa-id-card"></i> ${escapeHTML(myShortId)}
+                </span>
+                <div class="hamburger-menu" onclick="window.toggleMenu()">
+                    <i class="fas fa-bars"></i>
+                </div>
+            `;
             
             if (isAdminUser) {
-                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='ramadan-admin.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">🌙 إدارة رمضان</button>`;
-                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--main); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">⚙️ لوحة الإدارة</button>`;
+                statusDiv.innerHTML += `<button type="button" class="auth-btn" onclick="window.location.href='mx_2026_ctrl_p8.html'" style="margin-right:10px; background:var(--dark); color:white; border:none; padding:8px 16px; border-radius:10px; font-weight:bold; cursor:pointer;">الإدارة</button>`;
             }
             
             if (reviewContainer) {
-                if (myShortId || isAdminUser) {
-                    reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button type="button" onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
-                } else {
-                    reviewContainer.innerHTML = `<div class="review-locked"><i class="fas fa-lock"></i> يرجى تسجيل الدخول أولاً لتتمكن من إضافة رأيك.</div>`;
-                }
+                reviewContainer.innerHTML = `<div class="add-review-box"><h3>اكتب رأيك 👇</h3><textarea id="stuText" rows="3" placeholder="اكتب رأيك هنا..."></textarea><button type="button" onclick="window.sendStuReview()" style="background:var(--main); color:white; border:none; padding:12px; border-radius:50px; cursor:pointer; font-weight:bold; width:100%;">إرسال التقييم</button></div>`;
             }
             
             updateMenuItems(true);
             
             window.loadFolders();
             await window.loadPerfectScores();
+            
+            // ========== متابعة المشاهدة ==========
+            await window.loadContinueWatching();
+            
+            // ========== الإشعارات ==========
+            // إضافة أيقونة الإشعارات
+            if (typeof addNotificationIconToHeader === 'function') {
+                addNotificationIconToHeader();
+            }
+            
+            // إضافة لوحة الإشعارات
+            if (typeof addNotificationsPanel === 'function') {
+                addNotificationsPanel();
+            }
+            
+            // تحديث عداد الإشعارات
+            if (typeof updateNotificationBadge === 'function') {
+                await updateNotificationBadge(user.uid);
+            }
+            
+            // ========== البادجز ==========
+            // شارة الترحيب
+            if (typeof window.checkLoginBadges === 'function') {
+                await window.checkLoginBadges(user.uid);
+            }
+            
         } catch (error) {
             console.error("خطأ في جلب بيانات المستخدم:", error);
             window.showToast("حدث خطأ أثناء تحميل بياناتك.", 'error');
@@ -926,11 +939,13 @@ document.addEventListener('click', (e) => {
 });
 
 function updateMenuItems(isLoggedIn) {
+    const profileItem = document.getElementById('profileMenuItem');
     const homeItem = document.getElementById('homeMenuItem');
     const divider = document.getElementById('menuDivider');
     const logoutItem = document.getElementById('logoutMenuItem');
-    
+
     if (isLoggedIn) {
+        if (profileItem) profileItem.style.display = 'block';
         if (homeItem) {
             homeItem.style.display = 'block';
             homeItem.onclick = function(e) {
@@ -949,6 +964,7 @@ function updateMenuItems(isLoggedIn) {
             };
         }
     } else {
+        if (profileItem) profileItem.style.display = 'none';
         if (homeItem) homeItem.style.display = 'none';
         if (divider) divider.style.display = 'none';
         if (logoutItem) logoutItem.style.display = 'none';
@@ -1245,6 +1261,12 @@ window.confirmSubscription = async function() {
             timestamp: new Date().toLocaleString('ar-EG')
         });
         
+        // ========== البادجز ==========
+        // التحقق من شارات الاشتراكات
+        if (typeof window.checkSubscriptionBadges === 'function') {
+            await window.checkSubscriptionBadges(currentUser.uid);
+        }
+        
         window.showToast('✅ تم الاشتراك بنجاح! يمكنك الآن مشاهدة المحتوى كاملاً.', 'success');
         window.closeSubscriptionModal();
         await window.loadCourseContent(currentFolderId, currentFolderName, true);
@@ -1272,34 +1294,34 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     let examResultsMap = {};
 
     if (hasAccess && currentUser) {
-        const promises = [
+        const promisesWithResults = [
             get(child(dbRef, `folders/${folderId}/videos`)),
             get(child(dbRef, `quizzes/${folderId}`)),
             get(child(dbRef, `students/${currentUser.uid}/examResults`))
         ];
         
-        const results = await Promise.all(promises);
-        vSnap = results[0];
-        qSnap = results[1];
-        resultsSnap = results[2];
+        const fetchResults = await Promise.all(promisesWithResults);
+        vSnap = fetchResults[0];
+        qSnap = fetchResults[1];
+        resultsSnap = fetchResults[2];
         
         if (resultsSnap.exists()) {
-            const examData = resultsSnap.val();
-            Object.keys(examData).forEach(quizId => {
-                if (examData[quizId].courseId === folderId) {
-                    examResultsMap[quizId] = examData[quizId];
+            const examResultsData = resultsSnap.val();
+            Object.keys(examResultsData).forEach(quizId => {
+                if (examResultsData[quizId].courseId === folderId) {
+                    examResultsMap[quizId] = examResultsData[quizId];
                 }
             });
         }
     } else {
-        const promises = [
+        const promisesNoResults = [
             get(child(dbRef, `folders/${folderId}/videos`)),
             get(child(dbRef, `quizzes/${folderId}`))
         ];
         
-        const results = await Promise.all(promises);
-        vSnap = results[0];
-        qSnap = results[1];
+        const fetchResults = await Promise.all(promisesNoResults);
+        vSnap = fetchResults[0];
+        qSnap = fetchResults[1];
     }
 
     const grid = document.getElementById('combinedGrid');
@@ -1307,11 +1329,8 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     
     grid.innerHTML = "";
 
-    // ===== جمع الفيديوهات والامتحانات في مصفوفات =====
-    let videosArray = [];
-    let quizzesArray = [];
-
     if (vSnap.exists()) {
+        const videosArray = [];
         vSnap.forEach(v => {
             videosArray.push({
                 id: v.key,
@@ -1319,51 +1338,10 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
                 order: v.val().order || 999
             });
         });
+        
         videosArray.sort((a, b) => a.order - b.order);
-    }
-
-    if (qSnap.exists()) {
-        qSnap.forEach(q => {
-            quizzesArray.push({
-                id: q.key,
-                ...q.val(),
-                order: q.val().order || 999
-            });
-        });
-        quizzesArray.sort((a, b) => a.order - b.order);
-    }
-
-    // ===== بناء أزرار الفلترة حسب المراحل =====
-    const stageFilterBar = document.getElementById('stageFilterBar');
-    const stageFilterBtns = document.getElementById('stageFilterBtns');
-    
-    // جمع المراحل الفريدة من الفيديوهات
-    const stages = new Set();
-    videosArray.forEach(v => {
-        if (v.stage) stages.add(v.stage.trim());
-    });
-    quizzesArray.forEach(q => {
-        if (q.stage) stages.add(q.stage.trim());
-    });
-
-    let activeStage = 'all';
-
-    function renderContentByStage(stage) {
-        grid.innerHTML = "";
-        activeStage = stage;
-
-        // تحديث حالة الأزرار
-        if (stageFilterBtns) {
-            stageFilterBtns.querySelectorAll('button').forEach(btn => {
-                btn.style.background = btn.dataset.stage === stage ? 'var(--main)' : '#f0eeff';
-                btn.style.color = btn.dataset.stage === stage ? 'white' : 'var(--main)';
-            });
-        }
-
-        const filteredVideos = stage === 'all' ? videosArray : videosArray.filter(v => (v.stage || '').trim() === stage);
-        const filteredQuizzes = stage === 'all' ? quizzesArray : quizzesArray.filter(q => (q.stage || '').trim() === stage);
-
-        filteredVideos.forEach(videoData => {
+        
+        videosArray.forEach(videoData => {
             const videoUrl = videoData.url || '';
             let vidId = "error";
             const match = videoUrl.match(/^.*(youtu\.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/);
@@ -1393,14 +1371,6 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             badge.textContent = 'فيديو شرح';
             detailsDiv.appendChild(badge);
             
-            if (videoData.stage) {
-                const stageBadge = document.createElement('span');
-                stageBadge.className = 'badge';
-                stageBadge.style.cssText = 'background:#e0d7ff; color:var(--dark); margin-right:4px; font-size:0.72rem;';
-                stageBadge.textContent = videoData.stage;
-                detailsDiv.appendChild(stageBadge);
-            }
-            
             const title = document.createElement('h3');
             title.textContent = videoData.title || 'فيديو';
             detailsDiv.appendChild(title);
@@ -1415,8 +1385,21 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             
             grid.appendChild(card);
         });
+    }
 
-        filteredQuizzes.forEach(quizData => {
+    if (qSnap.exists()) {
+        const quizzesArray = [];
+        qSnap.forEach(q => {
+            quizzesArray.push({
+                id: q.key,
+                ...q.val(),
+                order: q.val().order || 999
+            });
+        });
+        
+        quizzesArray.sort((a, b) => a.order - b.order);
+        
+        quizzesArray.forEach(quizData => {
             const quizId = quizData.id;
             const isCompleted = examResultsMap[quizId] ? true : false;
             
@@ -1430,17 +1413,11 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             }
             
             const iconDiv = document.createElement('div');
-            iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center; flex-direction:column; gap:8px;';
+            iconDiv.style.cssText = 'height:160px; background:#f0eeff; display:flex; align-items:center; justify-content:center;';
             const icon = document.createElement('i');
             icon.className = 'fas fa-file-signature fa-3x';
             icon.style.cssText = 'color: var(--main);';
             iconDiv.appendChild(icon);
-            if (quizData.stage) {
-                const stageLbl = document.createElement('span');
-                stageLbl.style.cssText = 'font-size:0.75rem; color:var(--dark); background:#e0d7ff; padding:2px 8px; border-radius:20px;';
-                stageLbl.textContent = quizData.stage;
-                iconDiv.appendChild(stageLbl);
-            }
             card.appendChild(iconDiv);
             
             const detailsDiv = document.createElement('div');
@@ -1491,44 +1468,26 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
             
             grid.appendChild(card);
         });
-
-        if (grid.children.length === 0) {
-            grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذه المرحلة</p>";
-        }
     }
 
-    // ===== بناء شريط الفلترة =====
-    if (stages.size > 0 && stageFilterBar && stageFilterBtns) {
-        stageFilterBar.style.display = 'block';
-        stageFilterBtns.innerHTML = '';
-
-        // زر "الكل"
-        const allBtn = document.createElement('button');
-        allBtn.type = 'button';
-        allBtn.dataset.stage = 'all';
-        allBtn.textContent = '📚 الكل';
-        allBtn.style.cssText = 'padding:8px 18px; border-radius:25px; border:2px solid var(--main); background:var(--main); color:white; font-weight:bold; cursor:pointer; font-family:Cairo; font-size:0.9rem; transition:all 0.2s;';
-        allBtn.addEventListener('click', () => renderContentByStage('all'));
-        stageFilterBtns.appendChild(allBtn);
-
-        const stageIcons = ['🔵','🟢','🟡','🟠','🔴','🟣','⚪'];
-        let iconIdx = 0;
-        stages.forEach(stage => {
-            const btn = document.createElement('button');
-            btn.type = 'button';
-            btn.dataset.stage = stage;
-            btn.textContent = `${stageIcons[iconIdx % stageIcons.length]} ${stage}`;
-            iconIdx++;
-            btn.style.cssText = 'padding:8px 18px; border-radius:25px; border:2px solid var(--main); background:#f0eeff; color:var(--main); font-weight:bold; cursor:pointer; font-family:Cairo; font-size:0.9rem; transition:all 0.2s;';
-            btn.addEventListener('click', () => renderContentByStage(stage));
-            stageFilterBtns.appendChild(btn);
-        });
-    } else if (stageFilterBar) {
-        stageFilterBar.style.display = 'none';
+    if (grid.children.length === 0) {
+        grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذا الكورس بعد</p>";
+    }
+    // عرض رابط واتساب إذا كان المستخدم مشتركاً
+    if (hasAccess && typeof window.displayWhatsappGroup === 'function') {
+        window.displayWhatsappGroup(folderId);
+    } else {
+        const whatsappContainer = document.getElementById('whatsappGroupContainer');
+        if (whatsappContainer) whatsappContainer.innerHTML = '';
     }
 
-    // عرض المحتوى الافتراضي (الكل)
-    renderContentByStage('all');
+    // عرض الواجبات إذا كان المستخدم مشتركاً
+    if (hasAccess && typeof window.loadAssignments === 'function') {
+        window.loadAssignments(folderId, true);
+    } else {
+        const assignmentsContainer = document.getElementById('assignmentsContainer');
+        if (assignmentsContainer) assignmentsContainer.innerHTML = '';
+    }
 };
 
 // ================ OPEN VIDEO ================
@@ -1555,6 +1514,12 @@ window.openVideo = async function(url, title, videoId, folderId) {
             watchedAt: new Date().toLocaleString('ar-EG')
         });
         
+        // ========== البادجز ==========
+        // التحقق من شارات المشاهدة
+        if (typeof window.checkWatchingBadges === 'function') {
+            await window.checkWatchingBadges(currentUser.uid);
+        }
+        
         const quizTitle = document.getElementById('quizTitle');
         const quizOverlay = document.getElementById('quizOverlay');
         const quizContainer = document.getElementById('quizContainer');
@@ -1562,7 +1527,58 @@ window.openVideo = async function(url, title, videoId, folderId) {
         if (quizTitle) quizTitle.innerText = title;
         if (quizOverlay) quizOverlay.style.display = 'block';
         if (quizContainer) {
-            quizContainer.innerHTML = `<iframe width="100%" height="400px" src="https://www.youtube.com/embed/${videoIdentifier}?autoplay=1" frameborder="0" allowfullscreen style="border-radius:15px; background:#000;"></iframe>`;
+            // تنظيف أي tracking قديم قبل البدء
+            if (window._videoProgressInterval) {
+                clearInterval(window._videoProgressInterval);
+                window._videoProgressInterval = null;
+            }
+            if (window._videoMessageHandler) {
+                window.removeEventListener('message', window._videoMessageHandler);
+                window._videoMessageHandler = null;
+            }
+            
+            // أضف iframe مع إمكانية تتبع الوقت
+            quizContainer.innerHTML = `
+                <div style="position: relative; padding-bottom: 56.25%; height: 0;">
+                    <iframe 
+                        id="youtubePlayer"
+                        style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; border-radius:15px;"
+                        src="https://www.youtube.com/embed/${videoIdentifier}?autoplay=1&enablejsapi=1"
+                        frameborder="0"
+                        allow="autoplay; encrypted-media"
+                        allowfullscreen>
+                    </iframe>
+                </div>
+                <div style="margin-top: 15px; color: #666; font-size: 0.9rem; text-align: center;">
+                    <i class="fas fa-info-circle"></i> يتم حفظ تقدم المشاهدة تلقائياً
+                </div>
+            `;
+            
+            // أضف tracking للوقت مع حفظ المرجع لإمكانية الإيقاف لاحقاً
+            window._videoProgressInterval = setInterval(() => {
+                const iframe = document.getElementById('youtubePlayer');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage(JSON.stringify({
+                        event: 'command',
+                        func: 'getCurrentTime'
+                    }), '*');
+                }
+            }, 10000); // كل 10 ثواني
+            
+            // استقبال الوقت الحالي من اليوتيوب مع حفظ المرجع
+            window._videoMessageHandler = (event) => {
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.event === 'infoDelivery' && data.info && data.info.currentTime) {
+                        const currentTime = data.info.currentTime;
+                        const duration = data.info.duration;
+                        window.saveWatchingProgress(videoId, folderId, title, currentTime, duration);
+                    }
+                } catch (e) {
+                    // تجاهل الأخطاء
+                }
+            };
+            window.addEventListener('message', window._videoMessageHandler);
         }
     } catch (error) {
         console.error('Error opening video:', error);
@@ -1589,7 +1605,7 @@ window.startQuiz = async function(folderId, quizId) {
             return;
         }
         
-        const quizSnap = await get(ref(db, `quizzes/${folderId}/${quizId}`));
+        const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
         if(!quizSnap.exists()) {
             window.showToast('❌ خطأ في تحميل الامتحان', 'error');
             return;
@@ -1611,28 +1627,15 @@ window.startQuiz = async function(folderId, quizId) {
         
         Object.keys(questions).forEach((qKey, idx) => {
             const q = questions[qKey];
-            
-            // ✅ تحديد نوع السؤال: TF أو MCQ
-            const isTF = !q.c && (
-                (q.a === 'True' || q.a === 'False') ||
-                (q.a === 'صح' || q.a === 'خطأ')
-            );
-            
             html += `<div class="q-form-card">
                 <span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>
                 <div class="opt-container">`;
             
             ['a', 'b', 'c', 'd'].forEach(opt => {
                 if(q[opt]) {
-                    // ✅ عرض True/False بدل صح/خطأ للطلاب
-                    let displayText = q[opt];
-                    if (isTF) {
-                        if (opt === 'a') displayText = 'True';
-                        else if (opt === 'b') displayText = 'False';
-                    }
-                    html += `<label class="opt-label" data-qidx="${idx}" data-opt="${opt}">
+                    html += `<label class="opt-label" onclick="window.selectOption(this)">
                         <input type="radio" name="q${idx}" value="${opt}">
-                        <span>${escapeHTML(displayText)}</span>
+                        <span>${escapeHTML(q[opt])}</span>
                     </label>`;
                 }
             });
@@ -1657,29 +1660,11 @@ window.selectOption = function(label) {
     container.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
     label.classList.add('selected');
     const input = label.querySelector('input');
-    if (input) {
-        input.checked = true;
-        input.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+    if (input) input.checked = true;
 };
 
-// Event delegation for quiz option labels - يضمن عمل الاختيار بشكل صحيح
-document.addEventListener('click', function(e) {
-    const label = e.target.closest('.opt-label[data-qidx]');
-    if (label) {
-        const container = label.closest('.opt-container');
-        if (!container) return;
-        container.querySelectorAll('.opt-label').forEach(l => l.classList.remove('selected'));
-        label.classList.add('selected');
-        const input = label.querySelector('input[type="radio"]');
-        if (input) {
-            input.checked = true;
-        }
-    }
-});
-
 window.submitQuiz = async function(folderId, quizId) {
-    const quizSnap = await get(ref(db, `quizzes/${folderId}/${quizId}`));
+    const quizSnap = await get(child(dbRef, `quizzes/${folderId}/${quizId}`));
     if (!quizSnap.exists()) {
         window.showToast('❌ حدث خطأ في تحميل الامتحان', 'error');
         return;
@@ -1716,8 +1701,10 @@ window.submitQuiz = async function(folderId, quizId) {
             total: total,
             percentage: percentage,
             completedAt: new Date().toLocaleString('ar-EG'),
-            answers: userAnswers
-            // لا نحفظ الإجابات الصحيحة في بيانات الطالب للأمان
+            answers: userAnswers,
+            correctAnswers: Object.fromEntries(
+                Object.keys(questions).map(qKey => [qKey, questions[qKey].correct])
+            )
         });
 
         await push(ref(db, 'quiz_results'), {
@@ -1731,6 +1718,12 @@ window.submitQuiz = async function(folderId, quizId) {
             percentage: percentage,
             time: new Date().toLocaleString('ar-EG')
         });
+
+        // ========== البادجز ==========
+        // التحقق من شارات الامتحانات
+        if (typeof window.checkExamBadges === 'function') {
+            await window.checkExamBadges(currentUser.uid);
+        }
 
         await window.loadPerfectScores();
         window.closeQuiz();
@@ -1752,7 +1745,7 @@ window.viewQuizResult = async function(folderId, quizId) {
     
     try {
         const [quizSnap, resultSnap] = await Promise.all([
-            get(ref(db, `quizzes/${folderId}/${quizId}`)),
+            get(child(dbRef, `quizzes/${folderId}/${quizId}`)),
             get(child(dbRef, `students/${currentUser.uid}/examResults/${quizId}`))
         ]);
 
@@ -1769,10 +1762,7 @@ window.viewQuizResult = async function(folderId, quizId) {
         const resultData = resultSnap.val();
         const questions = quizData.questions || {};
         const userAnswers = resultData.answers || {};
-        // استخدام الإجابات الصحيحة من Firebase مباشرة (تعكس التعديلات الأخيرة)
-        const correctAnswers = Object.fromEntries(
-            Object.keys(questions).map(qKey => [qKey, questions[qKey].correct])
-        );
+        const correctAnswers = resultData.correctAnswers || {};
 
         const quizTitle = document.getElementById('quizTitle');
         const quizOverlay = document.getElementById('quizOverlay');
@@ -1793,12 +1783,6 @@ window.viewQuizResult = async function(folderId, quizId) {
             const correctAnswer = correctAnswers[qKey] || questions[qKey].correct;
             const isCorrect = userAnswer === correctAnswer || 
                              (correctAnswer && userAnswer && userAnswer.toString() === correctAnswer.toString());
-            
-            // ✅ تحديد نوع السؤال: TF إذا كان الخيار a هو True أو صح (للتوافق مع القديم)
-            const isTF = !q.c && (
-                (q.a === 'True' || q.a === 'False') ||
-                (q.a === 'صح' || q.a === 'خطأ')
-            );
 
             html += `<div class="q-form-card" style="border-right-color: ${isCorrect ? 'var(--success)' : 'var(--danger)'};">`;
             html += `<span class="q-text">س${idx + 1}: ${escapeHTML(q.text || '')}</span>`;
@@ -1813,17 +1797,9 @@ window.viewQuizResult = async function(folderId, quizId) {
                     if (userAnswer === opt && !isCorrect) {
                         style = 'background: #f8d7da; border-color: var(--danger);';
                     }
-                    
-                    // ✅ عرض True/False بدل صح/خطأ
-                    let displayText = q[opt];
-                    if (isTF) {
-                        if (opt === 'a') displayText = 'True';
-                        else if (opt === 'b') displayText = 'False';
-                    }
-                    
                     html += `<label class="opt-label" style="${style}">`;
                     html += `<input type="radio" name="q${idx}" value="${opt}" ${userAnswer === opt ? 'checked' : ''} disabled>`;
-                    html += `<span>${escapeHTML(displayText)}</span>`;
+                    html += `<span>${escapeHTML(q[opt])}</span>`;
                     if (correctAnswer === opt) {
                         html += ` <span style="color: var(--success); font-size: 0.85rem;">(الإجابة الصحيحة)</span>`;
                     }
@@ -1856,6 +1832,16 @@ window.viewQuizResult = async function(folderId, quizId) {
 window.closeQuiz = function() { 
     const quizOverlay = document.getElementById('quizOverlay');
     const quizContainer = document.getElementById('quizContainer');
+    
+    // تنظيف موارد تتبع الفيديو لتفادي memory leaks
+    if (window._videoProgressInterval) {
+        clearInterval(window._videoProgressInterval);
+        window._videoProgressInterval = null;
+    }
+    if (window._videoMessageHandler) {
+        window.removeEventListener('message', window._videoMessageHandler);
+        window._videoMessageHandler = null;
+    }
     
     if (quizOverlay) quizOverlay.style.display = 'none';
     if (quizContainer) quizContainer.innerHTML = "";
@@ -1978,6 +1964,13 @@ window.sendStuReview = async function() {
             });
             stuText.value = "";
             window.showToast('✅ شكراً لك! تم إرسال تقييمك.', 'success');
+            
+            // ========== البادجز ==========
+            // شارة إضافة تقييم
+            if (typeof window.checkAndAwardBadge === 'function') {
+                await window.checkAndAwardBadge(currentUser.uid, 'ADD_REVIEW');
+            }
+            
         } catch (error) {
             console.error('Send review error:', error);
             window.showToast('❌ حدث خطأ في إرسال التقييم', 'error');
@@ -2265,6 +2258,7 @@ document.addEventListener('DOMContentLoaded', () => {
     loadReviews();
     window.loadPerfectScores();
     
+    // ✅ تم التصحيح - استخدام الدالة الصحيحة
     const quizResultsRef = ref(db, 'quiz_results');
     onValue(quizResultsRef, () => {
         window.loadPerfectScores();
@@ -2285,262 +2279,271 @@ window.addEventListener('load', function() {
     setTimeout(window.debugLoginButtons, 500);
 });
 
-// ================ RAMADAN QUESTIONS FUNCTIONS ================
-// قائمة السور كاملة
-const SURAHS = [
-    "الفاتحة", "البقرة", "آل عمران", "النساء", "المائدة", "الأنعام", "الأعراف", "الأنفال", "التوبة", "يونس",
-    "هود", "يوسف", "الرعد", "إبراهيم", "الحجر", "النحل", "الإسراء", "الكهف", "مريم", "طه",
-    "الأنبياء", "الحج", "المؤمنون", "النور", "الفرقان", "الشعراء", "النمل", "القصص", "العنكبوت", "الروم",
-    "لقمان", "السجدة", "الأحزاب", "سبأ", "فاطر", "يس", "الصافات", "ص", "الزمر", "غافر",
-    "فصلت", "الشورى", "الزخرف", "الدخان", "الجاثية", "الأحقاف", "محمد", "الفتح", "الحجرات", "ق",
-    "الذاريات", "الطور", "النجم", "القمر", "الرحمن", "الواقعة", "الحديد", "المجادلة", "الحشر", "الممتحنة",
-    "الصف", "الجمعة", "المنافقون", "التغابن", "الطلاق", "التحريم", "الملك", "القلم", "الحاقة", "المعارج",
-    "نوح", "الجن", "المزمل", "المدثر", "القيامة", "الإنسان", "المرسلات", "النبأ", "النازعات", "عبس",
-    "التكوير", "الانفطار", "المطففين", "الانشقاق", "البروج", "الطارق", "الأعلى", "الغاشية", "الفجر", "البلد",
-    "الشمس", "الليل", "الضحى", "الشرح", "التين", "العلق", "القدر", "البينة", "الزلزلة", "العاديات",
-    "القارعة", "التكاثر", "العصر", "الهمزة", "الفيل", "قريش", "الماعون", "الكوثر", "الكافرون", "النصر",
-    "المسد", "الإخلاص", "الفلق", "الناس"
-];
-
-window.loadRamadanQuestions = function() {
-    const questionsRef = ref(db, 'ramadan_questions');
+// ================ CONTINUE WATCHING ================
+window.saveWatchingProgress = async function(videoId, folderId, videoTitle, currentTime, duration) {
+    if (!currentUser) return;
     
-    onValue(questionsRef, (snapshot) => {
-        const container = document.getElementById('ramadanQuestionsContainer');
-        if (!container) return;
+    try {
+        // احسب النسبة المئوية للمشاهدة
+        const progressPercent = Math.round((currentTime / duration) * 100);
         
-        if (!snapshot.exists()) {
-            container.innerHTML = '<div class="empty-state" style="color: #ffd700;"><i class="fas fa-moon"></i><br>🌙 سيتم إضافة أسئلة رمضان قريباً</div>';
-            return;
-        }
+        // لو قرب يخلص (أكثر من 90%) متحفظش التقدم عشان يعتبره خلص
+        if (progressPercent > 90) return;
         
-        let html = '';
+        const progressData = {
+            courseId: folderId,
+            courseName: document.getElementById('folderTitleName')?.innerText || '',
+            videoId: videoId,
+            videoTitle: videoTitle,
+            currentTime: currentTime,
+            duration: duration,
+            progressPercent: progressPercent,
+            lastWatchedAt: new Date().toISOString(),
+            completed: false
+        };
         
-        const questions = [];
-        snapshot.forEach(child => {
-            questions.push({ id: child.key, ...child.val() });
+        await set(ref(db, `students/${currentUser.uid}/watchingProgress/${folderId}_${videoId}`), progressData);
+        
+        // كمان سجل في history للطالب
+        await push(ref(db, `students/${currentUser.uid}/watchingHistory`), {
+            ...progressData,
+            watchedAt: new Date().toLocaleString('ar-EG')
         });
         
-        questions.sort((a, b) => a.day - b.day);
+    } catch (error) {
+        console.error('Error saving progress:', error);
+    }
+};
+
+// تحميل فيديوهات متابعة المشاهدة للطالب
+window.loadContinueWatching = async function() {
+    if (!currentUser) return;
+    
+    try {
+        const progressSnap = await get(child(dbRef, `students/${currentUser.uid}/watchingProgress`));
+        if (!progressSnap.exists()) return;
         
-        questions.forEach(q => {
+        const continueSection = document.createElement('section');
+        continueSection.className = 'continue-watching-section';
+        continueSection.id = 'continueWatchingSection';
+        continueSection.innerHTML = `
+            <h2 style="margin: 40px 0 20px; font-weight: 900;">
+                <i class="fas fa-play-circle" style="color: var(--main);"></i> 
+                أكمل المشاهدة
+            </h2>
+            <div id="continueGrid" class="continue-grid"></div>
+        `;
+        
+        // حط القسم تحت الهيرو مباشرة
+        const hero = document.querySelector('.hero');
+        if (hero && !document.getElementById('continueWatchingSection')) {
+            hero.insertAdjacentElement('afterend', continueSection);
+        }
+        
+        const continueGrid = document.getElementById('continueGrid');
+        if (!continueGrid) return;
+        
+        let html = '';
+        const progresses = [];
+        
+        progressSnap.forEach(progress => {
+            progresses.push({
+                id: progress.key,
+                ...progress.val()
+            });
+        });
+        
+        // رتب حسب آخر مشاهدة
+        progresses.sort((a, b) => new Date(b.lastWatchedAt) - new Date(a.lastWatchedAt));
+        
+        progresses.slice(0, 6).forEach(prog => {
+            // جلب صورة الفيديو من يوتيوب
+            const videoId = prog.videoId;
+            const thumbUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
+            
             html += `
-                <div class="ramadan-question-card" onclick="window.openRamadanQuestion('${q.id}')">
-                    <div class="ramadan-question-day">🌙 اليوم ${q.day}</div>
-                    <div class="ramadan-question-preview">${q.text}</div>
-                    <!-- إخفاء الإجابة الصحيحة -->
+                <div class="continue-card" 
+                     data-course-id="${escapeHTML(String(prog.courseId))}"
+                     data-video-id="${escapeHTML(String(prog.videoId))}"
+                     data-current-time="${escapeHTML(String(prog.currentTime))}">
+                    <img src="${thumbUrl}" class="continue-thumb" loading="lazy">
+                    <div class="continue-info">
+                        <h4>${escapeHTML(prog.videoTitle)}</h4>
+                        <p class="continue-course">${escapeHTML(prog.courseName)}</p>
+                        <div class="progress-bar-container">
+                            <div class="progress-fill" style="width: ${prog.progressPercent}%"></div>
+                        </div>
+                        <span class="continue-percent">${prog.progressPercent}% مكتمل</span>
+                    </div>
+                    <button class="btn-continue">
+                        <i class="fas fa-play"></i> أكمل
+                    </button>
                 </div>
             `;
         });
         
-        container.innerHTML = html;
-    });
-};
+        continueGrid.innerHTML = html || '<p class="empty-state">لا توجد فيديوهات قيد المشاهدة</p>';
 
-window.openRamadanQuestion = async function(questionId) {
-    const modal = document.getElementById('ramadanAnswerModal');
-    const title = document.getElementById('ramadanQuestionTitle');
-    const text = document.getElementById('ramadanQuestionText');
-    const answersContainer = document.getElementById('ramadanAnswersContainer');
-    const answerForm = document.querySelector('.ramadan-answer-form');
-    
-    const snapshot = await get(ref(db, `ramadan_questions/${questionId}`));
-    const question = snapshot.val();
-    
-    title.textContent = `🌙 اليوم ${question.day}`;
-    text.textContent = question.text;
-    
-    // تحديث نموذج الإجابة
-    if (answerForm) {
-        // تعبئة حقل كود الطالب تلقائياً إذا كان المستخدم مسجل دخوله
-        const studentIdField = document.getElementById('ramadanStudentId');
-        if (studentIdField && currentUser) {
-            studentIdField.value = myShortId || '';
-        }
-        
-        // إعادة تعبئة قائمة السور
-        const surahSelect = document.getElementById('ramadanSurahSelect');
-        if (surahSelect) {
-            surahSelect.innerHTML = '<option value="">-- اختر السورة --</option>';
-            SURAHS.forEach(surah => {
-                const option = document.createElement('option');
-                option.value = surah;
-                option.textContent = surah;
-                surahSelect.appendChild(option);
-            });
-            
-            surahSelect.addEventListener('change', updateRamadanAnswerPreview);
-            const ayaInput = document.getElementById('ramadanAyaInput');
-            if (ayaInput) {
-                ayaInput.addEventListener('input', updateRamadanAnswerPreview);
+        // ربط الأحداث بطريقة آمنة باستخدام event delegation
+        continueGrid.addEventListener('click', function(e) {
+            const card = e.target.closest('.continue-card');
+            if (card) {
+                const courseId = card.dataset.courseId;
+                const videoId = card.dataset.videoId;
+                const currentTime = card.dataset.currentTime;
+                window.continueWatching(courseId, videoId, currentTime);
             }
-        }
-    }
-    
-    modal.style.display = 'flex';
-    
-    // تحميل الإجابات وعرضها
-    loadRamadanAnswers(questionId, question.correctAnswer);
-    
-    modal.dataset.questionId = questionId;
-    modal.dataset.correctAnswer = question.correctAnswer;
-    modal.dataset.day = question.day;
-    
-    const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
-    if (submitBtn) {
-        submitBtn.removeEventListener('click', window.submitRamadanAnswer);
-        submitBtn.addEventListener('click', window.submitRamadanAnswer);
+        });
+        
+    } catch (error) {
+        console.error('Error loading continue watching:', error);
     }
 };
 
-function updateRamadanAnswerPreview() {
-    const surah = document.getElementById('ramadanSurahSelect')?.value;
-    const aya = document.getElementById('ramadanAyaInput')?.value;
-    const preview = document.getElementById('ramadanAnswerPreview');
+// متابعة المشاهدة من حيث توقفت
+window.continueWatching = async function(courseId, videoId, currentTime) {
+    if (!currentUser) { window.openLogin(); return; }
     
-    if (surah && aya) {
-        preview.innerHTML = `<span style="color: #00b894;">الإجابة المختارة: ${surah} - ${aya}</span>`;
-    } else if (surah) {
-        preview.innerHTML = `<span style="color: #ffd700;">${surah} - (أدخل رقم الآية)</span>`;
+    try {
+        // جلب بيانات الكورس للحصول على الاسم
+        const folderSnap = await get(child(dbRef, `folders/${courseId}`));
+        const courseName = folderSnap.exists() ? (folderSnap.val().name || '') : '';
+        
+        // جلب بيانات الفيديو
+        const videoSnap = await get(child(dbRef, `folders/${courseId}/videos/${videoId}`));
+        if (!videoSnap.exists()) {
+            window.showToast('❌ الفيديو غير موجود', 'error');
+            return;
+        }
+        const videoData = videoSnap.val();
+        
+        // افتح الفيديو مباشرة
+        await window.openVideo(videoData.url, videoData.title, videoId, courseId);
+        
+        // بعد تحميل الـ iframe، انتقل للوقت المحدد
+        setTimeout(() => {
+            const iframe = document.getElementById('youtubePlayer');
+            if (iframe) {
+                iframe.contentWindow.postMessage(JSON.stringify({
+                    event: 'command',
+                    func: 'seekTo',
+                    args: [parseFloat(currentTime) || 0, true]
+                }), '*');
+            }
+        }, 3000);
+    } catch (error) {
+        console.error('Error in continueWatching:', error);
+        window.showToast('❌ حدث خطأ في متابعة المشاهدة', 'error');
+    }
+};
+
+// ================ DARK MODE ================
+
+// التحقق من الوضع المخزن عند تحميل الصفحة
+function initDarkMode() {
+    const savedMode = localStorage.getItem('darkMode');
+    const darkModeIcon = document.getElementById('darkModeIcon');
+    
+    if (savedMode === 'enabled') {
+        document.body.classList.add('dark-mode');
+        if (darkModeIcon) {
+            darkModeIcon.classList.remove('fa-moon');
+            darkModeIcon.classList.add('fa-sun');
+        }
     } else {
-        preview.innerHTML = 'لم يتم الاختيار بعد';
+        document.body.classList.remove('dark-mode');
+        if (darkModeIcon) {
+            darkModeIcon.classList.remove('fa-sun');
+            darkModeIcon.classList.add('fa-moon');
+        }
     }
 }
 
-window.loadRamadanAnswers = function(questionId, correctAnswer) {
-    const answersRef = ref(db, 'ramadan_answers');
+// تبديل الوضع الليلي
+window.toggleDarkMode = function() {
+    const darkModeIcon = document.getElementById('darkModeIcon');
     
-    onValue(answersRef, (snapshot) => {
-        const container = document.getElementById('ramadanAnswersContainer');
-        if (!container) return;
-        
-        let html = '';
-        
-        if (snapshot.exists()) {
-            const answers = [];
-            snapshot.forEach(child => {
-                const ans = child.val();
-                if (ans.questionId === questionId) {
-                    answers.push(ans);
-                }
-            });
-            
-            answers.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-            
-            answers.forEach(ans => {
-                const isCorrect = ans.answer === correctAnswer;
-                html += `
-                    <div class="ramadan-answer-item ${isCorrect ? 'correct' : 'wrong'}">
-                        <div class="ramadan-answer-name">
-                            <i class="fas fa-user"></i> ${ans.name}
-                        </div>
-                        <!-- تم إخفاء نص الإجابة بناءً على طلب المستخدم -->
-                        <div class="ramadan-answer-status ${isCorrect ? 'correct' : 'wrong'}">
-                            ${isCorrect ? 
-                                '<i class="fas fa-check-circle"></i> إجابة صحيحة ✓' : 
-                                '<i class="fas fa-times-circle"></i> إجابة خاطئة ✗'}
-                        </div>
-                        <div class="ramadan-answer-time">
-                            <i class="far fa-clock"></i> ${ans.date}
-                        </div>
-                    </div>
-                `;
-            });
+    if (document.body.classList.contains('dark-mode')) {
+        document.body.classList.remove('dark-mode');
+        localStorage.setItem('darkMode', 'disabled');
+        if (darkModeIcon) {
+            darkModeIcon.classList.remove('fa-sun');
+            darkModeIcon.classList.add('fa-moon');
         }
-        
-        if (!html) {
-            html = '<p style="color: #666; text-align: center;">لا توجد إجابات بعد. كن أول من يجيب!</p>';
+        window.showToast('🌞 تم تفعيل الوضع النهاري', 'success');
+    } else {
+        document.body.classList.add('dark-mode');
+        localStorage.setItem('darkMode', 'enabled');
+        if (darkModeIcon) {
+            darkModeIcon.classList.remove('fa-moon');
+            darkModeIcon.classList.add('fa-sun');
         }
-        
-        container.innerHTML = html;
-    });
-};
-
-window.submitRamadanAnswer = async function() {
-    const modal = document.getElementById('ramadanAnswerModal');
-    const questionId = modal.dataset.questionId;
-    const correctAnswer = modal.dataset.correctAnswer;
-    const day = modal.dataset.day;
-    
-    const name = document.getElementById('ramadanAnswerName').value.trim();
-    const studentId = document.getElementById('ramadanStudentId').value.trim(); // كود الطالب
-    const surah = document.getElementById('ramadanSurahSelect').value;
-    const aya = document.getElementById('ramadanAyaInput').value;
-    
-    if (!name) {
-        alert('❌ يرجى إدخال الاسم');
-        return;
-    }
-    
-    if (!studentId) {
-        alert('❌ يرجى إدخال كود الطالب');
-        return;
-    }
-    
-    if (studentId.length !== 10) {
-        alert('❌ كود الطالب يجب أن يكون 10 أرقام');
-        return;
-    }
-    
-    if (!surah || !aya) {
-        alert('❌ يرجى اختيار السورة ورقم الآية');
-        return;
-    }
-    
-    const answer = `${surah} - ${aya}`;
-    // تطبيع الإجابة لمقارنة صحيحة
-    const normalizeAnswer = (str) => str ? str.trim().replace(/\s+-\s+/g, ' - ').replace(/\s+/g, ' ') : '';
-    const isCorrect = normalizeAnswer(answer) === normalizeAnswer(correctAnswer);
-    
-    const answerData = {
-        questionId: questionId,
-        day: parseInt(day),
-        name: name,
-        studentId: studentId, // حفظ كود الطالب
-        answer: answer,
-        surah: surah,
-        aya: parseInt(aya),
-        isCorrect: isCorrect,
-        date: new Date().toLocaleString('ar-EG'),
-        timestamp: Date.now()
-    };
-    
-    try {
-        await push(ref(db, 'ramadan_answers'), answerData);
-        
-        // إعادة تعيين الحقول
-        document.getElementById('ramadanAnswerName').value = '';
-        document.getElementById('ramadanStudentId').value = '';
-        document.getElementById('ramadanSurahSelect').value = '';
-        document.getElementById('ramadanAyaInput').value = '';
-        document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
-        
-        if (isCorrect) {
-            alert('✅ إجابة صحيحة! بارك الله فيك');
-        } else {
-            alert(`❌ إجابة خاطئة. حاول مرة أخرى.`);
-        }
-    } catch (error) {
-        console.error('Error submitting answer:', error);
-        alert('❌ حدث خطأ في إرسال الإجابة');
+        window.showToast('🌙 تم تفعيل الوضع الليلي', 'success');
     }
 };
 
-// إغلاق مودال رمضان
+// استدعاء الدالة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
-    const closeModal = document.querySelector('.ramadan-close-modal');
-    if (closeModal) {
-        closeModal.addEventListener('click', function() {
-            document.getElementById('ramadanAnswerModal').style.display = 'none';
-        });
-    }
-    
-    window.loadRamadanQuestions();
+    initDarkMode();
 });
 
-window.addEventListener('click', function(event) {
-    const modal = document.getElementById('ramadanAnswerModal');
-    if (event.target === modal) {
-        modal.style.display = 'none';
+// ================ PWA INSTALL PROMPT ================
+let deferredPrompt;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    // منع المتصفح من عرض الـ prompt تلقائياً
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    // عرض زر التثبيت
+    showInstallButton();
+});
+
+function showInstallButton() {
+    // لو المستخدم مسجل دخوله ومفيش زر تثبيت
+    if (currentUser && !document.getElementById('installPwaBtn')) {
+        const installBtn = document.createElement('button');
+        installBtn.id = 'installPwaBtn';
+        installBtn.className = 'install-pwa-btn';
+        installBtn.innerHTML = '<i class="fas fa-download"></i> تثبيت التطبيق';
+        installBtn.onclick = installPWA;
+        
+        // حط الزر في الهيدر
+        const headerControls = document.querySelector('.header-controls');
+        if (headerControls) {
+            headerControls.appendChild(installBtn);
+        }
+    }
+}
+
+async function installPWA() {
+    if (!deferredPrompt) return;
+    
+    // عرض الـ prompt
+    deferredPrompt.prompt();
+    
+    // انتظر رد المستخدم
+    const { outcome } = await deferredPrompt.userChoice;
+    console.log(`✅ User response to install prompt: ${outcome}`);
+    
+    // مفيش حاجة فاضلة
+    deferredPrompt = null;
+    
+    // أخفي الزر
+    const installBtn = document.getElementById('installPwaBtn');
+    if (installBtn) installBtn.remove();
+}
+
+// لو التطبيق اتثبت، اعرف
+window.addEventListener('appinstalled', (e) => {
+    console.log('✅ PWA was installed');
+    window.showToast('🎉 تم تثبيت التطبيق بنجاح', 'success');
+    
+    // أرسل إحصائية
+    if (typeof gtag !== 'undefined') {
+        gtag('event', 'install', {
+            'event_category': 'PWA',
+            'event_label': 'Install'
+        });
     }
 });
