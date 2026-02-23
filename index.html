@@ -33,6 +33,18 @@
     <meta property="twitter:description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال">
     <meta property="twitter:image" content="https://monaacademy-cd983.web.app/mona.jpg">
     
+    <!-- PWA Meta Tags -->
+<link rel="manifest" href="/manifest.json">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mona Academy">
+<link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+<link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+<link rel="apple-touch-icon" sizes="167x167" href="/icons/icon-152x152.png">
+<meta name="msapplication-TileImage" content="/icons/icon-144x144.png">
+<meta name="msapplication-TileColor" content="#6c5ce7">
+    
     <style>
         /* الأنماط الحرجة فقط */
         .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 10px; min-height: 200px; }
@@ -57,13 +69,17 @@
     <header>
         <div class="logo-text" id="logoText">MS. MONA KAMEL</div>
         <div class="header-controls">
-            <div id="authStatus"></div>
-        </div>
+    <div class="dark-mode-toggle" onclick="window.toggleDarkMode()">
+        <i class="fas fa-moon" id="darkModeIcon"></i>
+    </div>
+    <div id="authStatus"></div>
+</div>
     </header>
 
     <!-- HAMBURGER DROPDOWN -->
     <div id="menuDropdown" class="dropdown-menu">
         <a id="homeMenuItem" style="display: none;" class="touch-feedback"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <a id="profileMenuItem" href="profile.html" style="display: none;" class="touch-feedback"><i class="fas fa-user-circle" style="margin-left: 10px;"></i> ملفي الشخصي</a>
         <hr id="menuDivider" style="display: none;">
         <a id="logoutMenuItem" style="display: none; color: var(--danger);" class="touch-feedback"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
     </div>
@@ -133,23 +149,88 @@
                 <h2>طلاب الدرجة النهائية 🏅</h2>
                 <i class="fas fa-star"></i>
             </div>
-
-            <!-- زر أسئلة رمضان الجديد -->
-            <div style="text-align: center; margin: 40px 0 20px;">
-                <a href="#ramadanQuestionsSection" onclick="document.getElementById('ramadanQuestionsSection').scrollIntoView({behavior: 'smooth'})" 
-                   style="display: inline-flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #1a2639, #0c1a2b); 
-                          color: #ffd700; padding: 20px 50px; border-radius: 60px; text-decoration: none; font-weight: 900; 
-                          font-size: 1.5rem; border: 3px solid #ffd700; box-shadow: 0 10px 30px rgba(255,215,0,0.3); 
-                          transition: all 0.4s; cursor: pointer;" 
-                   onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 40px rgba(255,215,0,0.5)';"
-                   onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(255,215,0,0.3)';">
-                    <i class="fas fa-moon fa-2x" style="animation: ramadanTwinkle 2s infinite;"></i>
-                    <span>🌙 أسئلة رمضان</span>
-                    <i class="fas fa-star fa-2x" style="animation: ramadanStar 2.5s infinite;"></i>
-                </a>
-            </div>
             <div id="perfectScoresGrid" class="perfect-grid"></div>
         </section>
+
+        <!-- ================ RAMADAN QUESTIONS SECTION ================ -->
+        <section id="ramadanQuestionsSection" style="background: linear-gradient(145deg, #1a2639, #0c1a2b); padding: 60px 20px; margin: 0;">
+            <div style="max-width: 900px; margin: 0 auto;">
+                <!-- Header -->
+                <div style="text-align: center; margin-bottom: 40px;">
+                    <div style="font-size: 3rem; margin-bottom: 10px;">🌙</div>
+                    <h2 style="color: #ffd700; font-size: 2.2rem; font-weight: 900; margin-bottom: 10px;">مسابقة أسئلة رمضان</h2>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 1rem;">شارك وحقق أفضل النتائج</p>
+                </div>
+
+                <!-- شروط المسابقة -->
+                <div style="background: rgba(255,215,0,0.1); border: 2px solid rgba(255,215,0,0.4); border-radius: 20px; padding: 25px; margin-bottom: 35px;">
+                    <h3 style="color: #ffd700; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+                        <i class="fas fa-scroll"></i> شروط المسابقة
+                    </h3>
+                    <div style="color: rgba(255,255,255,0.85); line-height: 2; font-size: 0.95rem;">
+                        <p>📢 يتم الاختيار عشوائي .. ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
+                        <p>📖 شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير .. (آية ١٨٣، ١٨٤، ١٨٥)</p>
+                        <p>🌹 وحظ سعيد للجميع</p>
+                    </div>
+                </div>
+
+                <!-- الأسئلة -->
+                <div id="ramadanQuestionsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 20px;">
+                    <div style="text-align: center; color: rgba(255,255,255,0.5); grid-column: 1/-1; padding: 40px;">
+                        <i class="fas fa-moon fa-3x" style="color: rgba(255,215,0,0.3); margin-bottom: 15px;"></i>
+                        <p>جاري تحميل الأسئلة...</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================ RAMADAN ANSWER MODAL ================ -->
+        <div id="ramadanAnswerModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 5000; align-items: center; justify-content: center; padding: 20px;">
+            <div style="background: linear-gradient(145deg, #1a2639, #0c1a2b); border: 2px solid #ffd700; border-radius: 30px; max-width: 500px; width: 100%; max-height: 90vh; overflow-y: auto; padding: 30px; position: relative;">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
+                    <h3 id="ramadanQuestionTitle" style="color: #ffd700; font-size: 1.3rem; font-weight: 900; flex: 1; margin-left: 15px;"></h3>
+                    <span onclick="document.getElementById('ramadanAnswerModal').style.display='none'" style="color: rgba(255,255,255,0.5); font-size: 1.8rem; cursor: pointer; line-height: 1; flex-shrink: 0;">&times;</span>
+                </div>
+                <div id="ramadanQuestionText" style="color: white; font-size: 1.05rem; margin-bottom: 25px; line-height: 1.9; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px;"></div>
+
+                <div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="color: #ffd700; font-size: 0.9rem; display: block; margin-bottom: 6px;"><i class="fas fa-user"></i> الاسم الثلاثي</label>
+                        <input type="text" id="ramadanAnswerName" placeholder="أدخل اسمك الثلاثي" maxlength="50"
+                            style="width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; color: white; font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none;">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="color: #ffd700; font-size: 0.9rem; display: block; margin-bottom: 6px;"><i class="fas fa-id-card"></i> كود الطالب (10 أرقام)</label>
+                        <input type="text" id="ramadanStudentId" placeholder="0000000000" maxlength="10" inputmode="numeric"
+                            style="width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; color: white; font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none; direction: ltr;">
+                    </div>
+                    <div style="margin-bottom: 12px;">
+                        <label style="color: #ffd700; font-size: 0.9rem; display: block; margin-bottom: 6px;"><i class="fas fa-book-open"></i> اختر السورة</label>
+                        <select id="ramadanSurahSelect"
+                            style="width: 100%; padding: 12px 15px; background: rgba(20,30,50,0.95); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; color: white; font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none;">
+                            <option value="">-- اختر السورة --</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <label style="color: #ffd700; font-size: 0.9rem; display: block; margin-bottom: 6px;"><i class="fas fa-hashtag"></i> رقم الآية</label>
+                        <input type="number" id="ramadanAyaInput" placeholder="مثال: 183" min="1"
+                            style="width: 100%; padding: 12px 15px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,215,0,0.3); border-radius: 12px; color: white; font-family: 'Cairo', sans-serif; font-size: 0.95rem; outline: none; direction: ltr;">
+                    </div>
+
+                    <div id="ramadanSubmitMsg" style="display:none; margin-bottom: 12px; padding: 12px; border-radius: 10px; font-weight: 700; text-align: center;"></div>
+
+                    <button type="button" id="ramadanSubmitAnswerBtn"
+                        style="width: 100%; padding: 14px; background: linear-gradient(135deg, #ffd700, #ffa500); border: none; border-radius: 14px; color: #1a2639; font-weight: 900; font-size: 1.1rem; cursor: pointer; font-family: 'Cairo', sans-serif; transition: 0.3s;">
+                        <i class="fas fa-paper-plane"></i> إرسال الإجابة
+                    </button>
+                </div>
+
+                <div style="margin-top: 25px; border-top: 1px solid rgba(255,215,0,0.15); padding-top: 20px;">
+                    <h4 style="color: #ffd700; margin-bottom: 12px; font-size: 0.95rem;"><i class="fas fa-users"></i> إجابات المشاركين</h4>
+                    <div id="ramadanAnswersContainer" style="max-height: 200px; overflow-y: auto;"></div>
+                </div>
+            </div>
+        </div>
 
         <!-- REVIEWS SECTION -->
         <section class="reviews">
@@ -165,18 +246,19 @@
             <i class="fas fa-arrow-right"></i> العودة للرئيسية
         </button>
         <h2 id="folderTitleName" style="margin-bottom:30px; color:var(--dark); text-align:center; font-weight: 900;"></h2>
-        
+      
+<!-- حاوية رابط مجموعة واتساب -->
+<div id="whatsappGroupContainer" style="margin-bottom: 20px;"></div>
+  
         <!-- Rating Section -->
         <div id="courseRatingSection" class="rating-box" style="display: none;"></div>
-
-        <!-- ===== فلترة المراحل ===== -->
-        <div id="stageFilterBar" style="display:none; margin-bottom:25px; text-align:center;">
-            <p style="color:var(--gray); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-filter"></i> فلترة حسب المرحلة / الوحدة</p>
-            <div id="stageFilterBtns" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
-        </div>
         
         <div id="combinedGrid" class="content-grid"></div>
     </div>
+    
+    
+           <!-- حاوية الواجبات -->
+        <div id="assignmentsContainer" style="margin-top: 30px;"></div>
 
     <!-- QUIZ / VIDEO OVERLAY -->
     <div id="quizOverlay">
@@ -404,74 +486,79 @@
         </div>
     </footer>
 
-    <!-- Toast Container للإشعارات -->
+        <!-- Toast Container للإشعارات -->
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- استيراد السكريبت الرئيسي -->
     <script type="module" src="script.js?v=2.1"></script>
-    
+
+    <!-- استيراد السكريبتات المساعدة -->
+    <script src="notifications.js?v=1.0"></script>
+    <script src="badges.js?v=1.0"></script>
+    <script src="maintenance.js?v=1.0"></script>
+    <script src="whatsapp-group.js?v=1.0"></script>
+
     <script>
-        // ================ تحسينات تجربة المستخدم ================
-        
-        // Offline/Online Detection
+        // التحقق من وضع الصيانة بعد تحميل الملفات
+        (async function() {
+            if (typeof window.checkMaintenanceMode === 'function') {
+                const isMaintenance = await window.checkMaintenanceMode();
+                if (isMaintenance) {
+                    // تم عرض صفحة الصيانة، نوقف التحميل
+                    return;
+                }
+            }
+            console.log('✅ تم تجاوز وضع الصيانة');
+        })();
+
+        // تحسينات تجربة المستخدم (Offline Detection, Skeleton, ربط الأحداث)
         function updateOnlineStatus() {
             const indicator = document.getElementById('offlineIndicator');
             if (indicator) {
-                if (!navigator.onLine) {
-                    indicator.classList.add('show');
-                } else {
-                    indicator.classList.remove('show');
-                }
+                indicator.classList.toggle('show', !navigator.onLine);
             }
         }
-        
         window.addEventListener('online', updateOnlineStatus);
         window.addEventListener('offline', updateOnlineStatus);
         updateOnlineStatus();
-        
-        // تحميل Skeleton
+
         window.addEventListener('load', () => {
             setTimeout(() => {
                 document.querySelectorAll('.skeleton').forEach(el => el.remove());
             }, 1000);
         });
 
-        // ربط الأحداث الأساسية
         document.addEventListener('DOMContentLoaded', function() {
             // ربط أزرار الواتساب
             const showWaModalBtn = document.getElementById('showWaModalBtn');
             const closeWaModalBtn = document.getElementById('closeWaModalBtn');
             const waModal = document.getElementById('waModal');
-            
             if (showWaModalBtn) {
                 showWaModalBtn.addEventListener('click', function() {
                     if (waModal) waModal.style.display = 'flex';
                 });
             }
-            
             if (closeWaModalBtn) {
                 closeWaModalBtn.addEventListener('click', function() {
                     if (waModal) waModal.style.display = 'none';
                 });
             }
-            
+
             // ربط أزرار العودة للرئيسية
             const logoText = document.getElementById('logoText');
             const backToHomeBtn = document.getElementById('backToHomeBtn');
-            
             if (logoText) {
                 logoText.addEventListener('click', function() {
                     window.location.reload();
                 });
             }
-            
             if (backToHomeBtn) {
                 backToHomeBtn.addEventListener('click', function() {
                     document.getElementById('homePage').style.display = 'block';
                     document.getElementById('contentArea').style.display = 'none';
                 });
             }
-            
+
             // ربط أزرار إغلاق المودالات
             const closeLoginBtn = document.getElementById('closeLoginBtn');
             const closeSubscriptionBtn = document.getElementById('closeSubscriptionBtn');
@@ -479,44 +566,33 @@
             const loginModal = document.getElementById('loginModal');
             const subscriptionModal = document.getElementById('subscriptionModal');
             const quizOverlay = document.getElementById('quizOverlay');
-            
             if (closeLoginBtn) {
                 closeLoginBtn.addEventListener('click', function() {
                     if (loginModal) loginModal.style.display = 'none';
                 });
             }
-            
             if (closeSubscriptionBtn) {
                 closeSubscriptionBtn.addEventListener('click', function() {
                     if (subscriptionModal) subscriptionModal.style.display = 'none';
                 });
             }
-            
             if (closeQuizBtn) {
                 closeQuizBtn.addEventListener('click', function() {
                     if (quizOverlay) {
                         quizOverlay.style.display = 'none';
                         const quizContainer = document.getElementById('quizContainer');
-                        if (quizContainer) {
-                            quizContainer.innerHTML = "";
-                        }
+                        if (quizContainer) quizContainer.innerHTML = "";
                     }
                 });
             }
-            
+
             // إغلاق المودالات عند الضغط خارجها
             window.addEventListener('click', function(event) {
-                if (event.target === loginModal) {
-                    loginModal.style.display = 'none';
-                }
-                if (event.target === subscriptionModal) {
-                    subscriptionModal.style.display = 'none';
-                }
-                if (event.target === waModal) {
-                    waModal.style.display = 'none';
-                }
+                if (event.target === loginModal) loginModal.style.display = 'none';
+                if (event.target === subscriptionModal) subscriptionModal.style.display = 'none';
+                if (event.target === waModal) waModal.style.display = 'none';
             });
-            
+
             // منع التكبير على الـ inputs في الموبايل
             const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"]');
             inputs.forEach(input => {
@@ -526,69 +602,258 @@
             });
         });
     </script>
-    
-    <!-- ================ RAMADAN QUESTIONS SECTION ================ -->
-    <section id="ramadanQuestionsSection" class="ramadan-section">
-        <div class="ramadan-header">
-            <i class="fas fa-moon"></i>
-            <i class="fas fa-star"></i>
-            <h2>🌙 أسئلة رمضان</h2>
-            <i class="fas fa-star"></i>
-            <i class="fas fa-moon"></i>
-        </div>
-        
-        <!-- شروط المسابقة الجديدة -->
-        <div class="ramadan-rules" style="text-align: center; color: #ffd700; margin-bottom: 30px; background: rgba(255,215,0,0.1); padding: 20px; border-radius: 30px; border: 2px solid #ffd700;">
-            <p style="font-size: 1.2rem; font-weight: bold;">📢 شروط المسابقة:</p>
-            <p>يتم الاختيار عشوائي .. ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
-            <p>شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير .. (آية ١٨٣، ١٨٤، ١٨٥)</p>
-            <p>وحظ سعيد للجميع 🌹🌹</p>
-        </div>
-        
-        <div id="ramadanQuestionsContainer" class="ramadan-questions-container">
-            <!-- الأسئلة ستظهر هنا -->
-        </div>
-    </section>
 
-    <!-- ================ RAMADAN ANSWER MODAL ================ -->
-    <div id="ramadanAnswerModal" class="ramadan-modal">
-        <div class="ramadan-modal-content">
-            <div class="ramadan-modal-header">
-                <h3 id="ramadanQuestionTitle"></h3>
-                <span class="ramadan-close-modal">&times;</span>
+    <!-- PWA Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('✅ Service Worker registered with scope:', reg.scope))
+                    .catch(err => console.log('❌ Service Worker registration failed:', err));
+            });
+        }
+    </script>
+        <!-- ASSIGNMENT OVERLAY -->
+    <div id="assignmentOverlay" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="quiz-header">
+                <h2 id="assignmentTitle"></h2>
+                <button type="button" onclick="closeAssignmentOverlay()" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px;">إغلاق</button>
             </div>
-            <div class="ramadan-modal-body">
-                <div id="ramadanQuestionText" class="ramadan-question-text"></div>
-                <!-- إخفاء المرجع عن المستخدم -->
-                
-                <div class="ramadan-answer-form">
-                    <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
-                    <!-- حقل كود الطالب الجديد -->
-                    <input type="text" id="ramadanStudentId" class="ramadan-input" placeholder="كود الطالب (10 أرقام)" maxlength="10" inputmode="numeric" pattern="[0-9]*">
-                    
-                    <div style="margin: 15px 0;">
-                        <label style="color: #ffd700; display: block; margin-bottom: 8px;">اختر الإجابة الصحيحة:</label>
-                        <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom: 10px;">
-                            <option value="">-- اختر السورة --</option>
-                        </select>
-                        
-                        <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
-                        
-                        <div style="margin: 10px 0; color: #ffd700; font-size: 0.9rem;">
-                            <span id="ramadanAnswerPreview" style="color: #aaa;">لم يتم الاختيار بعد</span>
+            <div id="assignmentContainer" style="max-height: 80vh; overflow-y: auto;"></div>
+        </div>
+    </div>
+    <script src="assignments.js?v=1.0"></script>
+
+    <!-- ================ RAMADAN JS ================ -->
+    <script>
+    (function() {
+        const SURAHS = ["الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس","هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه","الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم","لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر","فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق","الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة","الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج","نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس","التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد","الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات","القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر","المسد","الإخلاص","الفلق","الناس"];
+
+        let currentQuestionId = null;
+
+        // تحميل السور في الـ select
+        function fillSurahSelect() {
+            const sel = document.getElementById('ramadanSurahSelect');
+            if (!sel) return;
+            SURAHS.forEach((s, i) => {
+                const opt = document.createElement('option');
+                opt.value = i + 1;
+                opt.textContent = `${i + 1}. سورة ${s}`;
+                sel.appendChild(opt);
+            });
+        }
+
+        // تحميل الأسئلة من Firebase
+        function loadRamadanQuestions() {
+            const container = document.getElementById('ramadanQuestionsContainer');
+            if (!container) return;
+
+            function tryLoad() {
+                if (!window.db || !window.ref || !window.onValue) {
+                    setTimeout(tryLoad, 300);
+                    return;
+                }
+                window.onValue(window.ref(window.db, 'ramadan_questions'), (snapshot) => {
+                    if (!snapshot.exists()) {
+                        container.innerHTML = '<div style="text-align:center;color:rgba(255,255,255,0.4);grid-column:1/-1;padding:40px;"><i class="fas fa-moon fa-3x" style="margin-bottom:15px;display:block;"></i>لا توجد أسئلة حالياً</div>';
+                        return;
+                    }
+                    const questions = [];
+                    snapshot.forEach(child => {
+                        questions.push({ id: child.key, ...child.val() });
+                    });
+                    questions.sort((a, b) => (a.day || 0) - (b.day || 0));
+                    renderQuestions(questions);
+                });
+            }
+            tryLoad();
+        }
+
+        function renderQuestions(questions) {
+            const container = document.getElementById('ramadanQuestionsContainer');
+            if (!container) return;
+            let html = '';
+            questions.forEach(q => {
+                const isActive = q.isActive !== false;
+                html += `
+                <div onclick="window.openRamadanQuestion('${q.id}')" style="
+                    background: rgba(255,255,255,0.05);
+                    border: 2px solid ${isActive ? '#ffd700' : 'rgba(255,255,255,0.1)'};
+                    border-radius: 20px; padding: 20px; cursor: pointer;
+                    transition: all 0.3s; position: relative; overflow: hidden;
+                    ${!isActive ? 'opacity: 0.5;' : ''}
+                " onmouseover="this.style.transform='translateY(-5px)';this.style.background='rgba(255,215,0,0.1)'"
+                   onmouseout="this.style.transform='';this.style.background='rgba(255,255,255,0.05)'">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+                        <div style="background: linear-gradient(135deg, #ffd700, #ffa500); width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; color:#1a2639; font-size:1rem; flex-shrink:0;">
+                            ${q.day || '?'}
+                        </div>
+                        <div>
+                            <div style="color:#ffd700;font-weight:700;font-size:0.85rem;">اليوم ${q.day || '?'}</div>
+                            <div style="color:rgba(255,255,255,0.5);font-size:0.75rem;">${isActive ? '✅ متاح' : '🔒 مغلق'}</div>
                         </div>
                     </div>
-                    
-                    <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
-                </div>
-                
-                <div class="ramadan-answers-list" id="ramadanAnswersList">
-                    <h4>إجابات المشاركين:</h4>
-                    <div id="ramadanAnswersContainer"></div>
-                </div>
-            </div>
-        </div>
-    </div> 
-    
-</body>
+                    <p style="color:white;font-size:0.9rem;line-height:1.7;margin:0;">${window.escapeHTML ? window.escapeHTML(q.text || '') : (q.text || '')}</p>
+                </div>`;
+            });
+            container.innerHTML = html || '<div style="text-align:center;color:rgba(255,255,255,0.4);grid-column:1/-1;padding:40px;">لا توجد أسئلة حالياً</div>';
+        }
+
+        window.openRamadanQuestion = function(questionId) {
+            function tryOpen() {
+                if (!window.db || !window.ref || !window.get) { setTimeout(tryOpen, 300); return; }
+                window.get(window.ref(window.db, `ramadan_questions/${questionId}`)).then(snap => {
+                    if (!snap.exists()) return;
+                    const q = snap.val();
+                    // ❌ منع فتح الأسئلة المغلقة
+                    if (q.isActive === false) {
+                        const msg = document.getElementById('ramadanSubmitMsg');
+                        // اعرض رسالة مؤقتة بدون فتح المودال
+                        alert('🔒 هذا السؤال مغلق حالياً');
+                        return;
+                    }
+                    currentQuestionId = questionId;
+                    document.getElementById('ramadanQuestionTitle').textContent = `سؤال اليوم ${q.day || ''}`;
+                    document.getElementById('ramadanQuestionText').textContent = q.text || '';
+                    document.getElementById('ramadanAnswerName').value = '';
+                    document.getElementById('ramadanStudentId').value = '';
+                    document.getElementById('ramadanSurahSelect').value = '';
+                    document.getElementById('ramadanAyaInput').value = '';
+                    const msg = document.getElementById('ramadanSubmitMsg');
+                    if (msg) msg.style.display = 'none';
+                    // إخفاء زر الإرسال بشكل مبدئي ريثما يتحقق من التكرار
+                    const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
+                    if (submitBtn) submitBtn.style.display = 'inline-flex';
+                    loadQuestionAnswers(questionId);
+                    document.getElementById('ramadanAnswerModal').style.display = 'flex';
+                });
+            }
+            tryOpen();
+        };
+
+        function loadQuestionAnswers(questionId) {
+            const container = document.getElementById('ramadanAnswersContainer');
+            if (!container || !window.db) return;
+            window.onValue(window.ref(window.db, 'ramadan_answers'), (snap) => {
+                if (!snap.exists()) { container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;text-align:center;">لا توجد إجابات بعد</p>'; return; }
+                const answers = [];
+                snap.forEach(child => {
+                    const d = child.val();
+                    if (d.questionId === questionId) answers.push(d);
+                });
+                if (answers.length === 0) { container.innerHTML = '<p style="color:rgba(255,255,255,0.4);font-size:0.85rem;text-align:center;">لا توجد إجابات بعد</p>'; return; }
+                container.innerHTML = answers.slice(-10).reverse().map(a => `
+                    <div style="background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <span style="color:white;font-size:0.85rem;font-weight:600;">${window.escapeHTML ? window.escapeHTML(a.name || '') : ''}</span>
+                            <span style="color:rgba(255,255,255,0.4);font-size:0.75rem;margin-right:8px;">${a.date || ''}</span>
+                        </div>
+                        <span style="font-size:0.8rem;padding:3px 10px;border-radius:50px;background:${a.isCorrect ? 'rgba(0,184,148,0.2)' : 'rgba(255,118,117,0.2)'};color:${a.isCorrect ? '#00b894' : '#ff7675'};">${a.isCorrect ? '✅ صحيح' : '❌ خطأ'}</span>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // إرسال الإجابة
+        document.addEventListener('DOMContentLoaded', function() {
+            fillSurahSelect();
+            loadRamadanQuestions();
+
+            const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', async function() {
+                    const name = document.getElementById('ramadanAnswerName').value.trim();
+                    const studentId = document.getElementById('ramadanStudentId').value.trim();
+                    const surahVal = document.getElementById('ramadanSurahSelect').value;
+                    const ayaVal = document.getElementById('ramadanAyaInput').value.trim();
+                    const msg = document.getElementById('ramadanSubmitMsg');
+
+                    function showMsg(text, ok) {
+                        if (!msg) return;
+                        msg.textContent = text;
+                        msg.style.background = ok ? 'rgba(0,184,148,0.2)' : 'rgba(255,118,117,0.2)';
+                        msg.style.color = ok ? '#00b894' : '#ff7675';
+                        msg.style.border = `1px solid ${ok ? '#00b894' : '#ff7675'}`;
+                        msg.style.display = 'block';
+                    }
+
+                    if (!name) { showMsg('❌ أدخل اسمك الثلاثي', false); return; }
+                    if (!/^\d{10}$/.test(studentId)) { showMsg('❌ كود الطالب يجب أن يكون 10 أرقام', false); return; }
+                    if (!surahVal) { showMsg('❌ اختر السورة', false); return; }
+                    if (!ayaVal || isNaN(ayaVal) || parseInt(ayaVal) < 1) { showMsg('❌ أدخل رقم الآية', false); return; }
+                    if (!currentQuestionId || !window.db) { showMsg('❌ حدث خطأ، أعد المحاولة', false); return; }
+
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'جاري الإرسال...';
+
+                    try {
+                        // ✅ التحقق من عدم تكرار الإجابة لنفس الطالب على نفس السؤال
+                        const existingAnswersSnap = await window.get(window.ref(window.db, 'ramadan_answers'));
+                        if (existingAnswersSnap.exists()) {
+                            let alreadyAnswered = false;
+                            existingAnswersSnap.forEach(child => {
+                                const d = child.val();
+                                if (d.questionId === currentQuestionId && d.studentId === studentId) {
+                                    alreadyAnswered = true;
+                                }
+                            });
+                            if (alreadyAnswered) {
+                                showMsg('⚠️ لقد أجبت على هذا السؤال من قبل', false);
+                                submitBtn.disabled = false;
+                                submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الإجابة';
+                                return;
+                            }
+                        }
+
+                        // جلب السؤال للتحقق من الإجابة
+                        const qSnap = await window.get(window.ref(window.db, `ramadan_questions/${currentQuestionId}`));
+                        const q = qSnap.exists() ? qSnap.val() : {};
+                        // الـ surah في قاعدة البيانات قد يكون اسمًا نصيًا أو رقمًا
+                        // surahVal هو رقم السورة (index+1) من الـ select
+                        let isCorrect = false;
+                        if (q.surah !== undefined && q.aya !== undefined) {
+                            const storedSurah = String(q.surah).trim();
+                            const selectedSurahName = SURAHS[parseInt(surahVal) - 1] || '';
+                            const selectedSurahNum = String(surahVal);
+                            // مقارنة مرنة: رقم أو اسم
+                            const surahMatch = storedSurah === selectedSurahNum || 
+                                               storedSurah === selectedSurahName ||
+                                               String(parseInt(storedSurah)) === selectedSurahNum;
+                            const ayaMatch = String(q.aya) === String(ayaVal);
+                            isCorrect = surahMatch && ayaMatch;
+                        }
+
+                        await window.push(window.ref(window.db, 'ramadan_answers'), {
+                            questionId: currentQuestionId,
+                            day: q.day || null,
+                            name,
+                            studentId,
+                            surah: parseInt(surahVal),
+                            surahName: SURAHS[parseInt(surahVal) - 1] || '',
+                            aya: parseInt(ayaVal),
+                            isCorrect,
+                            date: new Date().toLocaleDateString('ar-EG'),
+                            timestamp: Date.now()
+                        });
+
+                        showMsg(isCorrect ? '🎉 إجابة صحيحة! أحسنت' : '❌ إجابة خاطئة، حاول مرة أخرى', isCorrect);
+                        if (isCorrect) {
+                            document.getElementById('ramadanAnswerName').value = '';
+                            document.getElementById('ramadanStudentId').value = '';
+                            document.getElementById('ramadanSurahSelect').value = '';
+                            document.getElementById('ramadanAyaInput').value = '';
+                        }
+                    } catch (err) {
+                        showMsg('❌ فشل الإرسال، تحقق من الاتصال', false);
+                        console.error(err);
+                    } finally {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> إرسال الإجابة';
+                    }
+                });
+            }
+        });
+    })();
+    </script>
 </html>
