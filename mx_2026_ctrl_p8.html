@@ -3598,6 +3598,13 @@ C</div>
 
         // ================ DELETE DATA ================
         window.delData = function(path) {
+            // التحقق من المسارات المسموح بحذفها فقط
+            const allowedPrefixes = ['students/', 'quiz_results/', 'reviews/', 'course_reviews/', 'folders/', 'quizzes/', 'admins/', 'subscription_notifications/', 'ramadan_questions/', 'ramadan_answers/'];
+            const isAllowed = allowedPrefixes.some(prefix => path.startsWith(prefix));
+            if (!isAllowed) {
+                showToast('❌ مسار غير مسموح بحذفه', 'error');
+                return;
+            }
             if (confirm('هل أنت متأكد من الحذف؟')) {
                 startProgress();
                 remove(ref(db, path))

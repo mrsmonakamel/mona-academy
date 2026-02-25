@@ -1123,22 +1123,31 @@ function loadReviews() {
     
     const reviewsRef = ref(db, 'reviews');
     const listener = onValue(reviewsRef, snapshot => {
-        let html = "";
+        const testiGrid = document.getElementById('testiGrid');
+        if (!testiGrid) return;
+        testiGrid.innerHTML = '';
+        
         if (snapshot.exists()) {
             snapshot.forEach(c => {
                 const review = c.val();
-                html += `<div class="review-card">
-                    <p>"${escapeHTML(review.text || '')}"</p>
-                    <h4 style="color:var(--main);">- ${escapeHTML(review.student || '')}</h4>
-                    <span style="color: #999; font-size:0.75rem;">${escapeHTML(review.timestamp || '')}</span>
-                </div>`; 
+                const reviewDiv = document.createElement('div');
+                reviewDiv.className = 'review-card';
+                const reviewP = document.createElement('p');
+                reviewP.textContent = `"${review.text || ''}"`;
+                const reviewH4 = document.createElement('h4');
+                reviewH4.style.color = 'var(--main)';
+                reviewH4.textContent = `- ${review.student || ''}`;
+                const reviewSpan = document.createElement('span');
+                reviewSpan.style.cssText = 'color: #999; font-size:0.75rem;';
+                reviewSpan.textContent = review.timestamp || '';
+                reviewDiv.appendChild(reviewP);
+                reviewDiv.appendChild(reviewH4);
+                reviewDiv.appendChild(reviewSpan);
+                testiGrid.appendChild(reviewDiv);
             });
         } else {
-            html = "<p style='text-align:center;'>لا توجد آراء بعد</p>";
+            testiGrid.innerHTML = "<p style='text-align:center;'>لا توجد آراء بعد</p>";
         }
-        
-        const testiGrid = document.getElementById('testiGrid');
-        if (testiGrid) testiGrid.innerHTML = html;
     });
     
     listenerManager.add('reviews', reviewsRef, listener, 'reviews');
@@ -1206,12 +1215,18 @@ window.confirmSubscription = async function() {
     
     const enteredId = subIdInput.value.trim();
     if (!enteredId) {
-        subError.innerHTML = '❌ يرجى إدخال كود الطالب';
+        subError.textContent = '❌ يرجى إدخال كود الطالب';
         return;
     }
     
     if (enteredId.length !== 10) {
-        subError.innerHTML = '❌ كود الطالب يجب أن يكون 10 أرقام';
+        subError.textContent = '❌ كود الطالب يجب أن يكون 10 أرقام';
+        return;
+    }
+    
+    // التحقق من أن الكود أرقام فقط
+    if (!/^\d{10}$/.test(enteredId)) {
+        subError.textContent = '❌ كود الطالب يجب أن يحتوي على أرقام فقط';
         return;
     }
     
@@ -1220,13 +1235,13 @@ window.confirmSubscription = async function() {
     try {
         const userSnap = await get(child(dbRef, `students/${currentUser.uid}`));
         if (!userSnap.exists()) {
-            subError.innerHTML = '❌ لم يتم العثور على بياناتك';
+            subError.textContent = '❌ لم يتم العثور على بياناتك';
             return;
         }
         
         const studentData = userSnap.val();
         if (studentData.shortId !== enteredId) {
-            subError.innerHTML = '❌ كود الطالب غير صحيح';
+            subError.textContent = '❌ كود الطالب غير صحيح';
             return;
         }
         
@@ -1250,7 +1265,7 @@ window.confirmSubscription = async function() {
         await window.loadCourseContent(currentFolderId, currentFolderName, true);
     } catch (error) {
         console.error('Subscription error:', error);
-        subError.innerHTML = '❌ حدث خطأ في الاشتراك';
+        subError.textContent = '❌ حدث خطأ في الاشتراك';
     } finally {
         window.stopProgress();
     }
@@ -2325,9 +2340,9 @@ window.loadRamadanQuestions = function() {
         
         questions.forEach(q => {
             html += `
-                <div class="ramadan-question-card" onclick="window.openRamadanQuestion('${q.id}')">
-                    <div class="ramadan-question-day">🌙 اليوم ${q.day}</div>
-                    <div class="ramadan-question-preview">${q.text}</div>
+                <div class="ramadan-question-card" onclick="window.openRamadanQuestion('${escapeHTML(q.id)}')">
+                    <div class="ramadan-question-day">🌙 اليوم ${escapeHTML(String(q.day))}</div>
+                    <div class="ramadan-question-preview">${escapeHTML(q.text)}</div>
                     <!-- إخفاء الإجابة الصحيحة -->
                 </div>
             `;
@@ -2410,7 +2425,10 @@ function updateRamadanAnswerPreview() {
 window.loadRamadanAnswers = function(questionId, correctAnswer) {
     const answersRef = ref(db, 'ramadan_answers');
     
-    onValue(answersRef, (snapshot) => {
+    // إزالة أي listener سابق لتجنب تراكم المستمعين
+    listenerManager.removeByContext('ramadanAnswers');
+    
+    const listener = onValue(answersRef, (snapshot) => {
         const container = document.getElementById('ramadanAnswersContainer');
         if (!container) return;
         
@@ -2432,7 +2450,7 @@ window.loadRamadanAnswers = function(questionId, correctAnswer) {
                 html += `
                     <div class="ramadan-answer-item ${isCorrect ? 'correct' : 'wrong'}">
                         <div class="ramadan-answer-name">
-                            <i class="fas fa-user"></i> ${ans.name}
+                            <i class="fas fa-user"></i> ${escapeHTML(ans.name)}
                         </div>
                         <!-- تم إخفاء نص الإجابة بناءً على طلب المستخدم -->
                         <div class="ramadan-answer-status ${isCorrect ? 'correct' : 'wrong'}">
@@ -2441,7 +2459,7 @@ window.loadRamadanAnswers = function(questionId, correctAnswer) {
                                 '<i class="fas fa-times-circle"></i> إجابة خاطئة ✗'}
                         </div>
                         <div class="ramadan-answer-time">
-                            <i class="far fa-clock"></i> ${ans.date}
+                            <i class="far fa-clock"></i> ${escapeHTML(ans.date)}
                         </div>
                     </div>
                 `;
@@ -2454,6 +2472,8 @@ window.loadRamadanAnswers = function(questionId, correctAnswer) {
         
         container.innerHTML = html;
     });
+    
+    listenerManager.add('ramadanAnswers', answersRef, listener, 'ramadanAnswers');
 };
 
 window.submitRamadanAnswer = async function() {
@@ -2468,22 +2488,22 @@ window.submitRamadanAnswer = async function() {
     const aya = document.getElementById('ramadanAyaInput').value;
     
     if (!name) {
-        alert('❌ يرجى إدخال الاسم');
+        window.showToast('❌ يرجى إدخال الاسم', 'error');
         return;
     }
     
     if (!studentId) {
-        alert('❌ يرجى إدخال كود الطالب');
+        window.showToast('❌ يرجى إدخال كود الطالب', 'error');
         return;
     }
     
-    if (studentId.length !== 10) {
-        alert('❌ كود الطالب يجب أن يكون 10 أرقام');
+    if (!/^\d{10}$/.test(studentId)) {
+        window.showToast('❌ كود الطالب يجب أن يكون 10 أرقام فقط', 'error');
         return;
     }
     
     if (!surah || !aya) {
-        alert('❌ يرجى اختيار السورة ورقم الآية');
+        window.showToast('❌ يرجى اختيار السورة ورقم الآية', 'error');
         return;
     }
     
@@ -2516,13 +2536,13 @@ window.submitRamadanAnswer = async function() {
         document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
         
         if (isCorrect) {
-            alert('✅ إجابة صحيحة! بارك الله فيك');
+            window.showToast('✅ إجابة صحيحة! بارك الله فيك', 'success', 4000);
         } else {
-            alert(`❌ إجابة خاطئة. حاول مرة أخرى.`);
+            window.showToast('❌ إجابة خاطئة. حاول مرة أخرى.', 'error', 4000);
         }
     } catch (error) {
         console.error('Error submitting answer:', error);
-        alert('❌ حدث خطأ في إرسال الإجابة');
+        window.showToast('❌ حدث خطأ في إرسال الإجابة', 'error');
     }
 };
 
