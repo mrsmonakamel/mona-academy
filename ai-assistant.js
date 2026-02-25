@@ -51,31 +51,23 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
     let messages = [];
     let apiKey = null;
     let isLoading = false;
-    let apiKeyFetched = false;
 
-    // ---- جلب الـ API Key من Firebase (مع cache لتجنب التكرار) ----
+    // ---- جلب الـ API Key من Firebase ----
     async function getApiKey() {
-        if (apiKey && apiKeyFetched) return apiKey;
-        try {
-            const response = await fetch(
-                'https://monaacademy-cd983-default-rtdb.firebaseio.com/settings/anthropicApiKey.json'
-            );
-            if (!response.ok) throw new Error('Firebase HTTP error: ' + response.status);
-            const key = await response.json();
-            console.log('[AI] Key fetched, type:', typeof key, '| prefix:', key ? String(key).substring(0,10) + '...' : 'NULL');
-            // مفاتيح Anthropic تبدأ بـ sk- (قديمة) أو sk-ant- (جديدة)
-            if (key && typeof key === 'string' && key.trim().startsWith('sk-')) {
-                apiKey = key.trim();
-                apiKeyFetched = true;
-            } else {
-                console.error('[AI] المفتاح غير صالح أو غير موجود في Firebase. تأكد من: settings/anthropicApiKey');
-            }
-            return apiKey;
-        } catch (error) {
-            console.error('[AI] خطأ في جلب المفتاح:', error.message);
-            return null;
-        }
+    try {
+        // ⚠️ تنبيه أمني: هذا المسار يتطلب تفعيل قواعد Firebase للحماية
+        // تأكد أن مسار settings/anthropicApiKey محمي بقواعد Firebase Rules
+        const response = await fetch('https://monaacademy-cd983-default-rtdb.firebaseio.com/settings/anthropicApiKey.json');
+        if (!response.ok) throw new Error('Network error');
+        const key = await response.json();
+        // ✅ التحقق من أن المفتاح نص وليس بيانات خطرة
+        if (typeof key !== 'string' || key.length < 10) throw new Error('Invalid key format');
+        return key;
+    } catch (error) {
+        console.error("خطأ في جلب المفتاح:", error);
+        return null;
     }
+}
 
 
 
@@ -83,12 +75,13 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
     async function sendToAI(userMessage) {
         const key = await getApiKey();
         if (!key) {
-            console.error('[AI] لا يوجد API Key. تأكد من إضافته في Firebase: settings/anthropicApiKey');
-            return '❌ المساعد غير متاح حالياً.\n\n⚙️ **للمدير:** تأكد من إضافة Anthropic API Key في Firebase تحت المسار:\n`settings/anthropicApiKey`';
+            return '❌ المساعد غير متاح حالياً. تواصل مع الدعم الفني.';
         }
 
         // إضافة الرسالة للتاريخ
         messages.push({ role: 'user', content: userMessage });
+        // ✅ إصلاح memory leak: الاحتفاظ بآخر 20 رسالة فقط
+        if (messages.length > 20) messages = messages.slice(-20);
 
         try {
             const response = await fetch('https://api.anthropic.com/v1/messages', {
@@ -103,30 +96,14 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
                     model: 'claude-haiku-4-5-20251001',
                     max_tokens: 800,
                     system: SYSTEM_PROMPT,
-                    messages: messages.slice(-10)
+                    messages: messages.slice(-10) // آخر 10 رسائل فقط لتوفير التكلفة
                 })
             });
 
             if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                console.error('[AI] API error status:', response.status, errData);
-                // إزالة رسالة المستخدم عند الخطأ
-                if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-                    messages.pop();
-                }
-                if (response.status === 401) {
-                    // إعادة المحاولة بعد مسح الـ cache (ممكن المفتاح اتغير)
-                    apiKey = null;
-                    apiKeyFetched = false;
-                    return '❌ مفتاح API غير صحيح أو منتهي الصلاحية. تواصل مع الدعم الفني.';
-                }
-                if (response.status === 429) {
-                    return '⏳ الخدمة مشغولة حالياً، حاول مرة أخرى بعد ثوانٍ.';
-                }
-                if (response.status === 529 || response.status === 503) {
-                    return '⏳ خدمة AI مشغولة جداً الآن، حاول مرة أخرى بعد قليل.';
-                }
-                return '❌ حدث خطأ في الاتصال (كود: ' + response.status + '). حاول مرة أخرى.';
+                const err = await response.json().catch(() => ({}));
+                console.error('AI API error:', err);
+                return '❌ حدث خطأ في الاتصال. حاول مرة أخرى.';
             }
 
             const data = await response.json();
@@ -135,17 +112,30 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
             return reply;
 
         } catch (e) {
-            console.error('[AI] fetch error:', e.message);
-            // أزل آخر رسالة مستخدم من التاريخ عند الفشل
-            if (messages.length > 0 && messages[messages.length - 1].role === 'user') {
-                messages.pop();
-            }
-            return '❌ تعذر الاتصال بالإنترنت. تحقق من اتصالك وحاول مرة أخرى.';
+            console.error('AI fetch error:', e);
+            // أزل الرسالة الفاشلة من التاريخ
+            messages.pop();
+            return '❌ تعذر الاتصال. تحقق من الإنترنت وحاول مرة أخرى.';
         }
     }
 
     // ---- بناء الـ UI ----
     function buildUI() {
+        // ✅ التحقق من صحة روابط واتساب قبل الاستخدام
+        let safeGroupLink = '#';
+        let safeTeacherLink = '#';
+        try {
+            const gUrl = new URL(AI_CONFIG.whatsappGroupLink);
+            if (gUrl.protocol === 'https:' && (gUrl.hostname === 'chat.whatsapp.com' || gUrl.hostname === 'wa.me')) {
+                safeGroupLink = gUrl.href;
+            }
+        } catch(e) {}
+        try {
+            const tNum = String(AI_CONFIG.teacherWhatsapp).replace(/\D/g, '');
+            if (tNum.length >= 7 && tNum.length <= 15) {
+                safeTeacherLink = `https://wa.me/${tNum}`;
+            }
+        } catch(e) {}
         const style = document.createElement('style');
         style.textContent = `
             #aiChatBtn {
@@ -468,10 +458,10 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
                 <button class="ai-quick-btn" onclick="aiQuickSend('كيف أحل الامتحان؟')">📝 كيف أذاكر؟</button>
             </div>
             <div class="ai-action-btns">
-                <a class="ai-action-btn whatsapp" href="${AI_CONFIG.whatsappGroupLink}" target="_blank" rel="noopener noreferrer">
+                <a class="ai-action-btn whatsapp" href="${safeGroupLink}" target="_blank" rel="noopener noreferrer">
                     <i class="fab fa-whatsapp"></i> جروب الدعم
                 </a>
-                <a class="ai-action-btn teacher" href="https://wa.me/${AI_CONFIG.teacherWhatsapp}" target="_blank" rel="noopener noreferrer">
+                <a class="ai-action-btn teacher" href="${safeTeacherLink}" target="_blank" rel="noopener noreferrer">
                     <i class="fas fa-chalkboard-teacher"></i> المدرسة
                 </a>
             </div>
@@ -519,18 +509,26 @@ const SYSTEM_PROMPT = `أنت مساعد ذكي لمنصة "${AI_CONFIG.teacherN
         }
     }
 
+    // ✅ إصلاح XSS: دالة escape لنص المستخدم
+    function escapeText(str) {
+        return String(str || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function addMessage(role, text) {
         const container = document.getElementById('aiMessages');
         if (!container) return;
         const div = document.createElement('div');
         div.className = `ai-msg ${role}`;
         const icon = role === 'bot' ? '🤖' : '<i class="fas fa-user"></i>';
-        function escapeHTMLLocal(str) {
-            if (!str) return '';
-            return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-        }
-        const escaped = escapeHTMLLocal(text);
-        const formatted = escaped.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/•/g, '•');
+        // ✅ رسائل المستخدم: escape أولاً ثم format
+        // رسائل البوت: escape أولاً ثم نسمح بـ <br> و<strong> فقط
+        const safeText = escapeText(text);
+        const formatted = safeText.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
         div.innerHTML = `
             <div class="ai-msg-icon">${icon}</div>
             <div class="ai-msg-bubble">${formatted}</div>

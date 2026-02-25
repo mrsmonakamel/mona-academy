@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#6c5ce7">
+    <title>ملفي الشخصي - Mona Academy</title>
+    
+    <!-- Preconnect and Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Mona Academy">
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+    <style>
+        /* Tabs scrollable on mobile */
+        .profile-tabs-container {
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+        .profile-tabs-container::-webkit-scrollbar { display: none; }
+        .profile-tab-btn { white-space: nowrap; display: inline-flex; }
+        /* Avatar image fit */
+        #profileAvatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+        #profileAvatar { padding:0 !important; overflow:hidden; }
+        /* Timeline item */
+        .timeline-item { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(5px); } to { opacity:1; transform:none; } }
+        /* Avatar preview */
+        #avatarPreview img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+    </style>
+</head>
+<body>
+    <!-- Progress Indicator -->
+    <div id="progressIndicator" class="progress-indicator"></div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi-slash"></i>
+        أنت غير متصل بالإنترنت - بعض الميزات قد لا تعمل
+    </div>
+    
+        <header>
+        <div class="logo-text" id="logoText" onclick="window.location.href='index.html'">MS. MONA KAMEL</div>
+        <div class="header-controls">
+            <div class="dark-mode-toggle" onclick="window.toggleDarkMode()">
+                <i class="fas fa-moon" id="darkModeIcon"></i>
+            </div>
+            <div id="authStatus"></div>
+        </div>
+    </header>
+
+    <!-- HAMBURGER DROPDOWN -->
+    <div id="menuDropdown" class="dropdown-menu">
+        <a id="homeMenuItem" href="index.html" style="display: none;" class="touch-feedback"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <a id="profileMenuItem" href="profile.html" style="display: none;" class="touch-feedback"><i class="fas fa-user-circle" style="margin-left: 10px;"></i> ملفي الشخصي</a>
+        <hr id="menuDivider" style="display: none;">
+        <a id="logoutMenuItem" style="display: none; color: var(--danger);" class="touch-feedback"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
+    </div>
+    
+        <!-- Main Content -->
+    <div class="profile-container">
+        <!-- Cover Photo -->
+        <div class="profile-cover">
+            <div class="profile-cover-overlay"></div>
+        </div>
+        
+        <!-- Profile Header -->
+        <div class="profile-header-card">
+            <div class="profile-avatar-wrapper">
+                <div class="profile-avatar" id="profileAvatar">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <button class="edit-avatar-btn" onclick="showAvatarUpload()" title="تغيير الصورة">
+                    <i class="fas fa-camera"></i>
+                </button>
+            </div>
+            
+            <div class="profile-title">
+                <h1 id="profileName">...</h1>
+                <p id="profileEmail">...</p>
+                <span class="profile-grade" id="profileGrade">...</span>
+            </div>
+            
+            <div class="profile-stats-header">
+                <div class="stat-item">
+                    <span class="stat-value" id="profilePoints">0</span>
+                    <span class="stat-label">نقطة</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileBadgesCount">0</span>
+                    <span class="stat-label">شارة</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileVideosCount">0</span>
+                    <span class="stat-label">فيديو</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value" id="profileExamsCount">0</span>
+                    <span class="stat-label">امتحان</span>
+                </div>
+            </div>
+        </div>
+        
+                <!-- Profile Tabs -->
+        <div class="profile-tabs-container">
+            <button class="profile-tab-btn active" onclick="switchProfileTab('badges')">
+                <i class="fas fa-medal"></i>
+                <span>الشارات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('exams')">
+                <i class="fas fa-file-alt"></i>
+                <span>الامتحانات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('assignments')">
+                <i class="fas fa-tasks"></i>
+                <span>الواجبات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('stats')">
+                <i class="fas fa-chart-line"></i>
+                <span>الإحصائيات</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('history')">
+                <i class="fas fa-history"></i>
+                <span>سجل النشاط</span>
+            </button>
+            <button class="profile-tab-btn" onclick="switchProfileTab('settings')">
+                <i class="fas fa-cog"></i>
+                <span>الإعدادات</span>
+            </button>
+        </div>
+        
+        
+                <!-- Badges Tab -->
+        <div id="badgesTab" class="profile-tab-content active">
+            <div class="badges-summary">
+                <div class="total-points-card">
+                    <i class="fas fa-star"></i>
+                    <div>
+                        <span class="total-points-label">إجمالي النقاط</span>
+                        <span class="total-points-value" id="totalPoints">0</span>
+                    </div>
+                </div>
+                <div class="badges-levels">
+                    <div class="level-badge bronze">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="bronzeCount">0</span>
+                    </div>
+                    <div class="level-badge silver">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="silverCount">0</span>
+                    </div>
+                    <div class="level-badge gold">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="goldCount">0</span>
+                    </div>
+                    <div class="level-badge platinum">
+                        <i class="fas fa-shield-alt"></i>
+                        <span class="level-count" id="platinumCount">0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="userBadges" class="badges-grid">
+                <!-- هنا هتظهر الشارات -->
+            </div>
+        </div>
+        
+        
+        <!-- Exams Tab -->
+        <div id="examsTab" class="profile-tab-content">
+            <div class="exams-profile-header" style="display:flex; align-items:center; gap:15px; margin-bottom:25px;">
+                <div style="background:linear-gradient(135deg,#00b894,#00cec9); width:55px; height:55px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:white;">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <div>
+                    <h2 style="margin:0; color:var(--text-primary);">نتائج الامتحانات</h2>
+                    <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">جميع الامتحانات التي أجريتها</p>
+                </div>
+            </div>
+            <div id="profileExamsList" style="display:grid; gap:15px;">
+                <div class="empty-state"><i class="fas fa-file-alt"></i><p>جاري تحميل الامتحانات...</p></div>
+            </div>
+        </div>
+
+        <!-- Assignments Tab -->
+        <div id="assignmentsTab" class="profile-tab-content">
+            <div class="assignments-profile-header" style="display:flex; align-items:center; gap:15px; margin-bottom:25px;">
+                <div style="background:linear-gradient(135deg,#6c5ce7,#a29bfe); width:55px; height:55px; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:1.6rem; color:white;">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div>
+                    <h2 style="margin:0; color:var(--text-primary);">واجباتي</h2>
+                    <p style="color:var(--text-secondary); font-size:0.9rem; margin:0;">الواجبات من الكورسات المشترك فيها</p>
+                </div>
+            </div>
+            <div id="profileAssignmentsList" style="display:grid; gap:15px;">
+                <div class="empty-state"><i class="fas fa-tasks"></i><p>جاري تحميل الواجبات...</p></div>
+            </div>
+        </div>
+
+        <!-- Stats Tab -->
+        <div id="statsTab" class="profile-tab-content">
+            <div class="stats-grid-modern">
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #6c5ce7, #a29bfe)">
+                        <i class="fas fa-video"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">الفيديوهات</span>
+                        <span class="stats-number" id="statVideos">0</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #00b894, #00cec9)">
+                        <i class="fas fa-file-alt"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">الامتحانات</span>
+                        <span class="stats-number" id="statExams">0</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #f1c40f, #f39c12)">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">متوسط الدرجات</span>
+                        <span class="stats-number" id="statAvgScore">0%</span>
+                    </div>
+                </div>
+                
+                <div class="stats-card">
+                    <div class="stats-icon" style="background: linear-gradient(135deg, #e74c3c, #ff7675)">
+                        <i class="fas fa-calendar-check"></i>
+                    </div>
+                    <div class="stats-details">
+                        <span class="stats-label">أيام متتالية</span>
+                        <span class="stats-number" id="statStreak">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-pie"></i> توزيع الشارات</h3>
+                    <canvas id="badgesChart"></canvas>
+                </div>
+                
+                <div class="chart-card">
+                    <h3><i class="fas fa-chart-line"></i> تقدم الدرجات</h3>
+                    <canvas id="scoresChart"></canvas>
+                </div>
+            </div>
+
+            <div class="achievements-section">
+                <h3><i class="fas fa-trophy"></i> أبرز الإنجازات</h3>
+                <div id="achievementsList" class="achievements-grid"></div>
+            </div>
+        </div>
+        
+                <!-- History Tab -->
+        <div id="historyTab" class="profile-tab-content">
+            <div class="timeline-filter">
+                <button class="filter-btn active" onclick="filterHistory('all')">الكل</button>
+                <button class="filter-btn" onclick="filterHistory('video')">فيديوهات</button>
+                <button class="filter-btn" onclick="filterHistory('exam')">امتحانات</button>
+                <button class="filter-btn" onclick="filterHistory('badge')">شارات</button>
+            </div>
+            
+            <div class="timeline" id="activityTimeline">
+                <!-- هنا هتظهر الأنشطة -->
+            </div>
+        </div>
+        
+        
+            <!-- Settings Tab -->
+        <div id="settingsTab" class="profile-tab-content">
+            <div class="settings-section">
+                <h3><i class="fas fa-user-edit"></i> تعديل البيانات الشخصية</h3>
+                
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label>الاسم الرباعي</label>
+                        <input type="text" id="settingsName" class="settings-input" placeholder="الاسم الكامل">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رقم الواتساب</label>
+                        <div class="phone-input-group">
+                            <select id="settingsCountryCode" class="country-code-select">
+                                <option value="+20">+20 (مصر)</option>
+                                <option value="+966">+966 (السعودية)</option>
+                                <option value="+971">+971 (الإمارات)</option>
+                                <option value="+974">+974 (قطر)</option>
+                                <option value="+965">+965 (الكويت)</option>
+                                <option value="+973">+973 (البحرين)</option>
+                                <option value="+968">+968 (عمان)</option>
+                                <option value="+962">+962 (الأردن)</option>
+                            </select>
+                            <input type="tel" id="settingsWhatsapp" class="settings-input" placeholder="1234567890">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>رقم ولي الأمر (اختياري)</label>
+                        <div class="phone-input-group">
+                            <select id="settingsParentCountryCode" class="country-code-select">
+                                <option value="+20">+20 (مصر)</option>
+                                <option value="+966">+966 (السعودية)</option>
+                                <option value="+971">+971 (الإمارات)</option>
+                            </select>
+                            <input type="tel" id="settingsParentPhone" class="settings-input" placeholder="1234567890">
+                        </div>
+                    </div>
+                    
+                    <!-- ✅ حقل معرف التليجرام الجديد - هذا هو المهم -->
+                    <div class="form-group">
+                        <label>معرف تليجرام لولي الأمر (لإرسال التقارير)</label>
+                        <div>
+                            <input type="text" id="settingsTelegramChatId" class="settings-input" placeholder="مثلاً 123456789">
+                            <small class="hint-text">أرسل أي كلمة للبوت @EduTrackBot هيجيلك الرقم ده</small>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>المرحلة الدراسية</label>
+                        <select id="settingsGrade" class="settings-input">
+                            <option value="">-- اختر المرحلة --</option>
+                            <option value="الرابع الابتدائي">الرابع الابتدائي</option>
+                            <option value="الخامس الابتدائي">الخامس الابتدائي</option>
+                            <option value="السادس الابتدائي">السادس الابتدائي</option>
+                            <option value="الأول الإعدادي">الأول الإعدادي</option>
+                            <option value="الثاني الإعدادي">الثاني الإعدادي</option>
+                            <option value="الثالث الإعدادي">الثالث الإعدادي</option>
+                            <option value="الأول الثانوي">الأول الثانوي</option>
+                            <option value="الثاني الثانوي">الثاني الثانوي</option>
+                            <option value="الثالث الثانوي">الثالث الثانوي</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="settings-actions">
+                    <button class="btn-save" onclick="saveProfileChanges()">
+                        <i class="fas fa-save"></i> حفظ التغييرات
+                    </button>
+                    <button class="btn-cancel" onclick="resetProfileChanges()">
+                        <i class="fas fa-undo"></i> إلغاء
+                    </button>
+                </div>
+            </div>
+            
+            <div class="settings-section">
+                <h3><i class="fas fa-shield-alt"></i> الأمان والخصوصية</h3>
+                
+                <div class="security-item">
+                    <div class="security-info">
+                        <i class="fas fa-lock"></i>
+                        <div>
+                            <h4>تغيير كلمة المرور</h4>
+                            <p>قم بتحديث كلمة المرور الخاصة بك</p>
+                        </div>
+                    </div>
+                    <button class="btn-security" onclick="showChangePasswordModal()">
+                        <i class="fas fa-edit"></i> تغيير
+                    </button>
+                </div>
+                
+                <div class="security-item">
+                    <div class="security-info">
+                        <i class="fas fa-id-card"></i>
+                        <div>
+                            <h4>كود الطالب</h4>
+                            <p>الكود الخاص بك للاشتراك في الكورسات</p>
+                        </div>
+                    </div>
+                    <span class="student-code" id="settingsStudentId">********</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+        <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3><i class="fas fa-lock"></i> تغيير كلمة المرور</h3>
+            
+            <div class="form-group">
+                <label>كلمة المرور الحالية</label>
+                <input type="password" id="currentPassword" class="settings-input">
+            </div>
+            
+            <div class="form-group">
+                <label>كلمة المرور الجديدة</label>
+                <input type="password" id="newPassword" class="settings-input">
+            </div>
+            
+            <div class="form-group">
+                <label>تأكيد كلمة المرور الجديدة</label>
+                <input type="password" id="confirmNewPassword" class="settings-input">
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn-save" onclick="changePassword()">
+                    <i class="fas fa-check"></i> تأكيد
+                </button>
+                <button class="btn-cancel" onclick="closePasswordModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Avatar Upload Modal -->
+    <div id="avatarUploadModal" class="modal">
+        <div class="modal-content" style="max-width: 400px;">
+            <h3><i class="fas fa-camera"></i> تغيير الصورة الشخصية</h3>
+            
+            <div class="avatar-preview" id="avatarPreview">
+                <i class="fas fa-user-graduate"></i>
+            </div>
+            
+            <input type="file" id="avatarFile" accept="image/*" style="display: none;">
+            
+            <button class="btn-select-image" onclick="document.getElementById('avatarFile').click()">
+                <i class="fas fa-image"></i> اختيار صورة
+            </button>
+            
+            <div class="modal-actions">
+                <button class="btn-save" onclick="uploadAvatar()">
+                    <i class="fas fa-upload"></i> رفع
+                </button>
+                <button class="btn-cancel" onclick="closeAvatarModal()">
+                    <i class="fas fa-times"></i> إلغاء
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    
+        <!-- Footer -->
+    <footer>
+        <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></p>
+    </footer>
+
+    <!-- Scripts -->
+    <script type="module" src="script.js"></script>
+    <script src="notifications.js"></script>
+    <script src="badges.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+        <script>
+        // PWA Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(reg => console.log('✅ Service Worker registered'))
+                    .catch(err => console.log('❌ Service Worker failed:', err));
+            });
+        }
+
+        // Dark Mode
+        function initDarkMode() {
+            const savedMode = localStorage.getItem('darkMode');
+            const darkModeIcon = document.getElementById('darkModeIcon');
+            
+            if (savedMode === 'enabled') {
+                document.body.classList.add('dark-mode');
+                if (darkModeIcon) {
+                    darkModeIcon.classList.remove('fa-moon');
+                    darkModeIcon.classList.add('fa-sun');
+                }
+            }
+        }
+        initDarkMode();
+
+        // Tab Switching
+        window.switchProfileTab = function(tab) {
+            document.querySelectorAll('.profile-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.profile-tab-content').forEach(c => c.classList.remove('active'));
+            
+            const btn = document.querySelector('[onclick="switchProfileTab(\'' + tab + '\')"]');
+            if (btn) btn.classList.add('active');
+            const tabEl = document.getElementById(tab + 'Tab');
+            if (tabEl) tabEl.classList.add('active');
+            
+            // تحميل البيانات عند أول تبديل
+            if (tab === 'exams' && window.currentUser) loadProfileExams();
+            if (tab === 'assignments' && window.currentUser) loadProfileAssignments();
+            if (tab === 'history' && window.currentUser) loadActivityTimeline();
+        };
+
+        window.filterHistory = function(type) {
+            // تحديث الأزرار
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            const activeBtn = document.querySelector(`[onclick="filterHistory('${type}')"]`);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            const activities = window._allActivities || [];
+            const container = document.getElementById('activityTimeline');
+            if (!container) return;
+
+            // لو لم يتم تحميل النشاط بعد
+            if (activities.length === 0 && window.currentUser) {
+                window.loadActivityTimeline();
+                return;
+            }
+
+            const filtered = type === 'all' ? activities : activities.filter(a => a.type === type);
+            if (filtered.length === 0) {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>لا يوجد نشاط في هذا القسم</p></div>';
+                return;
+            }
+
+            let html = '';
+            filtered.forEach(act => {
+                const safeTitle = act.title ? act.title.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+                const safeSub = act.subtitle ? act.subtitle.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') : '';
+                html += `
+                <div class="timeline-item" data-type="${act.type}" style="display:flex; gap:15px; padding:15px 0; border-bottom:1px solid var(--border-color);">
+                    <div style="width:45px; height:45px; border-radius:50%; background:${act.color}20; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                        <i class="fas ${act.icon}" style="color:${act.color};"></i>
+                    </div>
+                    <div style="flex:1;">
+                        <h5 style="margin:0 0 3px; color:var(--text-primary); font-size:0.95rem;">${safeTitle}</h5>
+                        <p style="margin:0 0 3px; color:var(--text-secondary); font-size:0.82rem;">${safeSub}</p>
+                        <span style="color:var(--text-muted, #999); font-size:0.75rem;">${act.date}</span>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        };
+
+        window.showAvatarUpload = function() {
+            const modal = document.getElementById('avatarUploadModal');
+            if (modal) modal.style.display = 'flex';
+        };
+
+        window.closeAvatarModal = function() {
+            const modal = document.getElementById('avatarUploadModal');
+            if (modal) modal.style.display = 'none';
+        };
+
+        // معاينة الصورة قبل الرفع
+        document.addEventListener('DOMContentLoaded', function() {
+            const avatarFile = document.getElementById('avatarFile');
+            if (avatarFile) {
+                avatarFile.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    // تحقق من النوع والحجم
+                    if (!file.type.startsWith('image/')) {
+                        window.showToast('❌ يرجى اختيار صورة صالحة', 'error');
+                        return;
+                    }
+                    if (file.size > 2 * 1024 * 1024) {
+                        window.showToast('❌ حجم الصورة يجب أن يكون أقل من 2MB', 'error');
+                        avatarFile.value = '';
+                        return;
+                    }
+                    const reader = new FileReader();
+                    reader.onload = function(ev) {
+                        const preview = document.getElementById('avatarPreview');
+                        if (preview) {
+                            preview.innerHTML = `<img src="${ev.target.result}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+
+        // رفع الصورة وحفظها في Firebase
+        window.uploadAvatar = async function() {
+            if (!window.currentUser) {
+                window.showToast('❌ يرجى تسجيل الدخول أولاً', 'error');
+                return;
+            }
+            const avatarFile = document.getElementById('avatarFile');
+            if (!avatarFile || !avatarFile.files[0]) {
+                window.showToast('❌ يرجى اختيار صورة أولاً', 'error');
+                return;
+            }
+            const file = avatarFile.files[0];
+            if (!file.type.startsWith('image/')) {
+                window.showToast('❌ يرجى اختيار صورة صالحة', 'error');
+                return;
+            }
+            if (file.size > 2 * 1024 * 1024) {
+                window.showToast('❌ حجم الصورة يجب أن يكون أقل من 2MB', 'error');
+                return;
+            }
+
+            window.startProgress();
+            try {
+                const reader = new FileReader();
+                reader.onload = async function(ev) {
+                    try {
+                        const base64Data = ev.target.result;
+                        // حفظ الصورة كـ base64 في Realtime Database
+                        await window.update(window.ref(window.db, `students/${window.currentUser.uid}`), {
+                            profilePhoto: base64Data,
+                            photoUpdatedAt: new Date().toISOString()
+                        });
+
+                        // تحديث عرض الصورة مباشرة
+                        const profileAvatar = document.getElementById('profileAvatar');
+                        if (profileAvatar) {
+                            profileAvatar.innerHTML = `<img src="${base64Data}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;">`;
+                            profileAvatar.style.padding = '0';
+                        }
+
+                        window.showToast('✅ تم تحديث صورة البروفيل بنجاح', 'success');
+                        window.closeAvatarModal();
+                    } catch (err) {
+                        console.error('Error saving avatar:', err);
+                        window.showToast('❌ حدث خطأ في رفع الصورة', 'error');
+                    } finally {
+                        window.stopProgress();
+                    }
+                };
+                reader.onerror = function() {
+                    window.showToast('❌ خطأ في قراءة الملف', 'error');
+                    window.stopProgress();
+                };
+                reader.readAsDataURL(file);
+            } catch (error) {
+                console.error('Upload avatar error:', error);
+                window.showToast('❌ حدث خطأ في رفع الصورة', 'error');
+                window.stopProgress();
+            }
+        };
+
+        window.showChangePasswordModal = function() {
+            document.getElementById('changePasswordModal').style.display = 'flex';
+        };
+
+        window.closePasswordModal = function() {
+            document.getElementById('changePasswordModal').style.display = 'none';
+        };
+    </script>
+    
+        <script>
+        // دوال حفظ وإلغاء التغييرات في الملف الشخصي
+        window.saveProfileChanges = async function() {
+            const name = document.getElementById('settingsName')?.value.trim();
+            const countryCode = document.getElementById('settingsCountryCode')?.value;
+            const whatsapp = document.getElementById('settingsWhatsapp')?.value.trim();
+            const parentCountryCode = document.getElementById('settingsParentCountryCode')?.value;
+            const parentPhone = document.getElementById('settingsParentPhone')?.value.trim();
+            const telegramChatId = document.getElementById('settingsTelegramChatId')?.value.trim();
+            const grade = document.getElementById('settingsGrade')?.value;
+
+            if (!name) {
+                window.showToast('❌ يرجى إدخال الاسم', 'error');
+                return;
+            }
+
+            const fullWhatsapp = countryCode + (whatsapp || '');
+            const fullParentPhone = parentCountryCode + (parentPhone || '');
+
+            const updateData = {
+                name: name,
+                whatsapp: fullWhatsapp || '',
+                parentPhone: fullParentPhone || '',
+                grade: grade
+            };
+
+            if (telegramChatId) {
+                if (!/^\d+$/.test(telegramChatId)) {
+                    window.showToast('❌ معرف تليجرام يجب أن يكون أرقاماً فقط', 'error');
+                    return;
+                }
+                updateData.telegramChatId = telegramChatId;
+            }
+
+            window.startProgress();
+            try {
+                await window.update(window.ref(window.db, `students/${window.currentUser.uid}`), updateData);
+                window.showToast('✅ تم حفظ التغييرات', 'success');
+                // إعادة تحميل البيانات
+                if (typeof window.loadProgressVisuals === 'function') {
+                    window.loadProgressVisuals();
+                }
+            } catch (error) {
+                console.error('Error saving profile:', error);
+                window.showToast('❌ حدث خطأ', 'error');
+            } finally {
+                window.stopProgress();
+            }
+        };
+
+        window.resetProfileChanges = function() {
+            if (window.currentUser) {
+                window.get(window.child(window.dbRef, `students/${window.currentUser.uid}`)).then(snap => {
+                    if (snap.exists()) {
+                        const data = snap.val();
+                        const sn = document.getElementById('settingsName'); if(sn) sn.value = data.name || '';
+                        const sw = document.getElementById('settingsWhatsapp'); if(sw) sw.value = (data.whatsapp || '').replace(/^\+\d+/, '');
+                        const sp = document.getElementById('settingsParentPhone'); if(sp) sp.value = (data.parentPhone || '').replace(/^\+\d+/, '');
+                        const sg = document.getElementById('settingsGrade'); if(sg) sg.value = data.grade || '';
+                        const st = document.getElementById('settingsTelegramChatId'); if(st) st.value = data.telegramChatId || '';
+                    }
+                });
+            }
+        };
+    </script>
+    
+        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="badges.js?v=1.0"></script>
+    <script src="progress-visual.js?v=1.0"></script>
+    <script src="parent-reporter.js?v=1.0"></script>
+
+    <script>
+        // ====== تحميل بيانات الملف الشخصي ======
+        const checkUserInterval = setInterval(() => {
+            if (window.currentUser) {
+                clearInterval(checkUserInterval);
+                setTimeout(async () => {
+                    // تحميل الرسوم البيانية
+                    if (typeof window.loadProgressVisuals === 'function') {
+                        window.loadProgressVisuals();
+                    }
+                    // تحميل الشارات
+                    if (typeof window.loadUserBadges === 'function') {
+                        window.loadUserBadges(window.currentUser.uid);
+                    }
+                    // تحميل بيانات المستخدم الأساسية (صورة البروفيل، الاسم...)
+                    await loadProfileData(window.currentUser);
+                }, 500);
+            }
+        }, 100);
+
+        // تحميل بيانات الملف الشخصي الرئيسية
+        async function loadProfileData(user) {
+            try {
+                const snap = await window.get(window.child(window.dbRef, `students/${user.uid}`));
+                if (!snap.exists()) return;
+                const data = snap.val();
+
+                // الاسم
+                const nameEl = document.getElementById('profileName');
+                if (nameEl) nameEl.textContent = data.name || user.displayName || 'طالب';
+
+                // البريد/اليوزر
+                const emailEl = document.getElementById('profileEmail');
+                if (emailEl) {
+                    emailEl.textContent = data.username ? '@' + data.username : (data.email && !data.email.includes('@monastudent') ? data.email : '');
+                }
+
+                // المرحلة
+                const gradeEl = document.getElementById('profileGrade');
+                if (gradeEl) gradeEl.textContent = data.grade || '';
+
+                // كود الطالب في الإعدادات
+                const settingsId = document.getElementById('settingsStudentId');
+                if (settingsId) settingsId.textContent = data.shortId || '';
+
+                // بيانات حقول الإعدادات
+                const sName = document.getElementById('settingsName');
+                if (sName) sName.value = data.name || '';
+                const sWhatsapp = document.getElementById('settingsWhatsapp');
+                if (sWhatsapp) sWhatsapp.value = (data.whatsapp || '').replace(/^\+\d{1,4}/, '');
+                const sParent = document.getElementById('settingsParentPhone');
+                if (sParent) sParent.value = (data.parentPhone || '').replace(/^\+\d{1,4}/, '');
+                const sGrade = document.getElementById('settingsGrade');
+                if (sGrade) sGrade.value = data.grade || '';
+                const sTelegram = document.getElementById('settingsTelegramChatId');
+                if (sTelegram) sTelegram.value = data.telegramChatId || '';
+
+                // صورة البروفيل
+                const avatarEl = document.getElementById('profileAvatar');
+                if (avatarEl && data.profilePhoto) {
+                    avatarEl.innerHTML = `<img src="${data.profilePhoto}" style="width:100%; height:100%; object-fit:cover; border-radius:50%;" alt="صورة البروفيل">`;
+                    avatarEl.style.padding = '0';
+                }
+
+            } catch (err) {
+                console.error('Error loading profile data:', err);
+            }
+        }
+
+        // تحميل امتحانات الطالب في البروفيل
+        window.loadProfileExams = async function() {
+            const container = document.getElementById('profileExamsList');
+            if (!container || !window.currentUser) return;
+            
+            try {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>';
+                const snap = await window.get(window.child(window.dbRef, `students/${window.currentUser.uid}/examResults`));
+                
+                if (!snap.exists()) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-file-alt"></i><p>لم تؤدِ أي امتحانات بعد</p><p class="hint">اشترك في الكورسات وابدأ التعلم</p></div>';
+                    return;
+                }
+
+                const exams = [];
+                snap.forEach(e => exams.push({ id: e.key, ...e.val() }));
+                exams.sort((a, b) => {
+                    const da = a.completedAt ? new Date(a.completedAt) : 0;
+                    const db2 = b.completedAt ? new Date(b.completedAt) : 0;
+                    return db2 - da;
+                });
+
+                let html = '';
+                exams.forEach(exam => {
+                    const pct = exam.percentage || 0;
+                    const isPerfect = exam.score === exam.total;
+                    const isHigh = pct >= 90;
+                    const color = isPerfect ? 'var(--success)' : (isHigh ? '#00b894' : (pct >= 60 ? 'var(--warning)' : 'var(--danger)'));
+                    const icon = isPerfect ? 'fa-trophy' : (isHigh ? 'fa-star' : (pct >= 60 ? 'fa-check-circle' : 'fa-times-circle'));
+                    const label = isPerfect ? '🏆 ممتاز' : (isHigh ? '⭐ رائع' : (pct >= 60 ? '✅ جيد' : '❌ يحتاج مراجعة'));
+
+                    html += `
+                    <div style="background:var(--card-bg); border-radius:20px; padding:20px; box-shadow:var(--card-shadow); display:flex; align-items:center; gap:15px; border-right:5px solid ${color};">
+                        <div style="width:60px; height:60px; border-radius:50%; background:${color}20; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas ${icon}" style="color:${color}; font-size:1.5rem;"></i>
+                        </div>
+                        <div style="flex:1; min-width:0;">
+                            <h4 style="margin:0 0 5px; color:var(--text-primary); font-size:1rem;">${window.escapeHTML ? window.escapeHTML(exam.quizName || 'امتحان') : (exam.quizName || 'امتحان')}</h4>
+                            <p style="margin:0; color:var(--text-secondary); font-size:0.85rem;">${window.escapeHTML ? window.escapeHTML(exam.courseName || '') : (exam.courseName || '')}</p>
+                            <p style="margin:5px 0 0; color:var(--text-muted, #999); font-size:0.78rem;">${exam.completedAt || ''}</p>
+                        </div>
+                        <div style="text-align:center; flex-shrink:0;">
+                            <div style="font-size:1.5rem; font-weight:900; color:${color};">${pct}%</div>
+                            <div style="font-size:0.75rem; color:var(--text-secondary);">${exam.score}/${exam.total}</div>
+                            <div style="font-size:0.7rem; color:${color}; font-weight:bold; margin-top:3px;">${label}</div>
+                        </div>
+                    </div>`;
+                });
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Error loading exams:', err);
+                container.innerHTML = '<div class="empty-state" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i><p>حدث خطأ في التحميل</p></div>';
+            }
+        };
+
+        // تحميل الواجبات في البروفيل
+        window.loadProfileAssignments = async function() {
+            const container = document.getElementById('profileAssignmentsList');
+            if (!container || !window.currentUser) return;
+
+            try {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>';
+                
+                // جلب الكورسات المشترك فيها
+                const subsSnap = await window.get(window.child(window.dbRef, `students/${window.currentUser.uid}/subscriptions`));
+                if (!subsSnap.exists()) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-tasks"></i><p>لم تشترك في أي كورس بعد</p></div>';
+                    return;
+                }
+
+                const courseIds = Object.keys(subsSnap.val());
+                const allAssignments = [];
+
+                // جلب الواجبات من كل كورس
+                for (const courseId of courseIds) {
+                    try {
+                        const assignSnap = await window.get(window.ref(window.db, `assignments/${courseId}`));
+                        if (assignSnap.exists()) {
+                            assignSnap.forEach(a => {
+                                const aData = a.val();
+                                allAssignments.push({
+                                    id: a.key,
+                                    courseId,
+                                    courseName: subsSnap.val()[courseId]?.courseName || 'كورس',
+                                    ...aData
+                                });
+                            });
+                        }
+                    } catch (e) { /* تجاهل أخطاء الكورسات الفردية */ }
+                }
+
+                if (allAssignments.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-tasks"></i><p>لا توجد واجبات حالياً</p><p class="hint">سيظهر هنا أي واجب يضيفه معلمك</p></div>';
+                    return;
+                }
+
+                // جلب الواجبات المسلمة من الطالب
+                let submittedMap = {};
+                try {
+                    const submittedSnap = await window.get(window.ref(window.db, `assignment_submissions/${window.currentUser.uid}`));
+                    if (submittedSnap.exists()) submittedMap = submittedSnap.val();
+                } catch(e) {}
+
+                // ترتيب: غير مسلمة أولاً، ثم حسب التاريخ
+                allAssignments.sort((a, b) => {
+                    const aSub = submittedMap[a.id];
+                    const bSub = submittedMap[b.id];
+                    if (aSub && !bSub) return 1;
+                    if (!aSub && bSub) return -1;
+                    return 0;
+                });
+
+                let html = '';
+                allAssignments.forEach(assign => {
+                    const isSubmitted = !!submittedMap[assign.id];
+                    const dueDate = assign.dueDate || '';
+                    const isOverdue = dueDate && new Date(dueDate) < new Date() && !isSubmitted;
+                    const statusColor = isSubmitted ? 'var(--success)' : (isOverdue ? 'var(--danger)' : 'var(--main)');
+                    const statusIcon = isSubmitted ? 'fa-check-circle' : (isOverdue ? 'fa-exclamation-circle' : 'fa-clock');
+                    const statusText = isSubmitted ? 'تم التسليم' : (isOverdue ? 'متأخر' : 'لم يُسلّم');
+
+                    const safeTitle = window.escapeHTML ? window.escapeHTML(assign.title || 'واجب') : (assign.title || 'واجب');
+                    const safeCourse = window.escapeHTML ? window.escapeHTML(assign.courseName || '') : (assign.courseName || '');
+
+                    html += `
+                    <div style="background:var(--card-bg); border-radius:20px; padding:20px; box-shadow:var(--card-shadow); display:flex; align-items:flex-start; gap:15px; border-right:5px solid ${statusColor};">
+                        <div style="width:50px; height:50px; border-radius:15px; background:${statusColor}20; display:flex; align-items:center; justify-content:center; flex-shrink:0;">
+                            <i class="fas ${statusIcon}" style="color:${statusColor}; font-size:1.3rem;"></i>
+                        </div>
+                        <div style="flex:1;">
+                            <h4 style="margin:0 0 5px; color:var(--text-primary);">${safeTitle}</h4>
+                            <p style="margin:0 0 5px; color:var(--text-secondary); font-size:0.85rem;">
+                                <i class="fas fa-book" style="margin-left:5px;"></i>${safeCourse}
+                            </p>
+                            ${dueDate ? `<p style="margin:0; color:${isOverdue ? 'var(--danger)' : 'var(--text-muted, #999)'}; font-size:0.78rem;"><i class="fas fa-calendar-alt" style="margin-left:5px;"></i>الموعد النهائي: ${dueDate}</p>` : ''}
+                            ${assign.description ? `<p style="margin:10px 0 0; color:var(--text-secondary); font-size:0.85rem; background:var(--hover-bg); padding:8px 12px; border-radius:8px;">${window.escapeHTML ? window.escapeHTML(assign.description) : assign.description}</p>` : ''}
+                        </div>
+                        <div style="flex-shrink:0; text-align:center;">
+                            <span style="display:inline-block; background:${statusColor}20; color:${statusColor}; padding:5px 12px; border-radius:50px; font-size:0.78rem; font-weight:bold; white-space:nowrap;">
+                                <i class="fas ${statusIcon}"></i> ${statusText}
+                            </span>
+                        </div>
+                    </div>`;
+                });
+
+                container.innerHTML = html;
+            } catch (err) {
+                console.error('Error loading assignments:', err);
+                container.innerHTML = '<div class="empty-state" style="color:var(--danger)"><i class="fas fa-exclamation-triangle"></i><p>حدث خطأ في التحميل</p></div>';
+            }
+        };
+
+        // تحميل سجل النشاط
+        window.loadActivityTimeline = async function() {
+            const container = document.getElementById('activityTimeline');
+            if (!container || !window.currentUser) return;
+
+            try {
+                container.innerHTML = '<div class="empty-state"><i class="fas fa-spinner fa-spin"></i><p>جاري التحميل...</p></div>';
+                
+                const studentSnap = await window.get(window.child(window.dbRef, `students/${window.currentUser.uid}`));
+                if (!studentSnap.exists()) return;
+                const data = studentSnap.val();
+
+                const activities = [];
+
+                // الفيديوهات المشاهدة
+                if (data.watchedVideos) {
+                    Object.values(data.watchedVideos).forEach(v => {
+                        activities.push({
+                            type: 'video',
+                            icon: 'fa-video',
+                            color: '#6c5ce7',
+                            title: v.videoTitle || 'فيديو',
+                            subtitle: v.courseName || '',
+                            date: v.watchedAt || ''
+                        });
+                    });
+                }
+
+                // الامتحانات
+                if (data.examResults) {
+                    Object.values(data.examResults).forEach(e => {
+                        activities.push({
+                            type: 'exam',
+                            icon: 'fa-file-alt',
+                            color: e.percentage >= 90 ? '#00b894' : (e.percentage >= 60 ? '#f1c40f' : '#ff7675'),
+                            title: e.quizName || 'امتحان',
+                            subtitle: `${e.score}/${e.total} (${e.percentage}%) - ${e.courseName || ''}`,
+                            date: e.completedAt || ''
+                        });
+                    });
+                }
+
+                // الشارات
+                if (data.badges) {
+                    Object.values(data.badges).forEach(b => {
+                        activities.push({
+                            type: 'badge',
+                            icon: b.icon || 'fa-medal',
+                            color: '#ffd700',
+                            title: b.name || 'شارة',
+                            subtitle: `+${b.points} نقطة`,
+                            date: b.earnedAtLocal || ''
+                        });
+                    });
+                }
+
+                // ترتيب حسب التاريخ
+                activities.sort((a, b) => {
+                    const da = a.date ? new Date(a.date) : 0;
+                    const db2 = b.date ? new Date(b.date) : 0;
+                    return db2 - da;
+                });
+
+                if (activities.length === 0) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-history"></i><p>لا يوجد نشاط بعد</p></div>';
+                    return;
+                }
+
+                window._allActivities = activities;
+                window.filterHistory('all');
+
+            } catch (err) {
+                console.error('Error loading timeline:', err);
+            }
+        };
+    </script>
+    
+
+    <script>
+        // تغيير كلمة المرور
+        window.changePassword = async function() {
+            if (!window.currentUser) return;
+            const currentPwd = document.getElementById('currentPassword')?.value || '';
+            const newPwd = document.getElementById('newPassword')?.value || '';
+            const confirmPwd = document.getElementById('confirmNewPassword')?.value || '';
+
+            if (!currentPwd || !newPwd || !confirmPwd) {
+                window.showToast('❌ يرجى ملء جميع الحقول', 'error'); return;
+            }
+            if (newPwd.length < 6) {
+                window.showToast('❌ كلمة المرور الجديدة يجب أن تكون 6 أحرف على الأقل', 'error'); return;
+            }
+            if (newPwd !== confirmPwd) {
+                window.showToast('❌ كلمة المرور غير متطابقة', 'error'); return;
+            }
+
+            window.startProgress();
+            try {
+                // إعادة المصادقة قبل تغيير كلمة المرور
+                const { EmailAuthProvider, reauthenticateWithCredential, updatePassword } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js');
+                const credential = EmailAuthProvider.credential(window.currentUser.email, currentPwd);
+                await reauthenticateWithCredential(window.currentUser, credential);
+                await updatePassword(window.currentUser, newPwd);
+                window.showToast('✅ تم تغيير كلمة المرور بنجاح', 'success');
+                window.closePasswordModal();
+                // مسح الحقول
+                ['currentPassword', 'newPassword', 'confirmNewPassword'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
+            } catch (err) {
+                console.error('Change password error:', err);
+                const msg = err.code === 'auth/wrong-password' ? '❌ كلمة المرور الحالية غير صحيحة' : '❌ حدث خطأ في تغيير كلمة المرور';
+                window.showToast(msg, 'error');
+            } finally {
+                window.stopProgress();
+            }
+        };
+    </script>
+</body>
+</html>
+

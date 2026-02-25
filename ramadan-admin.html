@@ -378,18 +378,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-
-        // ================ دالة حماية XSS ================
-        function escapeHTML(str) {
-            if (str === null || str === undefined) return '';
-            if (typeof str !== 'string') str = String(str);
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        }
         const auth = getAuth(app);
         const provider = new GoogleAuthProvider();
 
@@ -769,27 +757,27 @@
                 html += `
                     <div class="question-card">
                         <div class="question-header">
-                            <span class="question-day">📅 اليوم ${escapeHTML(String(q.day))}</span>
+                            <span class="question-day">📅 اليوم ${q.day}</span>
                             <div style="display:flex; gap:8px;">
-                                <button class="ramadan-admin-btn" onclick="editQuestion('${escapeHTML(q.id)}')" style="padding: 5px 15px; background: rgba(108,92,231,0.3); border-color: #6c5ce7; color: #a29bfe;">
+                                <button class="ramadan-admin-btn" onclick="editQuestion('${q.id}')" style="padding: 5px 15px; background: rgba(108,92,231,0.3); border-color: #6c5ce7; color: #a29bfe;">
                                     <i class="fas fa-edit"></i> تعديل
                                 </button>
-                                <button class="ramadan-admin-btn" onclick="deleteQuestion('${escapeHTML(q.id)}')" style="padding: 5px 15px;">
+                                <button class="ramadan-admin-btn" onclick="deleteQuestion('${q.id}')" style="padding: 5px 15px;">
                                     <i class="fas fa-trash"></i> حذف
                                 </button>
                             </div>
                         </div>
-                        <div class="question-text">${escapeHTML(q.text)}</div>
+                        <div class="question-text">${q.text}</div>
                         <div class="question-answer">
                             <i class="fas fa-check-circle"></i> 
-                            الإجابة الصحيحة: ${escapeHTML(q.correctAnswer)}
+                            الإجابة الصحيحة: ${q.correctAnswer}
                         </div>
                         <div class="question-reference">
-                            <i class="fas fa-quran"></i> ${escapeHTML(q.surah)} - آية ${escapeHTML(String(q.aya))}
+                            <i class="fas fa-quran"></i> ${q.surah} - آية ${q.aya}
                         </div>
                         ${q.tafseer ? `
                             <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.05); border-radius: 8px; color: #aaa;">
-                                <i class="fas fa-book-open"></i> ${escapeHTML(q.tafseer)}
+                                <i class="fas fa-book-open"></i> ${q.tafseer}
                             </div>
                         ` : ''}
                     </div>
@@ -868,15 +856,15 @@
                 const correctAns = correctAnswersMap[ans.day] || 'غير معروف';
                 rows += `
                     <tr>
-                        <td>${escapeHTML(String(ans.day))}</td>
-                        <td>${escapeHTML(ans.name)}</td>
-                        <td>${escapeHTML(ans.studentId || 'غير محدد')}</td>
-                        <td>${escapeHTML(ans.answer)}</td>
-                        <td>${escapeHTML(correctAns)}</td>
+                        <td>${ans.day}</td>
+                        <td>${ans.name}</td>
+                        <td>${ans.studentId || 'غير محدد'}</td>
+                        <td>${ans.answer}</td>
+                        <td>${correctAns}</td>
                         <td class="${ans.isCorrect ? 'status-correct' : 'status-wrong'}">
                             ${ans.isCorrect ? '✓ صحيحة' : '✗ خاطئة'}
                         </td>
-                        <td>${escapeHTML(ans.date)}</td>
+                        <td>${ans.date}</td>
                     </tr>
                 `;
             });
