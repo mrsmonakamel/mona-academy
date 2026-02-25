@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات، متابعة مستمرة">
+    <meta name="theme-color" content="#6c5ce7">
+    <title>Ms. Mona Kamel | English Academy</title>
+    
+    <!-- Preload fonts and css -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="style.css?v=2.0">
+    
+    <!-- Preload hero image -->
+    <link rel="preload" as="image" href="mona.jpg">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://mrsmonakamel.github.io/mona-academy/">
+    <meta property="og:title" content="Ms. Mona Kamel | English Academy">
+    <meta property="og:description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال - شرح مبسط، اختبارات تفاعلية، متابعة مستمرة">
+    <meta property="og:image" content="https://mrsmonakamel.github.io/mona-academy/mona.jpg">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://mrsmonakamel.github.io/mona-academy/">
+    <meta property="twitter:title" content="Ms. Mona Kamel | English Academy">
+    <meta property="twitter:description" content="منصة تعليمية متكاملة مع الأستاذة منى كمال">
+    <meta property="twitter:image" content="https://mrsmonakamel.github.io/mona-academy/mona.jpg">
+    
+    <style>
+        /* الأنماط الحرجة فقط */
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: skeleton-loading 1.5s infinite; border-radius: 10px; min-height: 200px; }
+        @keyframes skeleton-loading { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .offline-indicator { position: fixed; top: 0; left: 0; right: 0; background: #ff7675; color: white; text-align: center; padding: 8px; font-size: 0.9rem; z-index: 10000; transform: translateY(-100%); transition: transform 0.3s ease; }
+        .offline-indicator.show { transform: translateY(0); }
+        .progress-indicator { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, #6c5ce7, #8b7cf0); z-index: 10001; transform: scaleX(0); transform-origin: 0 0; transition: transform 0.3s ease; }
+        .progress-indicator.loading { transform: scaleX(1); }
+        .toast-container { position: fixed; top: 20px; left: 20px; z-index: 10000; pointer-events: none; }
+    </style>
+</head>
+<body>
+    <!-- Progress Indicator -->
+    <div id="progressIndicator" class="progress-indicator"></div>
+    
+    <!-- Offline Indicator -->
+    <div id="offlineIndicator" class="offline-indicator">
+        <i class="fas fa-wifi-slash"></i>
+        أنت غير متصل بالإنترنت - بعض الميزات قد لا تعمل
+    </div>
+
+    <header>
+        <div class="logo-text" id="logoText">MS. MONA KAMEL</div>
+        <div class="header-controls">
+            <div id="authStatus"></div>
+        </div>
+    </header>
+
+    <!-- HAMBURGER DROPDOWN -->
+    <div id="menuDropdown" class="dropdown-menu">
+        <a id="homeMenuItem" style="display: none;" class="touch-feedback"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <hr id="menuDivider" style="display: none;">
+        <a id="logoutMenuItem" style="display: none; color: var(--danger);" class="touch-feedback"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
+    </div>
+
+    <!-- SUBSCRIPTION MODAL -->
+    <div id="subscriptionModal" class="subscription-modal">
+        <div class="subscription-content">
+            <i class="fas fa-times-circle" style="position: absolute; left: 20px; top: 20px; font-size: 1.5rem; color: #ccc; cursor: pointer;" id="closeSubscriptionBtn"></i>
+            <h2 style="color: var(--main); margin-bottom: 20px;">🎯 اشترك في الكورس</h2>
+            <div id="subCourseInfo" style="font-size: 1.2rem; font-weight: bold; margin-bottom: 20px;"></div>
+            <div class="sub-option">
+                <button type="button" id="previewBtn" class="sub-btn">👁️ مشاهدة المحتوى</button>
+                <button type="button" id="subscribeBtn" class="sub-btn primary">✅ اشتراك</button>
+            </div>
+            <div id="subscriptionIdSection" style="display: none;">
+                <p style="color: #666; margin-bottom: 10px;">أدخل كود الطالب الخاص بك (ID) لتأكيد الاشتراك:</p>
+                <input type="text" id="subscriptionIdInput" class="id-input" placeholder="1234567890" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+                <button type="button" id="confirmSubscribeBtn" class="auth-btn" style="width: 100%; margin-top: 10px; background: var(--main); color: white; border: none; padding: 12px; border-radius: 12px; font-weight: bold; cursor: pointer;">تأكيد الاشتراك</button>
+                <div id="subError" style="color: var(--danger); margin-top: 10px; font-size: 0.9rem;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HOME PAGE -->
+    <div id="homePage">
+        <section class="hero">
+            <div class="hero-content">
+                <h1>Learn English with <br> Ms. Mona Kamel</h1>
+                <p>Welcome to your second home! Everything you need to excel is right here.</p><br>
+                <a href="#courses" class="btn-hero" style="background: #fff; color: var(--main); padding: 15px 35px; border-radius: 50px; text-decoration: none; font-weight: 900;">View Courses</a>
+            </div>
+            <div class="hero-image"><img src="mona.jpg" alt="Ms. Mona Kamel" width="300" height="300"></div>
+        </section>
+
+        <section class="about-section">
+            <span class="about-tag">About Me</span>
+            <div class="about-content">
+                <h2>Who is Ms. Mona Kamel?</h2>
+                <p>Ms. Mona Kamel is a professional English language instructor dedicated to making English learning an enjoyable and rewarding experience.</p>
+            </div>
+        </section>
+        
+        <section class="features">
+            <h2>لماذا تشترك معنا؟ ✨</h2>
+            <div class="features-grid">
+                <div class="feat-card"><div class="num-circle">1</div><h3>شرح مبسط</h3><p>بنحلل كل قاعدة وكل كلمة في المنهج بأسلوب ممتع.</p></div>
+                <div class="feat-card"><div class="num-circle">2</div><h3>تكنولوجيا تعليمية</h3><p>فيديوهات بجودة عالية ومنصة سهلة تنظم لك مذاكرتك.</p></div>
+                <div class="feat-card"><div class="num-circle">3</div><h3>متابعة مستمرة</h3><p>إحنا معاك خطوة بخطوة للرد على استفساراتك.</p></div>
+            </div>
+        </section>
+
+        <!-- كورساتنا التعليمية -->
+        <section class="courses" id="courses">
+            <h2 style="text-align: center; margin-bottom: 40px; font-weight: 900;">كورساتنا التعليمية</h2>
+            <div id="foldersGrid" class="course-grid">
+                <!-- Skeleton Loading -->
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+                <div class="skeleton"></div>
+            </div>
+        </section>
+
+        <!-- PERFECT SCORES SECTION -->
+        <section id="perfectScoresSection" class="perfect-section" style="display: block;">
+            <div class="perfect-header">
+                <i class="fas fa-trophy"></i>
+                <h2>طلاب الدرجة النهائية 🏅</h2>
+                <i class="fas fa-star"></i>
+            </div>
+
+            <!-- زر أسئلة رمضان الجديد -->
+            <div style="text-align: center; margin: 40px 0 20px;">
+                <a href="#ramadanQuestionsSection" onclick="document.getElementById('ramadanQuestionsSection').scrollIntoView({behavior: 'smooth'})" 
+                   style="display: inline-flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #1a2639, #0c1a2b); 
+                          color: #ffd700; padding: 20px 50px; border-radius: 60px; text-decoration: none; font-weight: 900; 
+                          font-size: 1.5rem; border: 3px solid #ffd700; box-shadow: 0 10px 30px rgba(255,215,0,0.3); 
+                          transition: all 0.4s; cursor: pointer;" 
+                   onmouseover="this.style.transform='translateY(-5px) scale(1.05)'; this.style.boxShadow='0 20px 40px rgba(255,215,0,0.5)';"
+                   onmouseout="this.style.transform='translateY(0) scale(1)'; this.style.boxShadow='0 10px 30px rgba(255,215,0,0.3)';">
+                    <i class="fas fa-moon fa-2x" style="animation: ramadanTwinkle 2s infinite;"></i>
+                    <span>🌙 أسئلة رمضان</span>
+                    <i class="fas fa-star fa-2x" style="animation: ramadanStar 2.5s infinite;"></i>
+                </a>
+            </div>
+            <div id="perfectScoresGrid" class="perfect-grid"></div>
+        </section>
+
+        <!-- REVIEWS SECTION -->
+        <section class="reviews">
+            <h2 style="margin-bottom: 40px; font-weight: 900;">قالوا عن Ms. Mona Kamel ✨</h2>
+            <div class="reviews-grid" id="testiGrid"></div>
+            <div id="reviewSectionContainer"></div>
+        </section>
+    </div>
+
+    <!-- COURSE CONTENT AREA -->
+    <div id="contentArea" style="display: none;">
+        <button type="button" id="backToHomeBtn" style="background:#f0eeff; color:var(--main); border:none; padding:10px 25px; border-radius:15px; cursor:pointer; font-weight:bold; margin-bottom:25px; font-family:'Cairo';">
+            <i class="fas fa-arrow-right"></i> العودة للرئيسية
+        </button>
+        <h2 id="folderTitleName" style="margin-bottom:30px; color:var(--dark); text-align:center; font-weight: 900;"></h2>
+        
+        <!-- Rating Section -->
+        <div id="courseRatingSection" class="rating-box" style="display: none;"></div>
+
+        <!-- ===== فلترة المراحل ===== -->
+        <div id="stageFilterBar" style="display:none; margin-bottom:25px; text-align:center;">
+            <p style="color:var(--gray); margin-bottom:10px; font-size:0.9rem;"><i class="fas fa-filter"></i> فلترة حسب المرحلة / الوحدة</p>
+            <div id="stageFilterBtns" style="display:flex; flex-wrap:wrap; gap:8px; justify-content:center;"></div>
+        </div>
+        
+        <div id="combinedGrid" class="content-grid"></div>
+    </div>
+
+    <!-- QUIZ / VIDEO OVERLAY -->
+    <div id="quizOverlay">
+        <div class="quiz-header">
+            <h2 id="quizTitle" style="font-weight: 900; color: var(--main);"></h2>
+            <button type="button" id="closeQuizBtn" style="background:var(--danger); color:white; border:none; padding:8px 20px; border-radius:10px; cursor:pointer; font-weight:bold; font-family:'Cairo';">إغلاق</button>
+        </div>
+        <div id="quizContainer" style="max-width: 800px; margin: 0 auto; padding-bottom: 100px;"></div>
+    </div>
+
+    <!-- LOGIN & REGISTRATION MODAL -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <span class="close-modal" id="closeLoginBtn">&times;</span>
+            
+            <!-- شاشة اختيار تسجيل دخول / حساب جديد -->
+            <div id="authChoice">
+                <h2 style="color:var(--main); margin-bottom:20px;">مرحباً بك 🎓</h2>
+                <button type="button" class="auth-btn" id="showLoginChoiceBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    تسجيل الدخول
+                </button>
+                <button type="button" class="auth-btn" id="showRegisterBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    إنشاء حساب جديد
+                </button>
+            </div>
+            
+            <!-- شاشة اختيار طريقة تسجيل الدخول -->
+            <div id="loginChoice" style="display:none;">
+                <h2 style="color:var(--main); margin-bottom:20px;">اختر طريقة تسجيل الدخول</h2>
+                <button type="button" class="auth-btn" id="showLoginEmailBtn" style="width:100%; margin-bottom:10px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    الدخول بالإيميل والباسورد
+                </button>
+                <button type="button" class="auth-btn" id="showLoginUsernameBtn" style="background:#fff; color:var(--main); border:2px solid var(--main); width:100%; margin-bottom:10px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    الدخول باليوزر نيم والباسورد
+                </button>
+                <button type="button" class="auth-btn" id="loginGoogleBtn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; padding:12px; border-radius:12px; font-weight:bold;">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google"> 
+                    الدخول بواسطة جوجل
+                </button>
+                <p id="backToChoiceFromLogin" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);">العودة للخلف</p>
+            </div>
+            
+            <!-- نموذج تسجيل الدخول بالإيميل -->
+            <div id="loginEmail" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;">الدخول بالإيميل والباسورد</h2>
+                <input type="email" id="stEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email" name="email">
+                <input type="password" id="stPass" class="reg-input" placeholder="كلمة المرور" name="password">
+                <button type="button" class="auth-btn" id="loginEmailSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    تسجيل الدخول
+                </button>
+                <p id="backToLoginChoiceFromEmail" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);;">العودة للخلف</p>
+            </div>
+            
+            <!-- نموذج تسجيل الدخول باليوزر نيم -->
+            <div id="loginUsername" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;">الدخول باليوزر نيم والباسورد</h2>
+                <input type="text" id="stUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text" name="username">
+                <input type="password" id="stPassUsername" class="reg-input" placeholder="كلمة المرور" name="password">
+                <button type="button" class="auth-btn" id="loginUsernameSubmitBtn" style="width:100%; margin-top:15px; background:var(--main); color:white; border:none; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                    تسجيل الدخول
+                </button>
+                <p id="backToLoginChoiceFromUsername" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main);;">العودة للخلف</p>
+            </div>
+            
+            <!-- نموذج التسجيل (3 خطوات) -->
+            <div id="registerForm" style="display:none; text-align:right;">
+                <h2 style="color:var(--main); margin-bottom:20px;">إنشاء حساب جديد</h2>
+                
+                <!-- شريط التقدم -->
+                <div class="progress-bar">
+                    <div class="progress-fill" id="regProgress" style="width:33%;"></div>
+                </div>
+                
+                <!-- الخطوة 1: البيانات الشخصية -->
+                <div id="step1" class="step-container active">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">📋 الخطوة 1: البيانات الشخصية</h3>
+                    
+                    <label class="reg-label required-field">الاسم الرباعي</label>
+                    <div class="name-grid">
+                        <input type="text" id="n1" class="reg-input" placeholder="الأول" maxlength="50" inputmode="text" name="firstname">
+                        <input type="text" id="n2" class="reg-input" placeholder="الثاني" maxlength="50" inputmode="text" name="middlename1">
+                        <input type="text" id="n3" class="reg-input" placeholder="الثالث" maxlength="50" inputmode="text" name="middlename2">
+                        <input type="text" id="n4" class="reg-input" placeholder="الرابع" maxlength="50" inputmode="text" name="lastname">
+                    </div>
+                    
+                    <label class="reg-label required-field">رقم الواتساب</label>
+                    <div class="phone-row">
+                        <select id="countryCode" class="country-select" name="countrycode">
+                            <option value="+20">+20 (مصر)</option>
+                            <option value="+966">+966 (السعودية)</option>
+                            <option value="+971">+971 (الإمارات)</option>
+                            <option value="+974">+974 (قطر)</option>
+                            <option value="+965">+965 (الكويت)</option>
+                            <option value="+973">+973 (البحرين)</option>
+                            <option value="+968">+968 (عمان)</option>
+                            <option value="+962">+962 (الأردن)</option>
+                            <option value="+970">+970 (فلسطين)</option>
+                        </select>
+                        <input type="tel" id="regWhatsapp" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*" name="whatsapp">
+                    </div>
+                    <div class="hint-text">أدخل الرقم بدون مفتاح الدولة</div>
+                    
+                    <label class="reg-label">رقم ولي الأمر (اختياري)</label>
+                    <div class="phone-row">
+                        <select id="parentCountryCode" class="country-select" name="parentcountrycode">
+                            <option value="+20">+20 (مصر)</option>
+                            <option value="+966">+966 (السعودية)</option>
+                            <option value="+971">+971 (الإمارات)</option>
+                        </select>
+                        <input type="tel" id="regParentPhone" class="reg-input" placeholder="1234567890" maxlength="15" style="flex:1;" inputmode="numeric" pattern="[0-9]*" name="parentphone">
+                    </div>
+                    
+                    <div id="step1Error" class="error-message" style="display:none;"></div>
+                    
+                    <button type="button" id="step1NextBtn" class="btn btn-main" style="margin-top:20px; width:100%;" disabled>
+                        التالي <i class="fas fa-arrow-left"></i>
+                    </button>
+                </div>
+                
+                <!-- الخطوة 2: المرحلة الدراسية -->
+                <div id="step2" class="step-container">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">📚 الخطوة 2: المرحلة الدراسية</h3>
+                    
+                    <label class="reg-label required-field">المرحلة التعليمية</label>
+                    <select id="regLevel" class="reg-input" name="level">
+                        <option value="">-- اختر المرحلة --</option>
+                        <option value="primary">المرحلة الابتدائية</option>
+                        <option value="middle">المرحلة الإعدادية</option>
+                        <option value="secondary">المرحلة الثانوية</option>
+                    </select>
+                    
+                    <label class="reg-label required-field">الصف الدراسي</label>
+                    <select id="regGrade" class="reg-input" name="grade">
+                        <option value="">-- اختر الصف أولاً --</option>
+                    </select>
+                    
+                    <div id="step2Error" class="error-message" style="display:none;"></div>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button type="button" id="step2PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                            <i class="fas fa-arrow-right"></i> السابق
+                        </button>
+                        <button type="button" id="step2NextBtn" class="btn btn-main" style="flex:2;" disabled>
+                            التالي <i class="fas fa-arrow-left"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- الخطوة 3: اختيار طريقة التسجيل -->
+                <div id="step3" class="step-container">
+                    <h3 style="color:var(--dark); margin-bottom:15px;">🔐 الخطوة 3: طريقة التسجيل</h3>
+                    
+                    <div style="display:flex; gap:10px; margin-bottom:20px;">
+                        <button type="button" id="showRegEmailBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                            <i class="fas fa-envelope"></i> إيميل
+                        </button>
+                        <button type="button" id="showRegUsernameBtn" class="btn" style="flex:1; background:#f0eeff; color:var(--main); border:1px solid var(--main);">
+                            <i class="fas fa-user"></i> يوزر نيم
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بالإيميل -->
+                    <div id="step3Email" class="step-container" style="display:none;">
+                        <input type="email" id="regEmail" class="reg-input" placeholder="example@email.com" dir="ltr" inputmode="email" name="email">
+                        <input type="password" id="regPass" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)" name="password">
+                        <input type="password" id="regPassConfirm" class="reg-input" placeholder="تأكيد كلمة المرور" name="password_confirm">
+                        <button type="button" id="regBtn" class="btn btn-main" style="width:100%; margin-top:15px;">
+                            تسجيل
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بيوزر نيم -->
+                    <div id="step3Username" class="step-container" style="display:none;">
+                        <input type="text" id="regUsername" class="reg-input" placeholder="اسم المستخدم" dir="ltr" inputmode="text" name="username">
+                        <input type="password" id="regPassUser" class="reg-input" placeholder="كلمة المرور (6 أحرف فأكثر)" name="password">
+                        <input type="password" id="regPassUserConfirm" class="reg-input" placeholder="تأكيد كلمة المرور" name="password_confirm">
+                        <button type="button" id="regBtnUser" class="btn btn-main" style="width:100%; margin-top:15px;" disabled>
+                            تسجيل
+                        </button>
+                    </div>
+                    
+                    <!-- التسجيل بجوجل -->
+                    <button type="button" id="registerGoogleBtn" class="auth-btn" style="background:#fff; color:#444; border:1px solid #ddd; width:100%; display:flex; align-items:center; justify-content:center; gap:10px; margin-top:15px; padding:12px; border-radius:12px; font-weight:bold; cursor:pointer;">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" width="20" alt="Google">
+                        التسجيل بجوجل
+                    </button>
+                    
+                    <div style="display:flex; gap:10px; margin-top:20px;">
+                        <button type="button" id="step3PrevBtn" class="btn" style="background:#eee; color:var(--text-primary); flex:1;">
+                            <i class="fas fa-arrow-right"></i> السابق
+                        </button>
+                        <button type="button" id="step3CancelBtn" class="btn" style="background:var(--danger); color:white; flex:1;">
+                            إلغاء
+                        </button>
+                    </div>
+                </div>
+                
+                <p id="backToChoiceFromRegister" style="margin-top:15px; cursor:pointer; font-size:0.8rem; color:var(--main); text-align:center;">العودة للخلف</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- WHATSAPP MODAL -->
+    <div id="waModal" class="modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 20px;">تواصل مع Ms. Mona</h3>
+            <a href="https://wa.me/201026298954" class="social-btn wa" style="display:block; margin-bottom:10px;" target="_blank">01026298954</a>
+            <a href="https://wa.me/201128874885" class="social-btn wa" style="display:block;" target="_blank">01128874885</a>
+            <button type="button" id="closeWaModalBtn" style="margin-top: 15px; border: none; background: none; color: var(--danger); cursor: pointer; font-family:'Cairo';">إغلاق</button>
+        </div>
+    </div>
+
+    <footer>
+        <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></p>
+        <div style="margin-top: 20px; display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+            <a href="https://www.facebook.com/share/1C9MoP8pqj/" class="social-btn fb" target="_blank">
+                <i class="fab fa-facebook-f" style="margin-left: 5px;"></i> فيسبوك
+            </a>
+            <div class="social-btn wa" id="showWaModalBtn">
+                <i class="fab fa-whatsapp" style="margin-left: 5px;"></i> واتساب
+            </div>
+            <a href="https://wa.me/2010 91640622" class="social-btn developer-btn" target="_blank">
+                <i class="fas fa-code" style="margin-left: 5px;"></i> Developed by Abdelrahman Adawi
+            </a>
+        </div>
+    </footer>
+
+    <!-- Toast Container للإشعارات -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- استيراد السكريبت الرئيسي -->
+    <script type="module" src="script.js?v=2.1"></script>
+    
+    <script>
+        // ================ تحسينات تجربة المستخدم ================
+        
+        // Offline/Online Detection
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offlineIndicator');
+            if (indicator) {
+                if (!navigator.onLine) {
+                    indicator.classList.add('show');
+                } else {
+                    indicator.classList.remove('show');
+                }
+            }
+        }
+        
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+        
+        // تحميل Skeleton
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.querySelectorAll('.skeleton').forEach(el => el.remove());
+            }, 1000);
+        });
+
+        // ربط الأحداث الأساسية
+        document.addEventListener('DOMContentLoaded', function() {
+            // ربط أزرار الواتساب
+            const showWaModalBtn = document.getElementById('showWaModalBtn');
+            const closeWaModalBtn = document.getElementById('closeWaModalBtn');
+            const waModal = document.getElementById('waModal');
+            
+            if (showWaModalBtn) {
+                showWaModalBtn.addEventListener('click', function() {
+                    if (waModal) waModal.style.display = 'flex';
+                });
+            }
+            
+            if (closeWaModalBtn) {
+                closeWaModalBtn.addEventListener('click', function() {
+                    if (waModal) waModal.style.display = 'none';
+                });
+            }
+            
+            // ربط أزرار العودة للرئيسية
+            const logoText = document.getElementById('logoText');
+            const backToHomeBtn = document.getElementById('backToHomeBtn');
+            
+            if (logoText) {
+                logoText.addEventListener('click', function() {
+                    window.location.reload();
+                });
+            }
+            
+            if (backToHomeBtn) {
+                backToHomeBtn.addEventListener('click', function() {
+                    document.getElementById('homePage').style.display = 'block';
+                    document.getElementById('contentArea').style.display = 'none';
+                });
+            }
+            
+            // ربط أزرار إغلاق المودالات
+            const closeLoginBtn = document.getElementById('closeLoginBtn');
+            const closeSubscriptionBtn = document.getElementById('closeSubscriptionBtn');
+            const closeQuizBtn = document.getElementById('closeQuizBtn');
+            const loginModal = document.getElementById('loginModal');
+            const subscriptionModal = document.getElementById('subscriptionModal');
+            const quizOverlay = document.getElementById('quizOverlay');
+            
+            if (closeLoginBtn) {
+                closeLoginBtn.addEventListener('click', function() {
+                    if (loginModal) loginModal.style.display = 'none';
+                });
+            }
+            
+            if (closeSubscriptionBtn) {
+                closeSubscriptionBtn.addEventListener('click', function() {
+                    if (subscriptionModal) subscriptionModal.style.display = 'none';
+                });
+            }
+            
+            if (closeQuizBtn) {
+                closeQuizBtn.addEventListener('click', function() {
+                    if (quizOverlay) {
+                        quizOverlay.style.display = 'none';
+                        const quizContainer = document.getElementById('quizContainer');
+                        if (quizContainer) {
+                            quizContainer.innerHTML = "";
+                        }
+                    }
+                });
+            }
+            
+            // إغلاق المودالات عند الضغط خارجها
+            window.addEventListener('click', function(event) {
+                if (event.target === loginModal) {
+                    loginModal.style.display = 'none';
+                }
+                if (event.target === subscriptionModal) {
+                    subscriptionModal.style.display = 'none';
+                }
+                if (event.target === waModal) {
+                    waModal.style.display = 'none';
+                }
+            });
+            
+            // منع التكبير على الـ inputs في الموبايل
+            const inputs = document.querySelectorAll('input[type="text"], input[type="email"], input[type="tel"], input[type="number"]');
+            inputs.forEach(input => {
+                input.addEventListener('touchstart', () => {
+                    input.style.fontSize = '16px';
+                });
+            });
+        });
+    </script>
+    
+    <!-- ================ RAMADAN QUESTIONS SECTION ================ -->
+    <section id="ramadanQuestionsSection" class="ramadan-section">
+        <div class="ramadan-header">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-star"></i>
+            <h2>🌙 أسئلة رمضان</h2>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-moon"></i>
+        </div>
+        
+        <!-- شروط المسابقة الجديدة -->
+        <div class="ramadan-rules" style="text-align: center; color: #ffd700; margin-bottom: 30px; background: rgba(255,215,0,0.1); padding: 20px; border-radius: 30px; border: 2px solid #ffd700;">
+            <p style="font-size: 1.2rem; font-weight: bold;">📢 شروط المسابقة:</p>
+            <p>يتم الاختيار عشوائي .. ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
+            <p>شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير .. (آية ١٨٣، ١٨٤، ١٨٥)</p>
+            <p>وحظ سعيد للجميع 🌹🌹</p>
+        </div>
+        
+        <div id="ramadanQuestionsContainer" class="ramadan-questions-container">
+            <!-- الأسئلة ستظهر هنا -->
+        </div>
+    </section>
+
+    <!-- ================ RAMADAN ANSWER MODAL ================ -->
+    <div id="ramadanAnswerModal" class="ramadan-modal">
+        <div class="ramadan-modal-content">
+            <div class="ramadan-modal-header">
+                <h3 id="ramadanQuestionTitle"></h3>
+                <span class="ramadan-close-modal">&times;</span>
+            </div>
+            <div class="ramadan-modal-body">
+                <div id="ramadanQuestionText" class="ramadan-question-text"></div>
+                <!-- إخفاء المرجع عن المستخدم -->
+                
+                <div class="ramadan-answer-form">
+                    <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
+                    <!-- حقل كود الطالب الجديد -->
+                    <input type="text" id="ramadanStudentId" class="ramadan-input" placeholder="كود الطالب (10 أرقام)" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+                    
+                    <div style="margin: 15px 0;">
+                        <label style="color: #ffd700; display: block; margin-bottom: 8px;">اختر الإجابة الصحيحة:</label>
+                        <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom: 10px;">
+                            <option value="">-- اختر السورة --</option>
+                        </select>
+                        
+                        <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
+                        
+                        <div style="margin: 10px 0; color: #ffd700; font-size: 0.9rem;">
+                            <span id="ramadanAnswerPreview" style="color: #aaa;">لم يتم الاختيار بعد</span>
+                        </div>
+                    </div>
+                    
+                    <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn ramadan-btn-primary">إرسال الإجابة</button>
+                </div>
+                
+                <div class="ramadan-answers-list" id="ramadanAnswersList">
+                    <h4>إجابات المشاركين:</h4>
+                    <div id="ramadanAnswersContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div> 
+    
+<script src="ai-assistant.js"></script>
+
+    
+    
+</body>
+</html>
