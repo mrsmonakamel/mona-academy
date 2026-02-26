@@ -1628,14 +1628,9 @@
                 updateCounts();
             });
 
-            addListener('notifications', 'course_access_notifications', (data) => {
+            addListener('notifications', 'subscription_notifications', (data) => {
                 allNotifications = data;
                 renderNotifications(data);
-                updateCounts();
-            });
-
-            addListener('subscriptions', 'subscription_notifications', (data) => {
-                allSubscriptionNotifications = data;
                 updateCounts();
             });
 
@@ -1798,14 +1793,14 @@
             let html = '';
             if (notifications && Object.keys(notifications).length > 0) {
                 Object.entries(notifications)
-                    .sort((a, b) => (b[1].time || '').localeCompare(a[1].time || ''))
+                    .sort((a, b) => (b[1].subscribedAt || b[1].timestamp || '').localeCompare(a[1].subscribedAt || a[1].timestamp || ''))
                     .forEach(([id, n]) => {
                         html += `<tr>
                             <td>${escapeHTML(n.studentName || '')}</td>
                             <td><span class="student-id-display">${escapeHTML(n.studentId || '')}</span></td>
                             <td>${escapeHTML(n.courseName || '')}</td>
-                            <td>${escapeHTML(n.time || '')}</td>
-                            <td><button class="btn-delete btn-icon" onclick="delData('course_access_notifications/${id}')"><i class="fas fa-trash"></i></button></td>
+                            <td>${escapeHTML(n.subscribedAt || n.timestamp || '')}</td>
+                            <td><button class="btn-delete btn-icon" onclick="delData('subscription_notifications/${id}')"><i class="fas fa-trash"></i></button></td>
                         </tr>`;
                     });
             } else {
@@ -2464,7 +2459,7 @@
             
             try {
                 startProgress();
-                const adminId = email.replace(/[.#$[\]]/g, '_');
+                const adminId = email.toLowerCase().replace(/[.#$[\]/\\]/g, '_').replace(/\s+/g, '_');
                 await set(ref(db, `admins/${adminId}`), { email, name });
                 
                 document.getElementById('newAdminEmail').value = '';
@@ -2818,8 +2813,24 @@
             
             const ctx1 = document.getElementById('topCoursesChart')?.getContext('2d');
             if (ctx1) {
-                const courseNames = Object.values(allFolders).map(f => f.name).slice(0, 5);
-                const courseViews = courseNames.map(() => Math.floor(Math.random() * 50) + 10);
+                // حساب المشاهدات الحقيقية من بيانات الطلاب
+                const courseViewCounts = {};
+                Object.values(allStudents).forEach(student => {
+                    if (student.watchedVideos) {
+                        Object.values(student.watchedVideos).forEach(v => {
+                            const cId = v.courseId || '';
+                            if (cId) courseViewCounts[cId] = (courseViewCounts[cId] || 0) + 1;
+                        });
+                    }
+                });
+                
+                const topCourseEntries = Object.entries(allFolders)
+                    .map(([id, f]) => ({ name: f.name || id, views: courseViewCounts[id] || 0 }))
+                    .sort((a, b) => b.views - a.views)
+                    .slice(0, 5);
+                
+                const courseNames = topCourseEntries.map(c => c.name);
+                const courseViews = topCourseEntries.map(c => c.views);
                 
                 charts.topCourses = new Chart(ctx1, {
                     type: 'bar',
@@ -2859,7 +2870,16 @@
             const ctx3 = document.getElementById('activityChart')?.getContext('2d');
             if (ctx3) {
                 const days = ['الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت'];
-                const weekData = days.map(() => Math.floor(Math.random() * 20));
+                // حساب نشاط كل يوم من نتائج الامتحانات الحقيقية
+                const weekData = [0, 0, 0, 0, 0, 0, 0];
+                Object.values(allResults).forEach(r => {
+                    if (r.time) {
+                        try {
+                            const date = new Date(r.time);
+                            if (!isNaN(date)) weekData[date.getDay()]++;
+                        } catch(e) {}
+                    }
+                });
                 
                 charts.activity = new Chart(ctx3, {
                     type: 'line',
@@ -2907,7 +2927,7 @@
 
         // ================ DELETE DATA ================
         window.delData = function(path) {
-            const allowedPrefixes = ['students/', 'quiz_results/', 'reviews/', 'course_reviews/', 'folders/', 'quizzes/', 'admins/', 'subscription_notifications/', 'ramadan_questions/', 'ramadan_answers/'];
+            const allowedPrefixes = ['students/', 'quiz_results/', 'reviews/', 'course_reviews/', 'folders/', 'quizzes/', 'admins/', 'subscription_notifications/', 'ramadan_questions/', 'ramadan_answers/', 'course_access_logs/', 'course_access_notifications/', 'perfect_scores/'];
             const isAllowed = allowedPrefixes.some(prefix => path.startsWith(prefix));
             if (!isAllowed) {
                 showToast('❌ مسار غير مسموح بحذفه', 'error');
