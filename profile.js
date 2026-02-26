@@ -14,10 +14,9 @@ function updateMenuItems(isLoggedIn) {
         }
         if (homeItem) {
             homeItem.style.display = 'block';
-            homeItem.onclick = function(e) {
-                e.preventDefault();
+            homeItem.href = 'index.html';
+            homeItem.onclick = function() {
                 if (window.closeMenu) window.closeMenu();
-                window.location.href = 'index.html';
             };
         }
         if (divider) divider.style.display = 'block';

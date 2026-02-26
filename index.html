@@ -530,7 +530,7 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- استيراد السكريبت الرئيسي -->
-    <script type="module" src="script.js?v=2.1"></script>
+    <script type="module" src="script.js?v=2.2"></script>
 
     <!-- استيراد السكريبتات المساعدة -->
     <script src="notifications.js?v=1.0"></script>
@@ -596,13 +596,16 @@
             }
             if (backToHomeBtn) {
                 backToHomeBtn.addEventListener('click', function() {
+                    const hp = document.getElementById('homePage');
+                    const ca = document.getElementById('contentArea');
+                    if (hp) hp.style.display = 'block';
+                    if (ca) ca.style.display = 'none';
+                    // ✅ إصلاح: استدعاء goHome أو تنفيذ المنطق مباشرة مع loadFolders
                     if (typeof window.goHome === 'function') {
                         window.goHome();
                     } else {
-                        const hp = document.getElementById('homePage');
-                        const ca = document.getElementById('contentArea');
-                        if (hp) hp.style.display = 'block';
-                        if (ca) ca.style.display = 'none';
+                        if (typeof window.loadFolders === 'function') window.loadFolders();
+                        if (typeof window.loadPerfectScores === 'function') window.loadPerfectScores();
                     }
                 });
             }
@@ -915,6 +918,14 @@
 
     <!-- PWA Prompt Logic -->
     <script>
+        // ✅ إصلاح: التقاط الحدث مبكرًا قبل أي IIFE لضمان عدم تفويته
+        window._deferredInstallPrompt = window._deferredInstallPrompt || null;
+        window.addEventListener('beforeinstallprompt', function(e) {
+            e.preventDefault();
+            window._deferredInstallPrompt = e;
+        }, { once: true });
+    </script>
+    <script>
         (function() {
             var PROMPT_KEY = 'pwa_prompt_dismissed';
             var NOTIF_KEY = 'notif_prompt_done';
@@ -976,52 +987,62 @@
                 }
             };
 
-            // استقبال حدث beforeinstallprompt
-            window.addEventListener('beforeinstallprompt', function(e) {
-                e.preventDefault();
-                window._deferredInstallPrompt = e;
-                // لو لم يتم إلغاء الـ prompt من قبل، اعرضه بعد 3 ثواني
+            // ✅ إصلاح: بدلاً من إعادة تسجيل beforeinstallprompt، نتحقق من الـ prompt المحفوظ مسبقًا
+            function tryShowInstallModal() {
                 if (shouldShowPrompt()) {
-                    setTimeout(function() {
-                        var modal = document.getElementById('pwaPromptModal');
-                        if (modal) modal.style.display = 'flex';
-                        // أخفِ زر الإشعارات لو مفعّل بالفعل
-                        if (localStorage.getItem(NOTIF_KEY) || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
-                            var nb = document.getElementById('pwaNotifBtn');
-                            if (nb) nb.style.display = 'none';
-                        }
-                    }, 3000);
+                    var modal = document.getElementById('pwaPromptModal');
+                    if (modal) modal.style.display = 'flex';
+                    if (localStorage.getItem(NOTIF_KEY) || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+                        var nb = document.getElementById('pwaNotifBtn');
+                        if (nb) nb.style.display = 'none';
+                    }
                 }
+            }
+
+            // لو الـ prompt جاء مبكرًا قبل هذا الكود، نعرض المودال فورًا
+            if (window._deferredInstallPrompt && shouldShowPrompt()) {
+                setTimeout(tryShowInstallModal, 2000);
+            }
+
+            // لو الـ prompt جاء بعد هذا الكود
+            window.addEventListener('beforeinstallprompt', function(e) {
+                // e.preventDefault() تم بالفعل في الـ listener الخارجي
+                window._deferredInstallPrompt = e;
+                setTimeout(tryShowInstallModal, 2000);
             });
 
             // لو التطبيق مش مثبت وما جاش حدث الـ install (iOS أو Firefox) ولم يُلغَ من قبل
             window.addEventListener('load', function() {
                 setTimeout(function() {
-                    if (!window._deferredInstallPrompt && shouldShowPrompt()) {
-                        var modal = document.getElementById('pwaPromptModal');
-                        if (modal) {
-                            var installBtn = document.getElementById('pwaInstallBtn');
-                            var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+                    if (!shouldShowPrompt()) return;
+                    var modal = document.getElementById('pwaPromptModal');
+                    if (!modal) return;
+                    var installBtn = document.getElementById('pwaInstallBtn');
+                    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
 
-                            if (isIOS && installBtn) {
-                                // ✅ إصلاح iOS: عرض تعليمات يدوية بدل إخفاء الزر
-                                installBtn.innerHTML = '<i class="fas fa-share" style="margin-left:8px;"></i> إضافة للشاشة الرئيسية';
-                                installBtn.onclick = function() {
-                                    window.showToast && window.showToast('📱 اضغط زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"', 'success', 6000);
-                                    window.closePwaPrompt(false);
-                                };
-                                modal.style.display = 'flex';
-                            } else if (!isIOS && installBtn) {
-                                // مش iOS ومفيش deferredPrompt - أخفِ زر التثبيت
-                                installBtn.style.display = 'none';
-                                // اعرض فقط زر الإشعارات إن لم يُفعَّل
-                                if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && !localStorage.getItem(NOTIF_KEY)) {
-                                    modal.style.display = 'flex';
-                                }
-                            }
+                    if (window._deferredInstallPrompt) {
+                        // ✅ عندنا prompt - اعرض المودال
+                        modal.style.display = 'flex';
+                        if (localStorage.getItem(NOTIF_KEY) || (typeof Notification !== 'undefined' && Notification.permission === 'granted')) {
+                            var nb = document.getElementById('pwaNotifBtn');
+                            if (nb) nb.style.display = 'none';
+                        }
+                    } else if (isIOS && installBtn) {
+                        // iOS: تعليمات يدوية
+                        installBtn.innerHTML = '<i class="fas fa-share" style="margin-left:8px;"></i> إضافة للشاشة الرئيسية';
+                        installBtn.onclick = function() {
+                            window.showToast && window.showToast('📱 اضغط زر المشاركة ثم "إضافة إلى الشاشة الرئيسية"', 'success', 6000);
+                            window.closePwaPrompt(false);
+                        };
+                        modal.style.display = 'flex';
+                    } else if (!isIOS) {
+                        // مش iOS ومفيش deferredPrompt - أخفِ زر التثبيت واعرض زر الإشعارات فقط
+                        if (installBtn) installBtn.style.display = 'none';
+                        if (typeof Notification !== 'undefined' && Notification.permission !== 'granted' && !localStorage.getItem(NOTIF_KEY)) {
+                            modal.style.display = 'flex';
                         }
                     }
-                }, 5000);
+                }, 3000);
             });
 
             window.addEventListener('appinstalled', function() {
