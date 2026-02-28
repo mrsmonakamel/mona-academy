@@ -456,3 +456,31 @@ function addNotificationsPanel() {
     
     document.body.insertAdjacentHTML('beforeend', panelHtml);
 }
+
+// ================ تهيئة نظام الإشعارات ================
+// يتم الاستدعاء تلقائياً من updateMenuItems في script.js
+window.initNotifications = function() {
+    if (typeof addNotificationIconToHeader === 'function') addNotificationIconToHeader();
+    if (typeof addNotificationsPanel === 'function') addNotificationsPanel();
+    
+    // إغلاق اللوحة عند الضغط خارجها (مع تسجيل المستمع مرة واحدة)
+    if (!window._notificationsOutsideClickSet) {
+        window._notificationsOutsideClickSet = true;
+        document.addEventListener('click', function(e) {
+            const panel = document.getElementById('notificationsPanel');
+            const bell = document.getElementById('notificationBell');
+            if (panel && panel.style.display === 'flex' && !panel.contains(e.target) && (!bell || !bell.contains(e.target))) {
+                panel.style.display = 'none';
+            }
+        });
+    }
+};
+
+// ================ تهيئة عند تحميل الصفحة ================
+window._waitForFirebase(function() {
+    addNotificationIconToHeader();
+    addNotificationsPanel();
+    if (window.currentUser) {
+        updateNotificationBadge(window.currentUser.uid);
+    }
+});

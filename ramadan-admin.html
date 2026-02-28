@@ -14,14 +14,14 @@
         body {
             background: linear-gradient(145deg, #1a2639, #0c1a2b);
             min-height: 100vh;
-            font-family: 'Cairo', sans-serif;
+            font-family: 'Cairo', 'Tahoma', sans-serif;
         }
 
         /* ================ TOAST ================ */
         .toast-container {
             position: fixed;
             top: 20px;
-            left: 20px;
+            right: 20px;
             z-index: 10000;
             pointer-events: none;
             display: flex;
@@ -50,12 +50,12 @@
         .toast-msg.warning { border-right-color: #ffd700; }
 
         @keyframes toastIn {
-            from { transform: translateX(-30px); opacity: 0; }
+            from { transform: translateX(30px); opacity: 0; }
             to   { transform: translateX(0); opacity: 1; }
         }
         @keyframes toastOut {
             from { transform: translateX(0); opacity: 1; }
-            to   { transform: translateX(-30px); opacity: 0; }
+            to   { transform: translateX(30px); opacity: 0; }
         }
 
         /* ================ CONFIRM DIALOG ================ */
@@ -258,6 +258,7 @@
         }
 
         .ramadan-admin-btn:hover { background: rgba(255,215,0,0.2); }
+        .ramadan-admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         .ramadan-admin-btn-primary {
             background: linear-gradient(135deg, #ffd700, #ffa500);
@@ -318,6 +319,11 @@
             background: rgba(255,215,0,0.08);
         }
 
+        .ramadan-admin-form input.error,
+        .ramadan-admin-form textarea.error {
+            border-color: #ff7675;
+        }
+
         .ramadan-admin-form textarea { resize: vertical; }
 
         /* ================ SURAHS GRID ================ */
@@ -374,6 +380,8 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .question-day { color: #ffd700; font-weight: bold; font-size: 1.1rem; }
@@ -408,13 +416,20 @@
         }
 
         /* ================ ANSWERS TABLE ================ */
+        .table-wrapper {
+            overflow-x: auto;
+            border-radius: 15px;
+            border: 1px solid rgba(255,215,0,0.15);
+            max-height: 500px;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
         .answers-table {
             width: 100%;
             border-collapse: collapse;
             background: rgba(255,255,255,0.05);
-            border-radius: 15px;
-            overflow: hidden;
-            margin: 20px 0;
+            min-width: 800px;
         }
 
         .answers-table th,
@@ -431,20 +446,13 @@
             font-weight: bold;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
 
         .answers-table tr:hover { background: rgba(255,255,255,0.05); }
 
         .status-correct { color: #00b894; font-weight: bold; }
         .status-wrong   { color: #ff7675; font-weight: bold; }
-
-        .table-wrapper {
-            overflow-x: auto;
-            border-radius: 15px;
-            border: 1px solid rgba(255,215,0,0.15);
-            max-height: 500px;
-            overflow-y: auto;
-        }
 
         /* ================ FILTER ================ */
         .filter-input {
@@ -491,6 +499,40 @@
         }
 
         @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ================ MOBILE OPTIMIZATIONS ================ */
+        @media (max-width: 600px) {
+            .ramadan-admin-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .filter-input {
+                width: 100%;
+            }
+            
+            .ramadan-admin-btn {
+                width: 100%;
+            }
+            
+            .confirm-box {
+                padding: 25px 20px;
+            }
+            
+            .confirm-btns {
+                flex-direction: column;
+            }
+        }
+
+        /* ================ PRINT STYLES ================ */
+        @media print {
+            .ramadan-admin-actions,
+            .ramadan-admin-header button,
+            .question-header button,
+            .ramadan-admin-form {
+                display: none !important;
+            }
+        }
     </style>
 </head>
 <body>
@@ -502,7 +544,7 @@
         <div id="adminLogin" class="admin-login">
             <h2>🌙 دخول إدارة رمضان</h2>
             <p style="color:#ccc; margin-bottom:10px;">مخصص للأدمن فقط</p>
-            <button onclick="loginWithGoogle()">
+            <button onclick="loginWithGoogle()" id="googleLoginBtn">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
                 تسجيل الدخول بـ Google
             </button>
@@ -513,7 +555,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, get, push, update, remove, onValue, off } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, get, push, update, remove, onValue, off, query, orderByChild, equalTo } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
         import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // ================ FIREBASE CONFIG ================
@@ -533,12 +575,32 @@
 
         // ================ CONSTANTS ================
         const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+        const CACHE_DURATION = 5 * 60 * 1000; // 5 دقائق
 
-        // ================ GLOBAL LISTENERS (لمنع التراكم) ================
+        // ================ CACHE SYSTEM ================
+        const cache = {
+            questions: { data: null, timestamp: null },
+            answers: { data: null, timestamp: null }
+        };
+
+        // ================ GLOBAL LISTENERS ================
         let questionsListener = null;
         let answersListener   = null;
         let questionsRef      = null;
         let answersRef        = null;
+
+        // ================ DEBOUNCE FUNCTION ================
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
 
         // ================ ESCAPE HTML ================
         function escapeHTML(str) {
@@ -556,11 +618,22 @@
         function showToast(message, type = 'success', duration = 3500) {
             const container = document.getElementById('toastContainer');
             if (!container) return;
-            const icon = type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-exclamation-triangle';
+            
+            const icon = type === 'success' ? 'fa-check-circle' : 
+                        type === 'error' ? 'fa-exclamation-circle' : 
+                        'fa-exclamation-triangle';
+            
             const toast = document.createElement('div');
             toast.className = `toast-msg ${type}`;
-            toast.innerHTML = `<i class="fas ${icon}"></i><span>${escapeHTML(message)}</span>`;
+            
+            // عدم استخدام escapeHTML للرسائل التي تحتوي على أيقونات
+            const span = document.createElement('span');
+            span.textContent = message;
+            toast.appendChild(document.createElement('i')).className = `fas ${icon}`;
+            toast.appendChild(span);
+            
             container.appendChild(toast);
+            
             setTimeout(() => {
                 toast.style.animation = 'toastOut 0.3s forwards';
                 setTimeout(() => toast.remove(), 300);
@@ -568,7 +641,7 @@
         }
         window.showToast = showToast;
 
-        // ================ CONFIRM DIALOG (بديل alert/confirm) ================
+        // ================ CONFIRM DIALOG ================
         function showConfirm(message, onConfirm) {
             const overlay = document.createElement('div');
             overlay.className = 'confirm-overlay';
@@ -582,9 +655,36 @@
                     </div>
                 </div>
             `;
+            
             document.body.appendChild(overlay);
-            document.getElementById('confirmOk').onclick = () => { overlay.remove(); onConfirm(); };
+            
+            // إغلاق عند الضغط خارج الصندوق
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.remove();
+            });
+            
+            document.getElementById('confirmOk').onclick = () => { 
+                overlay.remove(); 
+                onConfirm(); 
+            };
+            
             document.getElementById('confirmCancel').onclick = () => overlay.remove();
+        }
+
+        // ================ CHECK ADMIN PERMISSIONS ================
+        async function checkAdminPermission(userEmail, action) {
+            if (userEmail === SUPER_ADMIN_EMAIL) return true;
+            
+            try {
+                const adminsSnap = await get(ref(db, 'admins'));
+                const admins = adminsSnap.val() || {};
+                return Object.values(admins).some(a =>
+                    a.email && a.email.toLowerCase() === userEmail.toLowerCase() && 
+                    (!action || a.permissions?.includes(action))
+                );
+            } catch(e) {
+                return false;
+            }
         }
 
         // ================ SURAHS LIST ================
@@ -603,37 +703,56 @@
             "المسد","الإخلاص","الفلق","الناس"
         ];
 
+        // ================ GET RAMADAN DAY ================
+        function getCurrentRamadanDay() {
+            const now = new Date();
+            const year = now.getFullYear();
+            
+            // تواريخ رمضان للسنوات القادمة (يمكن تحديثها سنوياً)
+            const ramadanDates = {
+                2024: new Date(2024, 2, 11), // 11 مارس 2024
+                2025: new Date(2025, 1, 28), // 28 فبراير 2025
+                2026: new Date(2026, 1, 17), // 17 فبراير 2026
+            };
+            
+            const ramadanStart = ramadanDates[year] || ramadanDates[2024];
+            const diffDays = Math.floor((now - ramadanStart) / (1000 * 60 * 60 * 24)) + 1;
+            
+            return Math.min(30, Math.max(1, diffDays));
+        }
+
         // ================ AUTH STATE ================
         onAuthStateChanged(auth, async (user) => {
+            const loginBtn = document.getElementById('googleLoginBtn');
+            if (loginBtn) loginBtn.disabled = true;
+            
             if (user) {
-                let isAllowed = user.email === SUPER_ADMIN_EMAIL;
+                try {
+                    let isAllowed = user.email === SUPER_ADMIN_EMAIL;
 
-                if (!isAllowed) {
-                    try {
-                        const adminsSnap = await get(ref(db, 'admins'));
-                        const admins = adminsSnap.val() || {};
-                        isAllowed = Object.values(admins).some(a =>
-                            a.email && a.email.toLowerCase() === user.email.toLowerCase()
-                        );
-                    } catch(e) {
-                        isAllowed = false;
+                    if (!isAllowed) {
+                        isAllowed = await checkAdminPermission(user.email);
                     }
-                }
 
-                if (isAllowed) {
-                    document.getElementById('adminLogin').style.display = 'none';
-                    document.getElementById('ramadanAdminPanel').style.display = 'block';
-                    loadAdminPanel();
-                } else {
-                    showToast('❌ هذا الحساب غير مصرح له بالدخول', 'error');
-                    setTimeout(() => signOut(auth), 2000);
+                    if (isAllowed) {
+                        document.getElementById('adminLogin').style.display = 'none';
+                        document.getElementById('ramadanAdminPanel').style.display = 'block';
+                        loadAdminPanel();
+                    } else {
+                        showToast('❌ هذا الحساب غير مصرح له بالدخول', 'error');
+                        setTimeout(() => signOut(auth), 2000);
+                    }
+                } catch (error) {
+                    showToast('❌ حدث خطأ في التحقق من الصلاحيات', 'error');
+                } finally {
+                    if (loginBtn) loginBtn.disabled = false;
                 }
             } else {
-                // إزالة الـ listeners عند تسجيل الخروج
                 cleanupListeners();
                 document.getElementById('adminLogin').style.display = 'block';
                 document.getElementById('ramadanAdminPanel').style.display = 'none';
                 document.getElementById('ramadanAdminPanel').innerHTML = '';
+                if (loginBtn) loginBtn.disabled = false;
             }
         });
 
@@ -649,10 +768,19 @@
         }
 
         window.loginWithGoogle = async function() {
+            const btn = document.getElementById('googleLoginBtn');
             try {
+                btn.disabled = true;
+                btn.innerHTML = '<span class="loading-spinner"></span> جاري تسجيل الدخول...';
                 await signInWithPopup(auth, provider);
             } catch (error) {
                 showToast('❌ حدث خطأ في تسجيل الدخول: ' + (error.message || ''), 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg" alt="Google">
+                    تسجيل الدخول بـ Google
+                `;
             }
         };
 
@@ -664,10 +792,7 @@
         // ================ LOAD ADMIN PANEL ================
         function loadAdminPanel() {
             const panel = document.getElementById('ramadanAdminPanel');
-
-            const today       = new Date();
-            const ramadanStart = new Date(today.getFullYear(), 2, 1);
-            const dayOfRamadan = Math.min(30, Math.max(1, Math.floor((today - ramadanStart) / 86400000) + 1));
+            const dayOfRamadan = getCurrentRamadanDay();
 
             panel.innerHTML = `
                 <div class="ramadan-admin-panel">
@@ -708,10 +833,13 @@
                         <button class="ramadan-admin-btn ramadan-admin-btn-primary" onclick="showAddQuestionForm()">
                             <i class="fas fa-plus"></i> إضافة سؤال
                         </button>
-                        <button class="ramadan-admin-btn" onclick="exportAnswers()">
+                        <button class="ramadan-admin-btn" onclick="exportAnswers(this)">
                             <i class="fas fa-download"></i> تصدير CSV
                         </button>
-                        <input type="text" id="studentIdFilter" class="filter-input" placeholder="🔍 فلترة بكود الطالب" oninput="filterAnswers()">
+                        <button class="ramadan-admin-btn" onclick="window.print()">
+                            <i class="fas fa-print"></i> طباعة
+                        </button>
+                        <input type="text" id="studentIdFilter" class="filter-input" placeholder="🔍 فلترة بكود الطالب">
                     </div>
 
                     <!-- فورم الإضافة/التعديل -->
@@ -804,21 +932,31 @@
             });
 
             document.getElementById('ayaNumber').addEventListener('input', updateAnswerPreview);
+            
+            // إضافة debounce للفلترة
+            const filterInput = document.getElementById('studentIdFilter');
+            filterInput.addEventListener('input', debounce(filterAnswers, 300));
 
-            // ربط الـ listeners مرة واحدة فقط
+            // ربط الـ listeners
             cleanupListeners();
 
             questionsRef = ref(db, 'ramadan_questions');
             questionsListener = onValue(questionsRef, (snap) => {
+                cache.questions = { data: snap, timestamp: Date.now() };
                 renderQuestions(snap);
                 updateStats();
+            }, (error) => {
+                showToast('❌ خطأ في تحميل الأسئلة', 'error');
             });
 
             answersRef = ref(db, 'ramadan_answers');
             answersListener = onValue(answersRef, (snap) => {
+                cache.answers = { data: snap, timestamp: Date.now() };
                 renderAnswersTable(snap);
                 updateStats();
                 renderAnalysis(snap);
+            }, (error) => {
+                showToast('❌ خطأ في تحميل الإجابات', 'error');
             });
         }
 
@@ -840,16 +978,17 @@
 
         // ================ SHOW / CANCEL FORM ================
         window.showAddQuestionForm = function() {
-            // تصفير الفورم للإضافة
             document.getElementById('editingQuestionId').value = '';
             document.getElementById('questionText').value = '';
+            document.getElementById('questionDay').classList.remove('error');
+            document.getElementById('questionText').classList.remove('error');
             document.getElementById('ayaNumber').value = '';
             document.getElementById('tafseer').value = '';
             document.querySelectorAll('.ramadan-surah-item').forEach(el => el.classList.remove('selected'));
             document.getElementById('selectedAnswerPreview').textContent = 'لم يتم الاختيار بعد';
             document.getElementById('saveQuestionBtn').innerHTML = '<i class="fas fa-save"></i> حفظ السؤال';
             document.getElementById('addQuestionForm').classList.add('active');
-            document.getElementById('addQuestionForm').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('addQuestionForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
         };
 
         window.cancelQuestionForm = function() {
@@ -857,27 +996,68 @@
             document.getElementById('editingQuestionId').value = '';
         };
 
-        // ================ SAVE QUESTION (إضافة + تعديل) ================
+        // ================ CHECK IF DAY EXISTS ================
+        async function checkDayExists(day, excludeId = null) {
+            const questionsSnap = await get(ref(db, 'ramadan_questions'));
+            if (!questionsSnap.exists()) return false;
+            
+            let exists = false;
+            questionsSnap.forEach(child => {
+                const q = child.val();
+                if (q.day === day && child.key !== excludeId) {
+                    exists = true;
+                }
+            });
+            return exists;
+        }
+
+        // ================ SAVE QUESTION ================
         window.saveQuestion = async function() {
             const editingId   = document.getElementById('editingQuestionId').value;
-            const day         = document.getElementById('questionDay').value;
+            const day         = parseInt(document.getElementById('questionDay').value);
             const text        = document.getElementById('questionText').value.trim();
             const selectedSurah = document.querySelector('.ramadan-surah-item.selected');
             const ayaNumber   = document.getElementById('ayaNumber').value;
             const tafseer     = document.getElementById('tafseer').value.trim();
 
-            if (!day || !text) {
-                showToast('❌ يرجى إدخال اليوم ونص السؤال', 'error');
-                return;
+            // Reset error states
+            document.getElementById('questionDay').classList.remove('error');
+            document.getElementById('questionText').classList.remove('error');
+
+            let hasError = false;
+
+            if (!day || day < 1 || day > 30) {
+                showToast('❌ يرجى إدخال يوم صحيح (1-30)', 'error');
+                document.getElementById('questionDay').classList.add('error');
+                hasError = true;
             }
+
+            if (!text) {
+                showToast('❌ يرجى إدخال نص السؤال', 'error');
+                document.getElementById('questionText').classList.add('error');
+                hasError = true;
+            }
+
             if (!selectedSurah || !ayaNumber) {
                 showToast('❌ يرجى اختيار السورة ورقم الآية', 'error');
-                return;
+                hasError = true;
+            }
+
+            if (hasError) return;
+
+            // Check if day already exists (for new questions)
+            if (!editingId) {
+                const dayExists = await checkDayExists(day);
+                if (dayExists) {
+                    showToast('❌ يوجد سؤال لهذا اليوم بالفعل', 'error');
+                    document.getElementById('questionDay').classList.add('error');
+                    return;
+                }
             }
 
             const correctAnswerText = `${selectedSurah.textContent} - ${ayaNumber}`;
             const questionData = {
-                day: parseInt(day),
+                day: day,
                 text,
                 correctAnswer: correctAnswerText,
                 surah: selectedSurah.textContent,
@@ -887,18 +1067,17 @@
             };
 
             try {
-                document.getElementById('saveQuestionBtn').disabled = true;
-                document.getElementById('saveQuestionBtn').innerHTML = '<span class="loading-spinner"></span>';
+                const saveBtn = document.getElementById('saveQuestionBtn');
+                saveBtn.disabled = true;
+                saveBtn.innerHTML = '<span class="loading-spinner"></span> جاري الحفظ...';
 
                 if (editingId) {
-                    // تعديل سؤال موجود
                     await update(ref(db, `ramadan_questions/${editingId}`), {
                         ...questionData,
                         updatedAt: Date.now()
                     });
                     showToast('✅ تم تحديث السؤال بنجاح');
                 } else {
-                    // إضافة سؤال جديد
                     await push(ref(db, 'ramadan_questions'), {
                         ...questionData,
                         createdAt: Date.now()
@@ -922,7 +1101,10 @@
         window.editQuestion = async function(questionId) {
             try {
                 const snap = await get(ref(db, `ramadan_questions/${questionId}`));
-                if (!snap.exists()) { showToast('❌ السؤال غير موجود', 'error'); return; }
+                if (!snap.exists()) { 
+                    showToast('❌ السؤال غير موجود', 'error'); 
+                    return; 
+                }
                 const q = snap.val();
 
                 document.getElementById('editingQuestionId').value = questionId;
@@ -932,13 +1114,17 @@
                 document.getElementById('tafseer').value = q.tafseer || '';
 
                 document.querySelectorAll('.ramadan-surah-item').forEach(el => {
-                    el.classList.toggle('selected', el.textContent === q.surah);
+                    if (el.textContent === q.surah) {
+                        el.classList.add('selected');
+                    } else {
+                        el.classList.remove('selected');
+                    }
                 });
                 updateAnswerPreview();
 
                 document.getElementById('saveQuestionBtn').innerHTML = '<i class="fas fa-save"></i> تحديث السؤال';
                 document.getElementById('addQuestionForm').classList.add('active');
-                document.getElementById('addQuestionForm').scrollIntoView({ behavior: 'smooth' });
+                document.getElementById('addQuestionForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
             } catch (error) {
                 showToast('❌ خطأ في تحميل السؤال', 'error');
             }
@@ -979,7 +1165,7 @@
                     <div class="question-card">
                         <div class="question-header">
                             <span class="question-day">📅 اليوم ${escapeHTML(String(q.day))}</span>
-                            <div style="display:flex; gap:8px;">
+                            <div style="display:flex; gap:8px; flex-wrap:wrap;">
                                 <button class="ramadan-admin-btn" onclick="editQuestion('${escapeHTML(q.id)}')" style="padding:6px 14px;">
                                     <i class="fas fa-edit"></i> تعديل
                                 </button>
@@ -1006,7 +1192,7 @@
         // ================ UPDATE STATS ================
         async function updateStats() {
             try {
-                const answersSnap = await get(ref(db, 'ramadan_answers'));
+                const answersSnap = cache.answers?.data || await get(ref(db, 'ramadan_answers'));
                 if (!answersSnap.exists()) {
                     ['totalAnswers','todayAnswers','correctAnswers'].forEach(id => {
                         const el = document.getElementById(id);
@@ -1016,7 +1202,7 @@
                 }
 
                 let total = 0, todayCount = 0, correct = 0;
-                const todayStr = new Date().toLocaleDateString('ar-EG');
+                const todayStr = new Date().toLocaleDateString('ar-EG', { timeZone: 'Africa/Cairo' });
 
                 answersSnap.forEach(child => {
                     const ans = child.val();
@@ -1025,11 +1211,17 @@
                     if (ans.isCorrect) correct++;
                 });
 
-                const set_ = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-                set_('totalAnswers',   total);
-                set_('todayAnswers',   todayCount);
+                const set_ = (id, val) => { 
+                    const el = document.getElementById(id); 
+                    if(el) el.textContent = val; 
+                };
+                
+                set_('totalAnswers', total);
+                set_('todayAnswers', todayCount);
                 set_('correctAnswers', correct);
-            } catch(e) { /* silent */ }
+            } catch(e) { 
+                console.error('Error updating stats:', e);
+            }
         }
 
         // ================ RENDER ANSWERS TABLE ================
@@ -1042,8 +1234,12 @@
                 return;
             }
 
-            // جلب الإجابات الصحيحة بشكل async
-            get(ref(db, 'ramadan_questions')).then(questionsSnap => {
+            // استخدام cached questions إذا كانت متاحة
+            const questionsPromise = cache.questions?.data ? 
+                Promise.resolve(cache.questions.data) : 
+                get(ref(db, 'ramadan_questions'));
+
+            questionsPromise.then(questionsSnap => {
                 const correctAnswersMap = {};
                 if (questionsSnap.exists()) {
                     questionsSnap.forEach(child => {
@@ -1053,9 +1249,9 @@
                 }
 
                 const answers = [];
-                snapshot.forEach(child => answers.push(child.val()));
+                snapshot.forEach(child => answers.push({ id: child.key, ...child.val() }));
 
-                // الترتيب حسب الـ timestamp (رقم) - تنازلي
+                // الترتيب حسب التاريخ (الأحدث أولاً)
                 answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                 let rows = '';
@@ -1065,7 +1261,7 @@
                         <tr>
                             <td>${escapeHTML(String(ans.day || '—'))}</td>
                             <td>${escapeHTML(ans.name || '—')}</td>
-                            <td style="font-family:monospace;">${escapeHTML(ans.studentId || 'غير محدد')}</td>
+                            <td style="font-family:monospace; direction:ltr;">${escapeHTML(ans.studentId || 'غير محدد')}</td>
                             <td>${escapeHTML(ans.answer || '—')}</td>
                             <td style="color:#ffd700;">${escapeHTML(correctAns)}</td>
                             <td class="${ans.isCorrect ? 'status-correct' : 'status-wrong'}">
@@ -1077,12 +1273,8 @@
                 });
 
                 tbody.innerHTML = rows || '<tr><td colspan="7" class="empty-state">لا توجد إجابات</td></tr>';
-
-                // إعادة تطبيق الفلتر لو في نص
-                const filterVal = document.getElementById('studentIdFilter')?.value?.trim();
-                if (filterVal) filterAnswers();
             }).catch(() => {
-                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">خطأ في التحميل</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="7" class="empty-state">خطأ في تحميل الإجابات</td></tr>';
             });
         }
 
@@ -1090,9 +1282,12 @@
         window.filterAnswers = function() {
             const filter = document.getElementById('studentIdFilter')?.value.trim().toLowerCase() || '';
             const rows = document.querySelectorAll('#answersTableBody tr');
+            
             rows.forEach(row => {
+                if (row.cells.length < 3) return;
                 const studentIdCell = row.cells[2];
                 if (!studentIdCell) return;
+                
                 const studentId = studentIdCell.textContent.toLowerCase();
                 row.style.display = (filter === '' || studentId.includes(filter)) ? '' : 'none';
             });
@@ -1114,7 +1309,10 @@
             snapshot.forEach(child => {
                 const answer = child.val();
                 const day = answer.day;
-                if (!answersByDay[day]) { answersByDay[day] = 0; correctByDay[day] = 0; }
+                if (!answersByDay[day]) { 
+                    answersByDay[day] = 0; 
+                    correctByDay[day] = 0; 
+                }
                 answersByDay[day]++;
                 if (answer.isCorrect) correctByDay[day]++;
             });
@@ -1142,8 +1340,14 @@
         }
 
         // ================ EXPORT CSV ================
-        window.exportAnswers = async function() {
+        window.exportAnswers = async function(triggerEl) {
             try {
+                const exportBtn = triggerEl || null;
+                if (exportBtn) {
+                    exportBtn.disabled = true;
+                    exportBtn.innerHTML = '<span class="loading-spinner"></span> جاري التصدير...';
+                }
+
                 const [answersSnap, questionsSnap] = await Promise.all([
                     get(ref(db, 'ramadan_answers')),
                     get(ref(db, 'ramadan_questions'))
@@ -1166,14 +1370,22 @@
                 answersSnap.forEach(child => answers.push(child.val()));
                 answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
-                const escCsv = val => `"${String(val || '').replace(/"/g, '""')}"`;
+                const escCsv = val => {
+                    if (val === null || val === undefined) return '""';
+                    const str = String(val).replace(/"/g, '""');
+                    return `"${str}"`;
+                };
 
                 const csv = [
                     ['اليوم','الاسم','كود الطالب','الإجابة','الإجابة الصحيحة','صحيحة؟','التاريخ'],
                     ...answers.map(a => [
-                        a.day, a.name, a.studentId || '',
-                        a.answer, questions[a.day] || 'غير معروف',
-                        a.isCorrect ? 'نعم' : 'لا', a.date
+                        a.day, 
+                        a.name, 
+                        a.studentId || '',
+                        a.answer, 
+                        questions[a.day] || 'غير معروف',
+                        a.isCorrect ? 'نعم' : 'لا', 
+                        a.date
                     ])
                 ].map(row => row.map(escCsv).join(',')).join('\n');
 
@@ -1182,12 +1394,20 @@
                 link.href = URL.createObjectURL(blob);
                 link.download = `ramadan_answers_${new Date().toISOString().slice(0,10)}.csv`;
                 link.click();
+                
                 showToast('✅ تم تصدير الملف بنجاح');
+                
+                setTimeout(() => URL.revokeObjectURL(link.href), 100);
             } catch (error) {
                 showToast('❌ خطأ في التصدير: ' + (error.message || ''), 'error');
+            } finally {
+                // triggerEl تم تمريره كمعامل (إصلاح #44)
+                if (triggerEl) {
+                    triggerEl.disabled = false;
+                    triggerEl.innerHTML = '<i class="fas fa-download"></i> تصدير CSV';
+                }
             }
         };
-
     </script>
 </body>
 </html>

@@ -101,6 +101,11 @@ function createReportMessage(data) {
 
 // إرسال تقرير لولي أمر طالب محدد
 window.sendReportToParent = async function(userId, silent = false) {
+    // التحقق من صلاحيات الأدمن (إصلاح #8)
+    if (!window.currentUser || !window.isAdminUser) {
+        if (!silent) alert('❌ غير مصرح بهذه العملية');
+        return false;
+    }
     const data = await getStudentReportData(userId);
     if (!data) {
         if (!silent) alert('❌ لم يتم العثور على بيانات الطالب');
@@ -108,6 +113,12 @@ window.sendReportToParent = async function(userId, silent = false) {
     }
     if (!data.telegramChatId) {
         if (!silent) alert('❌ لا يوجد معرف تليجرام لولي الأمر');
+        return false;
+    }
+    // التحقق من صحة chatId (يجب أن يكون رقماً أو يبدأ بـ @)
+    const chatIdStr = String(data.telegramChatId).trim();
+    if (!chatIdStr || (!/^-?\d+$/.test(chatIdStr) && !chatIdStr.startsWith('@'))) {
+        if (!silent) alert('❌ معرف تليجرام لولي الأمر غير صحيح');
         return false;
     }
 
@@ -126,6 +137,11 @@ window.sendReportToParent = async function(userId, silent = false) {
 
 // إرسال تقارير لكل الطلاب
 window.sendBulkReports = async function() {
+    // التحقق من الصلاحيات (إصلاح #8)
+    if (!window.currentUser || !window.isAdminUser) {
+        alert('❌ غير مصرح بهذه العملية');
+        return;
+    }
     const studentsSnap = await window.get(window.child(window.dbRef, 'students'));
     if (!studentsSnap.exists()) {
         alert('❌ لا يوجد طلاب');
@@ -135,12 +151,19 @@ window.sendBulkReports = async function() {
     let sentCount = 0;
     let totalWithTelegram = 0;
 
-    for (const [uid, student] of Object.entries(studentsSnap.val())) {
-        if (student.telegramChatId) {
-            totalWithTelegram++;
-            const success = await window.sendReportToParent(uid, true); // silent=true لتجنب alert لكل طالب
-            if (success) sentCount++;
-            await new Promise(resolve => setTimeout(resolve, 1000));
+    // إرسال متوازي مع تأخير لتجنب flood limits (إصلاح #9)
+    const entries = Object.entries(studentsSnap.val()).filter(([, s]) => s.telegramChatId);
+    totalWithTelegram = entries.length;
+    
+    const BATCH_SIZE = 5;
+    for (let i = 0; i < entries.length; i += BATCH_SIZE) {
+        const batch = entries.slice(i, i + BATCH_SIZE);
+        const results = await Promise.allSettled(
+            batch.map(([uid]) => window.sendReportToParent(uid, true))
+        );
+        sentCount += results.filter(r => r.status === 'fulfilled' && r.value).length;
+        if (i + BATCH_SIZE < entries.length) {
+            await new Promise(resolve => setTimeout(resolve, 2000));
         }
     }
 

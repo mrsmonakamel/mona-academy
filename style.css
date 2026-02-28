@@ -4,7 +4,7 @@
     --dark: #007aff;
     --bg: #0a0f1e;
     --whatsapp: #25d366;
-    --success: #00d4ff;
+    --success: #00b894;
     --danger: #ff6b6b;
     --warning: #f59e0b;
     --gray: #5a7a9a;
@@ -473,8 +473,8 @@ header {
     flex-wrap: wrap;
     gap: 10px;
     border-bottom: 1px solid rgba(0,212,255,0.12);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
 }
 
 .logo-text {

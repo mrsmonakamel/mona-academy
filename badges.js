@@ -500,6 +500,7 @@ window.checkLoginBadges = async function(userId) {
 // إضافة CSS للشارات
 function addBadgesCSS() {
     const style = document.createElement('style');
+    style.id = 'badges-css-injected';
     style.textContent = `
         /* ================ BADGES STYLES ================ */
         .badges-grid {
@@ -703,7 +704,9 @@ function addBadgesCSS() {
     document.head.appendChild(style);
 }
 
-// تنفيذ عند تحميل الصفحة
+// تنفيذ عند تحميل الصفحة - حقن CSS مرة واحدة فقط
 document.addEventListener('DOMContentLoaded', function() {
-    addBadgesCSS();
+    if (!document.getElementById('badges-css-injected')) {
+        addBadgesCSS();
+    }
 });

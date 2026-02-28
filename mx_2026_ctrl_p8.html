@@ -2238,8 +2238,19 @@
         const dbRef = ref(db); // ✅ مرجع جذر قاعدة البيانات – مطلوب في child(dbRef, ...)
 
         // ================ CONSTANTS ================
-        const IMGBB_API_KEY = "049eb1f0e45afcb93f3c45a1400a29ef";
-        const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
+        // ⚠️ تم نقل مفتاح ImgBB إلى Firebase (إصلاح #19 - لا تضع المفاتيح في الكود)
+        // يجب تخزينه في: settings/imgbbApiKey في Firebase
+        let IMGBB_API_KEY = null;
+        (async () => {
+            try {
+                const keySnap = await get(child(ref(db), 'settings/imgbbApiKey'));
+                if (keySnap.exists()) IMGBB_API_KEY = keySnap.val();
+                else console.warn('⚠️ مفتاح ImgBB غير مُعرَّف في settings/imgbbApiKey');
+            } catch(e) { console.error('خطأ في جلب مفتاح ImgBB:', e); }
+        })();
+        // إصلاح #20: يمكن تخزين قائمة الأدمن في Firebase
+        // للتطوير المستقبلي: جلب من settings/adminEmails
+        const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com"; // يمكن نقله لـ Firebase لاحقاً
         
         // ================ GLOBAL VARIABLES ================
         let activeCID = "";
@@ -2434,11 +2445,11 @@
             startProgress();
             
             const addListener = (name, refPath, callback) => {
-                const dbRef = ref(db, refPath);
-                const listener = onValue(dbRef, (snapshot) => {
+                const listenerRef = ref(db, refPath);
+                const listener = onValue(listenerRef, (snapshot) => {
                     callback(snapshot.val() || {});
                 });
-                dataListeners.set(name, { ref: dbRef, callback: listener });
+                dataListeners.set(name, { ref: listenerRef, callback: listener });
             };
 
             addListener('students', 'students', (data) => {

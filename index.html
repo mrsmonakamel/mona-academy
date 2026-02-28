@@ -168,8 +168,6 @@
 </a>
     <div id="authStatus"></div>
 </div>
-    <div id="authStatus"></div>
-</div>
     </header>
 
     <!-- HAMBURGER DROPDOWN -->
@@ -597,6 +595,15 @@
                         quizOverlay.style.display = 'none';
                         const quizContainer = document.getElementById('quizContainer');
                         if (quizContainer) quizContainer.innerHTML = "";
+                        // تنظيف مؤقتات ومستمعي الفيديو
+                        if (window._videoProgressInterval) {
+                            clearInterval(window._videoProgressInterval);
+                            window._videoProgressInterval = null;
+                        }
+                        if (window._videoMessageHandler) {
+                            window.removeEventListener('message', window._videoMessageHandler);
+                            window._videoMessageHandler = null;
+                        }
                     }
                 });
             }
@@ -631,7 +638,7 @@
     </div>
     <script src="assignments.js?v=1.1" defer></script>
     
-    <!-- Firebase مُهيَّأ بالكامل في script.js (Firebase v10 modular) - لا حاجة لتهيئة إضافية هنا -->
+    <!-- Firebase مُهيَّأ بالكامل في script.js (Firebase v10 modular) -->
 
 
 

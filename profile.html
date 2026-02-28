@@ -383,11 +383,11 @@
         <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></p>
     </footer>
 
-    <!-- Scripts -->
+    <!-- Scripts - يجب تحميل script.js أولاً (module) ثم باقي السكريبتات بـ defer -->
     <script type="module" src="script.js"></script>
-    <script src="notifications.js"></script>
-    <script src="badges.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="notifications.js" defer></script>
+    <script src="badges.js" defer></script>
     
         <script>
        
@@ -509,11 +509,9 @@
     <script src="parent-reporter.js?v=1.0"></script>
 
     <script>
-        // انتظار تحميل currentUser
-        const checkUserInterval = setInterval(() => {
+        // استخدام _waitForFirebase بدلاً من setInterval غير المحدود (إصلاح #47)
+        function waitForUserAndLoad(retries = 100) {
             if (window.currentUser) {
-                clearInterval(checkUserInterval);
-                // تأخير بسيط لضمان تحميل باقي العناصر
                 setTimeout(() => {
                     if (typeof window.loadProgressVisuals === 'function') {
                         window.loadProgressVisuals();
@@ -521,9 +519,14 @@
                     if (typeof window.loadUserBadges === 'function') {
                         window.loadUserBadges(window.currentUser.uid);
                     }
-                }, 500);
+                }, 300);
+            } else if (retries > 0) {
+                setTimeout(() => waitForUserAndLoad(retries - 1), 100);
+            } else {
+                console.warn('⚠️ تعذّر تحميل بيانات المستخدم - غير مسجّل دخول');
             }
-        }, 100);
+        }
+        waitForUserAndLoad();
     </script>
     
 </body>

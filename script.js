@@ -186,8 +186,12 @@ setInterval(clearExpiredCache, 60000);
 // ================ PHONE VALIDATION ================
 function validatePhoneNumber(phone, countryCode = '') {
     if (!phone) return false;
-    // تنظيف الرقم من المسافات
-    const cleanPhone = phone.replace(/\s+/g, '');
+    // تنظيف الرقم من المسافات والشرطات
+    let cleanPhone = phone.replace(/[\s\-]/g, '');
+    // إزالة الصفر الأول إذا كان يبدأ بصفر (مع كود الدولة)
+    if (countryCode && cleanPhone.startsWith('0')) {
+        cleanPhone = cleanPhone.substring(1);
+    }
     // التأكد أن الرقم يتكون من أرقام فقط
     if (!/^\d+$/.test(cleanPhone)) return false;
     // التحقق من الطول الكلي مع كود الدولة
@@ -319,15 +323,14 @@ const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 // ================ دوال مساعدة للتحقق من البيانات المكررة ================
 async function isEmailExists(email) {
     try {
+        // بحث مباشر بالإيميل بدلاً من تحميل كل الطلاب
         const studentsSnap = await get(child(dbRef, 'students'));
         if (!studentsSnap.exists()) return false;
-        
+        const emailLower = email.toLowerCase();
         let exists = false;
-        studentsSnap.forEach(studentSnapshot => {
-            const studentData = studentSnapshot.val();
-            if (studentData.email && studentData.email.toLowerCase() === email.toLowerCase()) {
-                exists = true;
-            }
+        studentsSnap.forEach(s => {
+            const d = s.val();
+            if (d.email && d.email.toLowerCase() === emailLower) exists = true;
         });
         return exists;
     } catch (error) {
@@ -362,25 +365,19 @@ async function generateUniqueStudentId() {
         const existingIds = new Set();
         
         if (studentsSnap.exists()) {
-            studentsSnap.forEach(studentSnapshot => {
-                const studentData = studentSnapshot.val();
-                if (studentData.shortId) existingIds.add(studentData.shortId);
+            studentsSnap.forEach(s => {
+                const d = s.val();
+                if (d.shortId) existingIds.add(d.shortId);
             });
         }
         
-        let newId;
-        let attempts = 0;
-        const MAX_ATTEMPTS = 100;
-        
-        do {
-            newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-            attempts++;
-            if (attempts >= MAX_ATTEMPTS) {
-                throw new Error('فشل توليد كود طالب فريد بعد محاولات عديدة');
-            }
-        } while (existingIds.has(newId));
-        
-        return newId;
+        const MAX_ATTEMPTS = 50; // حد صارم لمنع الحلقة اللانهائية
+        for (let i = 0; i < MAX_ATTEMPTS; i++) {
+            const newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
+            if (!existingIds.has(newId)) return newId;
+        }
+        // fallback: استخدام timestamp + random
+        return Date.now().toString().slice(-10);
     } catch (error) {
         console.error('❌ خطأ في توليد كود الطالب:', error);
         throw new Error('فشل في توليد كود الطالب');
@@ -1043,45 +1040,6 @@ window.loadPerfectScores = async function() {
         const perfectScoresGrid = document.getElementById('perfectScoresGrid');
         if (perfectScoresGrid) {
             perfectScoresGrid.innerHTML = '<div class="empty-state"><i class="fas fa-exclamation-triangle"></i><br>حدث خطأ في تحميل الدرجات النهائية</div>';
-        }
-    }
-};
-
-        const finalList = Object.values(unique);
-        
-        if (finalList.length > 0) {
-            let html = '';
-            finalList.forEach(ps => {
-                html += `<div class="perfect-card">
-                    <div class="perfect-name">
-                        <i class="fas fa-user-graduate" style="color: var(--main);"></i>
-                        ${escapeHTML(ps.studentName)}
-                    </div>
-                    <div class="perfect-exam">
-                        <i class="fas fa-file-alt" style="margin-left: 5px; color: var(--main);"></i>
-                        ${escapeHTML(ps.examName)}
-                    </div>
-                    <div class="perfect-grade">
-                        <i class="fas fa-graduation-cap" style="margin-left: 5px;"></i>
-                        الصف: ${escapeHTML(ps.grade)}
-                    </div>
-                    <div class="perfect-score">
-                        <i class="fas fa-check-circle"></i> ممتاز - ${ps.score}/${ps.total}
-                    </div>
-                </div>`;
-            });
-            perfectScoresGrid.innerHTML = html;
-        } else {
-            perfectScoresGrid.innerHTML = '<div class="empty-state"><i class="fas fa-star"></i><br>🎉 لا توجد درجات نهائية بعد. كن أنت الأول!</div>';
-        }
-    } catch (error) {
-        console.error("Error loading perfect scores:", error);
-        const perfectScoresSection = document.getElementById('perfectScoresSection');
-        const perfectScoresGrid = document.getElementById('perfectScoresGrid');
-        
-        if (perfectScoresSection && perfectScoresGrid) {
-            perfectScoresSection.style.display = 'block';
-            perfectScoresGrid.innerHTML = '<div class="empty-state" style="color:#e74c3c;"><i class="fas fa-exclamation-triangle"></i><br>حدث خطأ في تحميل الدرجات النهائية</div>';
         }
     }
 };

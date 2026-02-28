@@ -313,6 +313,11 @@ window.submitAssignment = async function(courseId, assignmentId) {
 
 // ================ إغلاق نافذة الواجب ================
 window.closeAssignmentOverlay = function() {
-    document.getElementById('assignmentOverlay').style.display = 'none';
-    document.getElementById('assignmentContainer').innerHTML = '';
+    const overlay = document.getElementById('assignmentOverlay');
+    const container = document.getElementById('assignmentContainer');
+    if (overlay) overlay.style.display = 'none';
+    if (container) {
+        // تنظيف المحتوى والمستمعين المحتملين (إصلاح #50)
+        container.innerHTML = '';
+    }
 };

@@ -82,6 +82,7 @@ function updateStatsNumbers(studentData) {
 function drawBadgesChart() {
     const canvas = document.getElementById('badgesChart');
     if (!canvas) return;
+    if (typeof Chart === 'undefined') { console.warn('Chart.js غير محملة'); return; }
     
     // إتلاف الرسم البياني القديم إن وجد
     if (window.badgesChartInstance) {
@@ -123,10 +124,25 @@ function drawBadgesChart() {
     });
 }
 
+// دالة موحدة لتحليل التواريخ (إصلاح #17)
+function parseDateSafe(d) {
+    if (!d) return 0;
+    const t = new Date(d).getTime();
+    if (!isNaN(t)) return t;
+    const m = String(d).match(/(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);
+    if (m) return new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`).getTime();
+    return 0;
+}
+
 // رسم بياني لتقدم الدرجات (خطي)
 function drawScoresChart(examResults) {
     const canvas = document.getElementById('scoresChart');
     if (!canvas) return;
+    // التحقق من وجود مكتبة Chart.js (إصلاح #16)
+    if (typeof Chart === 'undefined') {
+        console.warn('Chart.js غير محملة - لا يمكن رسم المخططات');
+        return;
+    }
     
     // إتلاف القديم
     if (window.scoresChartInstance) {
@@ -140,19 +156,7 @@ function drawScoresChart(examResults) {
     }
     
     // ترتيب حسب التاريخ – يدعم ISO وصيغ محلية
-    exams.sort((a, b) => {
-        const parseDate = (d) => {
-            if (!d) return 0;
-            // محاولة تحويل مباشر (يعمل مع ISO وكثير من الصيغ)
-            const t = new Date(d).getTime();
-            if (!isNaN(t)) return t;
-            // صيغة DD/MM/YYYY أو DD-MM-YYYY
-            const m = String(d).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-            if (m) return new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`).getTime();
-            return 0;
-        };
-        return parseDate(a.completedAt) - parseDate(b.completedAt);
-    });
+    exams.sort((a, b) => parseDateSafe(a.completedAt) - parseDateSafe(b.completedAt));
     
     const labels = exams.map((e, i) => `امتحان ${i+1}`);
     const scores = exams.map(e => e.percentage || 0);
@@ -189,6 +193,7 @@ function drawScoresChart(examResults) {
 function drawActivityChart(studentData) {
     const canvas = document.getElementById('activityChart');
     if (!canvas) return;
+    if (typeof Chart === 'undefined') { console.warn('Chart.js غير محملة'); return; }
     
     if (window.activityChartInstance) {
         window.activityChartInstance.destroy();
@@ -202,20 +207,11 @@ function drawActivityChart(studentData) {
             const now = new Date();
             const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-            const parseDate = (d) => {
-                if (!d) return null;
-                const t = new Date(d);
-                if (!isNaN(t)) return t;
-                // صيغة DD/MM/YYYY أو DD-MM-YYYY
-                const m = String(d).match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
-                if (m) return new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
-                return null;
-            };
-
             Object.values(studentData.watchedVideos).forEach(video => {
                 if (video.watchedAt) {
-                    const dateObj = parseDate(video.watchedAt);
-                    if (dateObj && !isNaN(dateObj) && dateObj >= oneWeekAgo) {
+                    const ts = parseDateSafe(video.watchedAt);
+                    const dateObj = ts ? new Date(ts) : null;
+                    if (dateObj && dateObj >= oneWeekAgo) {
                         activityData[dateObj.getDay()]++;
                     }
                 }
