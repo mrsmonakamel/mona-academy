@@ -71,7 +71,8 @@ window.loadAssignments = async function(courseId, hasAccess) {
 
             html += `
                 <div class="card" style="margin-bottom:12px; border-right: 4px solid ${isExpired ? '#d63031' : 'var(--main)'}; cursor:pointer;"
-                     onclick="window.viewAssignment('${window.escapeHTML(courseId)}', '${window.escapeHTML(a.id)}')">
+                     data-course-id="${window.escapeHTML(courseId)}" data-assignment-id="${window.escapeHTML(a.id)}"
+                     onclick="window._openAssignment(this)">
                     <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                         <div>
                             <h4 style="margin:0; color:var(--main);">
@@ -96,6 +97,13 @@ window.loadAssignments = async function(courseId, hasAccess) {
         console.error('❌ خطأ في تحميل الواجبات:', error);
         container.innerHTML = '';
     }
+};
+
+// handler آمن لبطاقات الواجبات
+window._openAssignment = function(el) {
+    const courseId = el.getAttribute('data-course-id');
+    const assignmentId = el.getAttribute('data-assignment-id');
+    if (courseId && assignmentId) window.viewAssignment(courseId, assignmentId);
 };
 
 // ================ عرض واجب معين في الـ Overlay ================
@@ -175,7 +183,8 @@ window.viewAssignment = async function(courseId, assignmentId) {
             html += `
                 <div style="margin-top:20px; text-align:center;">
                     <button type="button"
-                        onclick="window.submitAssignment('${window.escapeHTML(courseId)}', '${window.escapeHTML(assignmentId)}')"
+                        data-course-id="${window.escapeHTML(courseId)}" data-assignment-id="${window.escapeHTML(assignmentId)}"
+                        onclick="window._submitAssignmentBtn(this)"
                         style="background:var(--main); color:white; border:none; padding:12px 40px; border-radius:50px; font-weight:bold; font-size:1rem; cursor:pointer;">
                         <i class="fas fa-paper-plane"></i> تسليم الواجب
                     </button>
@@ -242,6 +251,13 @@ function buildQuestionsHTML(questions, existingAnswers, readOnly) {
     return html;
 }
 
+// handler آمن لزر تسليم الواجب
+window._submitAssignmentBtn = function(btn) {
+    const courseId = btn.getAttribute('data-course-id');
+    const assignmentId = btn.getAttribute('data-assignment-id');
+    if (courseId && assignmentId) window.submitAssignment(courseId, assignmentId);
+};
+
 // ================ تسليم الواجب ================
 window.submitAssignment = async function(courseId, assignmentId) {
     if (!window.currentUser) {
@@ -282,7 +298,7 @@ window.submitAssignment = async function(courseId, assignmentId) {
             }
         }
 
-        const submitBtn = container.querySelector('button[onclick*="submitAssignment"]');
+        const submitBtn = container.querySelector('button[data-course-id]');
         if (submitBtn) {
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري التسليم...';
