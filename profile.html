@@ -379,6 +379,17 @@
     <footer>
         <p>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></p>
     </footer>
+    
+    <!-- HAMBURGER DROPDOWN -->
+    <div id="menuDropdown" class="dropdown-menu">
+        <a id="homeMenuItem" class="touch-feedback" href="index.html"><i class="fas fa-home" style="margin-left: 10px;"></i> الرئيسية</a>
+        <a id="profileMenuItem" class="touch-feedback" href="profile.html"><i class="fas fa-user" style="margin-left: 10px;"></i> الملف الشخصي</a>
+        <hr id="menuDivider">
+        <a id="logoutMenuItem" class="touch-feedback" onclick="logout()" style="color: var(--danger);"><i class="fas fa-sign-out-alt" style="margin-left: 10px;"></i> تسجيل الخروج</a>
+    </div>
+    
+    <!-- Menu Overlay -->
+    <div id="menuOverlay" class="menu-overlay"></div>
 
     <!-- Scripts - يجب تحميل script.js أولاً (module) ثم باقي السكريبتات بـ defer -->
     <script type="module" src="script.js"></script>

@@ -556,6 +556,28 @@ header {
     border: 0.5px solid var(--border-color);
 }
 
+/* ================ MENU OVERLAY ================ */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    display: none;
+    backdrop-filter: blur(3px);
+}
+
+.menu-overlay.show {
+    display: block;
+}
+
+/* Show dropdown when it has 'show' class */
+.dropdown-menu.show {
+    display: block;
+}
+
 /* ================ STUDENT ID ================ */
 .student-id-badge {
     background: linear-gradient(135deg, #f0eeff, #e5e2ff);

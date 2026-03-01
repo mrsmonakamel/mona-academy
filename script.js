@@ -831,10 +831,14 @@ onAuthStateChanged(auth, async user => {
     if (user) {
         window.startProgress();
         try {
-            const isAdmin = user.email === ADMIN_EMAIL;
+            // التحقق من صلاحيات الأدمن (غير حساس لحالة الأحرف)
+            const userEmail = user.email?.toLowerCase() || '';
+            const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
             const adminsSnap = await get(ref(db, 'admins'));
             const admins = adminsSnap.val() || {};
-            const isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+            const isAddedAdmin = admins && Object.values(admins).some(a => 
+                (a.email?.toLowerCase() || '') === userEmail
+            );
             isAdminUser = isAdmin || isAddedAdmin;
             
             const userSnap = await get(child(dbRef, `students/${user.uid}`));
@@ -907,21 +911,29 @@ onAuthStateChanged(auth, async user => {
 // ================ HAMBURGER MENU ================
 window.toggleMenu = function() {
     const menu = document.getElementById('menuDropdown');
+    const overlay = document.getElementById('menuOverlay');
     if (menu) {
-        menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
+        menu.classList.toggle('show');
+        if (overlay) {
+            overlay.classList.toggle('show');
+        }
     }
 };
 
 window.closeMenu = function() {
     const menu = document.getElementById('menuDropdown');
-    if (menu) menu.style.display = 'none';
+    const overlay = document.getElementById('menuOverlay');
+    if (menu) menu.classList.remove('show');
+    if (overlay) overlay.classList.remove('show');
 };
 
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('menuDropdown');
     const hamburger = document.querySelector('.hamburger-menu');
     if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
-        menu.style.display = 'none';
+        menu.classList.remove('show');
+        const overlay = document.getElementById('menuOverlay');
+        if (overlay) overlay.classList.remove('show');
     }
 });
 

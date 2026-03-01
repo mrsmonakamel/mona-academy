@@ -3080,24 +3080,46 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
 
         // ================ ADMIN FUNCTIONS ================
         window.addAdmin = async function() {
-            const email = document.getElementById('newAdminEmail')?.value.trim();
+            const email = document.getElementById('newAdminEmail')?.value.trim().toLowerCase();
             const name = document.getElementById('newAdminName')?.value.trim();
             
             if (!email || !name) {
-                showToast('أدخل البريد والاسم', 'error');
+                showToast('❌ أدخل البريد والاسم', 'error');
+                return;
+            }
+            
+            // التحقق من صحة البريد الإلكتروني
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showToast('❌ البريد الإلكتروني غير صالح', 'error');
+                return;
+            }
+            
+            // منع إضافة نفس البريد مرتين
+            const adminId = email.replace(/[.#$[\]]/g, '_');
+            const existingAdmin = await get(ref(db, `admins/${adminId}`));
+            if (existingAdmin.exists()) {
+                showToast('❌ هذا البريد مسجل كأدمن بالفعل', 'error');
                 return;
             }
             
             try {
                 startProgress();
-                const adminId = email.replace(/[.#$[\]]/g, '_');
-                await set(ref(db, `admins/${adminId}`), { email, name });
+                
+                // حفظ بيانات الأدمن في قاعدة البيانات
+                await set(ref(db, `admins/${adminId}`), { 
+                    email: email, 
+                    name: name,
+                    addedAt: new Date().toISOString(),
+                    addedBy: currentUser?.email || 'unknown'
+                });
                 
                 document.getElementById('newAdminEmail').value = '';
                 document.getElementById('newAdminName').value = '';
-                showToast('✅ تم إضافة الأدمن');
+                showToast('✅ تم إضافة الأدمن بنجاح!');
             } catch (error) {
-                showToast('❌ حدث خطأ', 'error');
+                console.error('Error adding admin:', error);
+                showToast('❌ حدث خطأ: ' + error.message, 'error');
             } finally {
                 stopProgress();
             }
