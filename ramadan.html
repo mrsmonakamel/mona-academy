@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="theme-color" content="#1a2639">
+    <title>أسئلة رمضان 🌙 | Ms. Mona Kamel</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        /* جميع الأنماط كما هي دون تغيير */
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: linear-gradient(145deg, #0c1a2b, #1a2639);
+            min-height: 100vh;
+            color: white;
+            direction: rtl;
+        }
+
+        header {
+            background: rgba(26, 38, 57, 0.95);
+            backdrop-filter: blur(20px);
+            border-bottom: 2px solid rgba(255,215,0,0.3);
+            padding: 15px 5%;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,215,0,0.15);
+            color: #ffd700;
+            border: 2px solid rgba(255,215,0,0.4);
+            padding: 10px 22px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .back-btn:hover {
+            background: rgba(255,215,0,0.3);
+            transform: translateX(5px);
+        }
+
+        .header-title {
+            font-size: 1.4rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .ramadan-section {
+            padding: 60px 5%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ramadan-section::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,215,0,0.07) 0%, transparent 70%);
+            animation: ramadanRotate 30s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes ramadanRotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .ramadan-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .ramadan-header i {
+            font-size: 2.5rem;
+            color: #ffd700;
+            text-shadow: 0 0 20px rgba(255,215,0,0.5);
+        }
+
+        .ramadan-header i.fa-moon { animation: ramadanMoon 3s infinite; }
+        .ramadan-header i.fa-star { animation: ramadanStar 2.5s infinite; }
+
+        @keyframes ramadanMoon {
+            0%, 100% { transform: rotate(0deg); }
+            50% { transform: rotate(10deg); }
+        }
+
+        @keyframes ramadanStar {
+            0%, 100% { transform: rotate(0deg) scale(1); }
+            33% { transform: rotate(120deg) scale(1.2); }
+            66% { transform: rotate(240deg) scale(0.9); }
+        }
+
+        .ramadan-header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffd700, #ffa500);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 0;
+        }
+
+        .ramadan-rules {
+            text-align: center;
+            color: #ffd700;
+            margin-bottom: 40px;
+            background: rgba(255,215,0,0.08);
+            padding: 25px 30px;
+            border-radius: 30px;
+            border: 2px solid rgba(255,215,0,0.4);
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            position: relative;
+            z-index: 2;
+        }
+
+        .ramadan-rules p { margin-bottom: 8px; line-height: 1.7; }
+        .ramadan-rules p:last-child { margin-bottom: 0; }
+        .ramadan-rules .rules-title {
+            font-size: 1.2rem;
+            font-weight: 900;
+            margin-bottom: 12px;
+        }
+
+        .ramadan-questions-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 25px;
+            position: relative;
+            z-index: 2;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .ramadan-question-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            border: 2px solid rgba(255, 215, 0, 0.3);
+            border-radius: 30px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.4s;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .ramadan-question-card::before {
+            content: '🌙';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            font-size: 5rem;
+            opacity: 0.08;
+            transform: rotate(15deg);
+        }
+
+        .ramadan-question-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: #ffd700;
+            box-shadow: 0 20px 40px rgba(255,215,0,0.2);
+            background: rgba(255, 255, 255, 0.13);
+        }
+
+        .ramadan-question-day {
+            display: inline-block;
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #1a2639;
+            padding: 8px 20px;
+            border-radius: 50px;
+            font-weight: 900;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .ramadan-question-preview {
+            color: rgba(255,255,255,0.9);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            display: -webkit-box;
+            -webkit-line-clamp: 4;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .ramadan-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 5000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .ramadan-modal-content {
+            background: linear-gradient(145deg, #1e2b3a, #15232e);
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            border-radius: 40px;
+            border: 2px solid #ffd700;
+            overflow: hidden;
+            animation: ramadanModalFade 0.5s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes ramadanModalFade {
+            from { opacity: 0; transform: scale(0.9) translateY(20px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .ramadan-modal-header {
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            padding: 20px 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .ramadan-modal-header h3 {
+            color: #1a2639;
+            font-size: 1.5rem;
+            font-weight: 900;
+            margin: 0;
+        }
+
+        .ramadan-close-modal {
+            color: #1a2639;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: 0.3s;
+            line-height: 1;
+        }
+
+        .ramadan-close-modal:hover { transform: rotate(90deg); }
+
+        .ramadan-modal-body {
+            padding: 30px;
+            color: white;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .ramadan-question-text {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            margin-bottom: 20px;
+            padding: 20px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 20px;
+            border-right: 4px solid #ffd700;
+            max-height: 260px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .ramadan-answer-form {
+            margin: 25px 0;
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        .ramadan-input {
+            width: 100%;
+            padding: 14px 18px;
+            margin: 8px 0;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,215,0,0.3);
+            border-radius: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1rem;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .ramadan-input:focus {
+            border-color: #ffd700;
+            outline: none;
+            background: rgba(255,255,255,0.15);
+        }
+
+        .ramadan-input::placeholder { color: rgba(255,255,255,0.45); }
+
+        .ramadan-input option { background: #1a2639; color: white; }
+
+        .ramadan-btn-primary {
+            width: 100%;
+            margin-top: 15px;
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            color: #1a2639;
+            border: none;
+            border-radius: 15px;
+            font-family: 'Cairo', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 900;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .ramadan-btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(255,215,0,0.4);
+        }
+
+        .ramadan-answers-list {
+            margin-top: 25px;
+            background: rgba(255,255,255,0.05);
+            padding: 25px;
+            border-radius: 25px;
+        }
+
+        .ramadan-answers-list h4 {
+            color: #ffd700;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+        }
+
+        .ramadan-answer-item {
+            background: rgba(255,255,255,0.07);
+            border-radius: 15px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            border-right: 4px solid #666;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .ramadan-answer-item.correct { border-right-color: #00b894; }
+        .ramadan-answer-item.wrong   { border-right-color: #d63031; }
+
+        .ramadan-answer-name  { font-weight: 700; font-size: 1rem; }
+        .ramadan-answer-status { font-size: 0.9rem; }
+        .ramadan-answer-status.correct { color: #00b894; }
+        .ramadan-answer-status.wrong   { color: #d63031; }
+        .ramadan-answer-time  { color: rgba(255,255,255,0.5); font-size: 0.85rem; }
+
+        .toast {
+            position: fixed;
+            top: 25px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: #1e2b3a;
+            color: white;
+            padding: 14px 28px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: bold;
+            z-index: 9999;
+            border: 2px solid rgba(255,215,0,0.4);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+            white-space: nowrap;
+        }
+
+        .toast.show { transform: translateX(-50%) translateY(0); }
+        .toast.success { border-color: #00b894; }
+        .toast.error   { border-color: #d63031; }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #ffd700;
+            font-size: 1.3rem;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state i { font-size: 3rem; margin-bottom: 20px; display: block; }
+
+        footer {
+            text-align: center;
+            padding: 30px 5%;
+            color: rgba(255,215,0,0.6);
+            font-size: 0.9rem;
+            border-top: 1px solid rgba(255,215,0,0.15);
+            margin-top: 40px;
+        }
+
+        @media (max-width: 600px) {
+            .ramadan-header h1 { font-size: 1.8rem; }
+            .ramadan-questions-container { grid-template-columns: 1fr; }
+            .header-title { font-size: 1.1rem; }
+            .back-btn { padding: 8px 16px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ===== HEADER ===== -->
+    <header>
+        <a href="index.html" class="back-btn">
+            <i class="fas fa-arrow-right"></i> العودة للرئيسية
+        </a>
+        <div class="header-title">Ms. Mona Kamel 🌙</div>
+        <div style="width: 120px;"></div><!-- spacer -->
+    </header>
+
+    <!-- ===== MAIN ===== -->
+    <main class="ramadan-section">
+
+        <div class="ramadan-header">
+            <i class="fas fa-moon"></i>
+            <i class="fas fa-star"></i>
+            <h1>🌙 أسئلة رمضان</h1>
+            <i class="fas fa-star"></i>
+            <i class="fas fa-moon"></i>
+        </div>
+
+        <div class="ramadan-rules">
+            <p class="rules-title">📢 شروط المسابقة:</p>
+            <p>يتم الاختيار عشوائياً، ويتم التواصل عن طريق رقم الهاتف المسجل.</p>
+            <p>شرط أن يتم إرسال إجابات الأسئلة متتالية لنهاية الشهر مع حفظ آيات الصيام بسورة البقرة ومعرفة تفسيرها من تفسير ابن كثير (الآيات ١٨٣، ١٨٤، ١٨٥).</p>
+            <p>وحظ سعيد للجميع 🌹🌹</p>
+        </div>
+
+        <div id="ramadanQuestionsContainer" class="ramadan-questions-container">
+            <div class="empty-state"><i class="fas fa-spinner fa-spin"></i> جاري تحميل الأسئلة...</div>
+        </div>
+
+    </main>
+
+    <footer>جميع الحقوق محفوظة © ٢٠٢٦ | <strong>Ms. Mona Kamel</strong></footer>
+
+    <!-- ===== ANSWER MODAL ===== -->
+    <div id="ramadanAnswerModal" class="ramadan-modal">
+        <div class="ramadan-modal-content">
+            <div class="ramadan-modal-header">
+                <h3 id="ramadanQuestionTitle"></h3>
+                <span class="ramadan-close-modal">&times;</span>
+            </div>
+            <div class="ramadan-modal-body">
+                <div id="ramadanQuestionText" class="ramadan-question-text"></div>
+
+                <div class="ramadan-answer-form">
+                    <input type="text" id="ramadanAnswerName" class="ramadan-input" placeholder="الاسم الثلاثي" maxlength="50">
+                    <input type="text" id="ramadanStudentId" class="ramadan-input" placeholder="كود الطالب (10 أرقام)" maxlength="10" inputmode="numeric" pattern="[0-9]*">
+
+                    <div style="margin: 15px 0;">
+                        <label style="color:#ffd700; display:block; margin-bottom:8px;">اختر الإجابة الصحيحة:</label>
+                        <select id="ramadanSurahSelect" class="ramadan-input" style="margin-bottom:10px;">
+                            <option value="">-- اختر السورة --</option>
+                        </select>
+                        <input type="number" id="ramadanAyaInput" class="ramadan-input" placeholder="رقم الآية" min="1">
+                        <div style="margin:10px 0; font-size:0.95rem;">
+                            <span id="ramadanAnswerPreview" style="color:#aaa;">لم يتم الاختيار بعد</span>
+                        </div>
+                    </div>
+
+                    <button type="button" id="ramadanSubmitAnswerBtn" class="ramadan-btn-primary">إرسال الإجابة ✅</button>
+                </div>
+
+                <div class="ramadan-answers-list" id="ramadanAnswersList">
+                    <h4>إجابات المشاركين:</h4>
+                    <div id="ramadanAnswersContainer"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== TOAST ===== -->
+    <div id="toastEl" class="toast"></div>
+
+    <!-- ===== FIREBASE + LOGIC ===== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, push, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+        // تكوين Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyA8KQAQgu4nIiomoDpoTLnBz_uAtab63sY",
+            authDomain: "monaacademy-cd983.firebaseapp.com",
+            databaseURL: "https://monaacademy-cd983-default-rtdb.firebaseio.com",
+            projectId: "monaacademy-cd983",
+            storageBucket: "monaacademy-cd983.appspot.com",
+            appId: "1:410646694761:web:bea49c51d3b0ff5eb9cbf8"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const auth = getAuth(app);
+
+        // قائمة السور
+        const SURAHS = [
+            "الفاتحة","البقرة","آل عمران","النساء","المائدة","الأنعام","الأعراف","الأنفال","التوبة","يونس",
+            "هود","يوسف","الرعد","إبراهيم","الحجر","النحل","الإسراء","الكهف","مريم","طه",
+            "الأنبياء","الحج","المؤمنون","النور","الفرقان","الشعراء","النمل","القصص","العنكبوت","الروم",
+            "لقمان","السجدة","الأحزاب","سبأ","فاطر","يس","الصافات","ص","الزمر","غافر",
+            "فصلت","الشورى","الزخرف","الدخان","الجاثية","الأحقاف","محمد","الفتح","الحجرات","ق",
+            "الذاريات","الطور","النجم","القمر","الرحمن","الواقعة","الحديد","المجادلة","الحشر","الممتحنة",
+            "الصف","الجمعة","المنافقون","التغابن","الطلاق","التحريم","الملك","القلم","الحاقة","المعارج",
+            "نوح","الجن","المزمل","المدثر","القيامة","الإنسان","المرسلات","النبأ","النازعات","عبس",
+            "التكوير","الانفطار","المطففين","الانشقاق","البروج","الطارق","الأعلى","الغاشية","الفجر","البلد",
+            "الشمس","الليل","الضحى","الشرح","التين","العلق","القدر","البينة","الزلزلة","العاديات",
+            "القارعة","التكاثر","العصر","الهمزة","الفيل","قريش","الماعون","الكوثر","الكافرون","النصر",
+            "المسد","الإخلاص","الفلق","الناس"
+        ];
+
+        // دالة لتحويل الأرقام العربية إلى إنجليزية
+        function toEnglishDigits(str) {
+            return String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+        }
+
+        // دالة تطبيع النص للمقارنة
+        function normalizeAnswer(s) {
+            if (!s) return '';
+            // تحويل الأرقام العربية إلى إنجليزية
+            let str = toEnglishDigits(s);
+            // توحيد المسافات والشرطات
+            return str.trim().replace(/\s+-\s+/g, ' - ').replace(/\s+/g, ' ');
+        }
+
+        // دالة هروب النص (للاستخدام في HTML)
+        function escapeHTML(str) {
+            return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+        }
+
+        // Toast
+        let toastTimer;
+        function showToast(msg, type = 'info', duration = 3000) {
+            const el = document.getElementById('toastEl');
+            el.textContent = msg;
+            el.className = `toast ${type} show`;
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(() => el.classList.remove('show'), duration);
+        }
+
+        // تحميل قائمة الأسئلة
+        function loadRamadanQuestions() {
+            const questionsRef = ref(db, 'ramadan_questions'); // المسار في Firebase: ramadan_questions
+            const container = document.getElementById('ramadanQuestionsContainer');
+
+            onValue(questionsRef, (snapshot) => {
+                if (!container) return;
+
+                if (!snapshot.exists()) {
+                    container.innerHTML = '<div class="empty-state"><i class="fas fa-moon"></i>🌙 سيتم إضافة أسئلة رمضان قريباً</div>';
+                    return;
+                }
+
+                const questions = [];
+                snapshot.forEach(child => questions.push({ id: child.key, ...child.val() }));
+                questions.sort((a, b) => a.day - b.day);
+
+                container.innerHTML = questions.map(q => `
+                    <div class="ramadan-question-card" onclick="openRamadanQuestion('${q.id}')">
+                        <div class="ramadan-question-day">🌙 اليوم ${escapeHTML(String(q.day))}</div>
+                        <div class="ramadan-question-preview">${escapeHTML(q.text)}</div>
+                    </div>
+                `).join('');
+            });
+        }
+
+        // متغير لتخزين دالة إلغاء الاشتراك في تحديثات الإجابات
+        let answersUnsubscribe = null;
+
+        // فتح نافذة السؤال
+        window.openRamadanQuestion = async function(questionId) {
+            const modal = document.getElementById('ramadanAnswerModal');
+            const snapshot = await get(ref(db, `ramadan_questions/${questionId}`));
+            const question = snapshot.val();
+
+            document.getElementById('ramadanQuestionTitle').textContent = `🌙 اليوم ${question.day}`;
+            document.getElementById('ramadanQuestionText').textContent = question.text;
+
+            // إعادة تعيين حقول الإدخال
+            const surahSelect = document.getElementById('ramadanSurahSelect');
+            const newSelect = surahSelect.cloneNode(false);
+            newSelect.innerHTML = '<option value="">-- اختر السورة --</option>';
+            SURAHS.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = opt.textContent = s;
+                newSelect.appendChild(opt);
+            });
+            surahSelect.replaceWith(newSelect);
+            newSelect.addEventListener('change', updatePreview);
+
+            const ayaInput = document.getElementById('ramadanAyaInput');
+            const newAya = ayaInput.cloneNode(true);
+            newAya.value = '';
+            ayaInput.replaceWith(newAya);
+            newAya.addEventListener('input', updatePreview);
+
+            document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
+            document.getElementById('ramadanAnswerName').value = '';
+            document.getElementById('ramadanStudentId').value = '';
+
+            // تخزين بيانات السؤال في المودال
+            modal.dataset.questionId = questionId;
+            modal.dataset.correctAnswer = question.correctAnswer;
+            modal.dataset.day = question.day;
+
+            // إعادة تعيين زر الإرسال
+            const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
+            submitBtn.replaceWith(submitBtn.cloneNode(true));
+            document.getElementById('ramadanSubmitAnswerBtn').addEventListener('click', submitRamadanAnswer);
+
+            // تحميل الإجابات السابقة
+            loadRamadanAnswers(questionId, question.correctAnswer);
+
+            modal.style.display = 'flex';
+        };
+
+        // تحديث المعاينة عند اختيار السورة والآية
+        function updatePreview() {
+            const surah = document.getElementById('ramadanSurahSelect')?.value;
+            const aya = document.getElementById('ramadanAyaInput')?.value;
+            const prev = document.getElementById('ramadanAnswerPreview');
+            if (surah && aya) {
+                prev.innerHTML = `<span style="color:#00b894;">الإجابة المختارة: ${surah} - ${aya}</span>`;
+            } else if (surah) {
+                prev.innerHTML = `<span style="color:#ffd700;">${surah} - (أدخل رقم الآية)</span>`;
+            } else {
+                prev.innerHTML = 'لم يتم الاختيار بعد';
+            }
+        }
+
+        // تحميل وعرض الإجابات الخاصة بسؤال معين
+        function loadRamadanAnswers(questionId, correctAnswer) {
+            if (answersUnsubscribe) answersUnsubscribe();
+
+            const answersRef = ref(db, 'ramadan_answers'); // المسار في Firebase: ramadan_answers
+            const container = document.getElementById('ramadanAnswersContainer');
+            const listEl = document.getElementById('ramadanAnswersList');
+
+            answersUnsubscribe = onValue(answersRef, (snapshot) => {
+                if (!container) return;
+                const answers = [];
+                if (snapshot.exists()) {
+                    snapshot.forEach(child => {
+                        const ans = child.val();
+                        if (ans.questionId === questionId) answers.push(ans);
+                    });
+                }
+                // ترتيب حسب الوقت (الأحدث أولاً)
+                answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+                if (!answers.length) {
+                    container.innerHTML = '<p style="color:#666;text-align:center;">لا توجد إجابات بعد. كن أول من يجيب!</p>';
+                    return;
+                }
+
+                container.innerHTML = answers.map(ans => {
+                    const ok = ans.answer === correctAnswer; // المقارنة المباشرة (تم تسويتها وقت الحفظ)
+                    return `
+                        <div class="ramadan-answer-item ${ok ? 'correct' : 'wrong'}">
+                            <div class="ramadan-answer-name"><i class="fas fa-user"></i> ${escapeHTML(ans.name)}</div>
+                            <div class="ramadan-answer-status ${ok ? 'correct' : 'wrong'}">
+                                ${ok ? '<i class="fas fa-check-circle"></i> إجابة صحيحة ✓' : '<i class="fas fa-times-circle"></i> إجابة خاطئة ✗'}
+                            </div>
+                            <div class="ramadan-answer-time"><i class="far fa-clock"></i> ${escapeHTML(ans.date)}</div>
+                        </div>`;
+                }).join('');
+
+            }, () => { if (listEl) listEl.style.display = 'none'; });
+        }
+
+        // إرسال الإجابة
+        async function submitRamadanAnswer() {
+            const modal = document.getElementById('ramadanAnswerModal');
+            const questionId = modal.dataset.questionId;
+            const correct = modal.dataset.correctAnswer;
+            const day = modal.dataset.day;
+
+            const name = document.getElementById('ramadanAnswerName').value.trim();
+            const studentId = document.getElementById('ramadanStudentId').value.trim();
+            const surah = document.getElementById('ramadanSurahSelect').value;
+            const aya = document.getElementById('ramadanAyaInput').value;
+
+            // التحقق من الحقول
+            if (!name) { showToast('❌ يرجى إدخال الاسم', 'error'); return; }
+            if (!studentId) { showToast('❌ يرجى إدخال كود الطالب', 'error'); return; }
+            if (!/^\d{10}$/.test(studentId)) { showToast('❌ كود الطالب يجب أن يكون 10 أرقام فقط', 'error'); return; }
+            if (!surah || !aya) { showToast('❌ يرجى اختيار السورة ورقم الآية', 'error'); return; }
+            if (parseInt(aya) <= 0) { showToast('❌ رقم الآية يجب أن يكون أكبر من صفر', 'error'); return; }
+
+            // التحقق من التكرار
+            try {
+                const allSnap = await get(ref(db, 'ramadan_answers'));
+                if (allSnap.exists()) {
+                    let dup = false;
+                    for (const child of Object.values(allSnap.val())) {
+                        if (child.questionId === questionId && child.studentId === studentId) {
+                            dup = true;
+                            break;
+                        }
+                    }
+                    if (dup) { showToast('❌ لقد أرسلت إجابة لهذا السؤال من قبل', 'error'); return; }
+                }
+            } catch (_) {}
+
+            // تجهيز الإجابة
+            const answer = `${surah} - ${aya}`;
+            const normalizedAnswer = normalizeAnswer(answer);
+            const normalizedCorrect = normalizeAnswer(correct);
+            const isCorrect = normalizedAnswer === normalizedCorrect;
+
+            // حفظ في Firebase
+            try {
+                await push(ref(db, 'ramadan_answers'), {
+                    questionId,
+                    day: parseInt(day),
+                    name,
+                    studentId,
+                    answer, // الإجابة الأصلية كما أدخلها المستخدم
+                    surah,
+                    aya: parseInt(aya),
+                    isCorrect,
+                    date: new Date().toLocaleString('ar-EG'), // تاريخ محلي للعرض
+                    timestamp: serverTimestamp() // وقت الخادم
+                });
+
+                // إعادة تعيين الحقول بعد الإرسال
+                document.getElementById('ramadanAnswerName').value = '';
+                document.getElementById('ramadanStudentId').value = '';
+                document.getElementById('ramadanSurahSelect').value = '';
+                document.getElementById('ramadanAyaInput').value = '';
+                document.getElementById('ramadanAnswerPreview').innerHTML = 'لم يتم الاختيار بعد';
+
+                showToast(isCorrect ? '✅ إجابة صحيحة! بارك الله فيك' : '❌ إجابة خاطئة. حاول مرة أخرى.', isCorrect ? 'success' : 'error', 4000);
+            } catch (e) {
+                console.error(e);
+                showToast('❌ حدث خطأ في إرسال الإجابة', 'error');
+            }
+        }
+
+        // إغلاق المودال
+        document.querySelector('.ramadan-close-modal').addEventListener('click', () => {
+            if (answersUnsubscribe) answersUnsubscribe();
+            document.getElementById('ramadanAnswerModal').style.display = 'none';
+        });
+
+        window.addEventListener('click', e => {
+            const modal = document.getElementById('ramadanAnswerModal');
+            if (e.target === modal) {
+                if (answersUnsubscribe) answersUnsubscribe();
+                modal.style.display = 'none';
+            }
+        });
+
+        // بدء التحميل
+        loadRamadanQuestions();
+    </script>
+
+</body>
+</html>
