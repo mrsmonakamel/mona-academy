@@ -1500,9 +1500,6 @@
                 <i class="fas fa-file-import"></i> استيراد الامتحانات
                 <span class="badge-beta">تجريبي</span>
             </div>
-            <div class="nav-link touch-feedback" onclick="showSection('studentSearchSection', this)">
-                <i class="fas fa-search"></i> بحث متقدم
-            </div>
             <div class="nav-link touch-feedback" onclick="showSection('studentsSection', this)">
                 <i class="fas fa-user-graduate"></i> الطلاب
                 <span class="badge-count" id="studentCount">0</span>
@@ -1510,14 +1507,6 @@
             <div class="nav-link touch-feedback" onclick="showSection('resultsSection', this)">
                 <i class="fas fa-poll-h"></i> النتائج
                 <span class="badge-count" id="resultsCount">0</span>
-            </div>
-            <div class="nav-link touch-feedback" onclick="showSection('accessLogsSection', this)">
-                <i class="fas fa-history"></i> سجل الدخول
-                <span class="badge-count" id="logsCount">0</span>
-            </div>
-            <div class="nav-link touch-feedback" onclick="showSection('notificationsSection', this)">
-                <i class="fas fa-bell"></i> إشعارات
-                <span class="badge-count" id="notificationsCount">0</span>
             </div>
             <div class="nav-link touch-feedback" onclick="showSection('reviewsSection', this)">
                 <i class="fas fa-star"></i> الآراء
@@ -1725,63 +1714,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 </div>
             </section>
 
-            <!-- Student Search Section -->
-            <section id="studentSearchSection" class="admin-section">
-                <div class="card">
-                    <h3><i class="fas fa-search"></i> بحث متقدم عن الطلاب</h3>
-                    <p style="color: #666; margin-bottom: 20px;">ابحث بالاسم أو كود الطالب</p>
-                    
-                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                        <input type="text" id="advancedSearch" placeholder="اكتب اسم الطالب أو كود الطالب..." style="flex: 3; min-width: 200px;">
-                        <button class="btn btn-main touch-feedback" onclick="performAdvancedSearch()">
-                            <i class="fas fa-search"></i> بحث
-                        </button>
-                        <button class="btn btn-danger touch-feedback" onclick="clearAdvancedSearch()">
-                            <i class="fas fa-times"></i> إلغاء
-                        </button>
-                    </div>
-                </div>
-                
-                <div id="searchResults" style="display: none;">
-                    <div class="card">
-                        <div class="flex justify-between align-center">
-                            <h3><i class="fas fa-user-graduate"></i> معلومات الطالب</h3>
-                        </div>
-                        <div id="studentInfo" class="grid-system" style="margin-top: 20px;"></div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3><i class="fas fa-book"></i> الاشتراكات في الكورسات</h3>
-                        <div id="studentSubscriptions"></div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3><i class="fas fa-video"></i> الفيديوهات المشاهدة</h3>
-                        <div id="studentWatchedVideos"></div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3><i class="fas fa-poll"></i> نتائج الامتحانات</h3>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>الاختبار</th><th>الدرجة</th><th>النسبة</th><th>التوقيت</th></tr></thead>
-                                <tbody id="studentExamResults"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                    
-                    <div class="card">
-                        <h3><i class="fas fa-clock"></i> سجل الدخول للكورسات</h3>
-                        <div class="table-container">
-                            <table>
-                                <thead><tr><th>الكورس</th><th>وقت الدخول</th></tr></thead>
-                                <tbody id="studentAccessLog"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
             <!-- Results Section -->
             <section id="resultsSection" class="admin-section">
                 <div class="card">
@@ -1804,56 +1736,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                                 </tr>
                             </thead>
                             <tbody id="resultsList"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Access Logs Section -->
-            <section id="accessLogsSection" class="admin-section">
-                <div class="card">
-                    <div class="section-header">
-                        <h2><i class="fas fa-history"></i> سجل الدخول</h2>
-                        <input type="text" id="logSearch" placeholder="🔍 ابحث..." style="max-width: 300px;">
-                    </div>
-                    
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الطالب</th>
-                                    <th>كود الطالب</th>
-                                    <th>الكورس</th>
-                                    <th>التوقيت</th>
-                                    <th>حذف</th>
-                                </tr>
-                            </thead>
-                            <tbody id="logsList"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Notifications Section -->
-            <section id="notificationsSection" class="admin-section">
-                <div class="card">
-                    <div class="section-header">
-                        <h2><i class="fas fa-bell"></i> إشعارات الدخول</h2>
-                        <input type="text" id="notificationSearch" placeholder="🔍 ابحث..." style="max-width: 300px;">
-                    </div>
-                    
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>الطالب</th>
-                                    <th>كود الطالب</th>
-                                    <th>الكورس</th>
-                                    <th>التوقيت</th>
-                                    <th>حذف</th>
-                                </tr>
-                            </thead>
-                            <tbody id="notificationsList"></tbody>
                         </table>
                     </div>
                 </div>
@@ -3188,88 +3070,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
         }
 
         // ================ ADVANCED SEARCH ================
-        window.performAdvancedSearch = async function() {
-            const term = document.getElementById('advancedSearch')?.value.trim().toLowerCase();
-            if (!term) {
-                showToast('أدخل كلمة البحث', 'error');
-                return;
-            }
-            
-            try {
-                startProgress();
-                let foundStudent = null;
-                let foundUid = null;
-                
-                for (const [uid, s] of Object.entries(allStudents)) {
-                    if ((s.name && s.name.toLowerCase().includes(term)) || 
-                        (s.shortId && s.shortId.toLowerCase().includes(term))) {
-                        foundStudent = s;
-                        foundUid = uid;
-                        break;
-                    }
-                }
-                
-                if (!foundStudent) {
-                    showToast('لم يتم العثور على طالب', 'error');
-                    document.getElementById('searchResults').style.display = 'none';
-                    return;
-                }
-                
-                currentStudentData = foundStudent;
-                currentStudentUid = foundUid;
-                
-                document.getElementById('studentInfo').innerHTML = `
-                    <div class="card"><strong>الاسم:</strong> ${escapeHTML(foundStudent.name)}</div>
-                    <div class="card"><strong>الكود:</strong> ${escapeHTML(foundStudent.shortId)}</div>
-                    <div class="card"><strong>المرحلة:</strong> ${escapeHTML(foundStudent.grade)}</div>
-                    <div class="card"><strong>واتساب:</strong> ${escapeHTML(foundStudent.whatsapp)}</div>
-                    <div class="card"><strong>النقاط:</strong> ${foundStudent.points || 0}</div>
-                `;
-                
-                let subsHtml = '';
-                if (foundStudent.subscriptions) {
-                    Object.values(foundStudent.subscriptions).forEach(sub => {
-                        subsHtml += `<div class="list-item">${escapeHTML(sub.courseName)}</div>`;
-                    });
-                }
-                document.getElementById('studentSubscriptions').innerHTML = subsHtml || '<p class="empty-state">لا يوجد اشتراكات</p>';
-                
-                let videosHtml = '';
-                if (foundStudent.watchedVideos) {
-                    Object.values(foundStudent.watchedVideos).forEach(v => {
-                        videosHtml += `<div class="list-item">${escapeHTML(v.videoTitle)} - ${escapeHTML(v.watchedAt)}</div>`;
-                    });
-                }
-                document.getElementById('studentWatchedVideos').innerHTML = videosHtml || '<p class="empty-state">لا توجد فيديوهات</p>';
-                
-                let examsHtml = '';
-                if (foundStudent.examResults) {
-                    Object.values(foundStudent.examResults).forEach(ex => {
-                        examsHtml += `<tr>
-                            <td>${escapeHTML(ex.quizName)}</td>
-                            <td>${ex.score}/${ex.total}</td>
-                            <td>${ex.percentage}%</td>
-                            <td>${escapeHTML(ex.completedAt)}</td>
-                        </tr>`;
-                    });
-                }
-                document.getElementById('studentExamResults').innerHTML = examsHtml || '<tr><td colspan="4" class="empty-state">لا توجد نتائج</td></tr>';
-                
-                let accessHtml = '';
-                if (allCourseAccess[foundUid]) {
-                    Object.values(allCourseAccess[foundUid]).forEach(acc => {
-                        accessHtml += `<tr><td>${escapeHTML(acc.courseName)}</td><td>${escapeHTML(acc.time)}</td></tr>`;
-                    });
-                }
-                document.getElementById('studentAccessLog').innerHTML = accessHtml || '<tr><td colspan="2" class="empty-state">لا توجد سجلات</td></tr>';
-                
-                document.getElementById('searchResults').style.display = 'block';
-            } catch (error) {
-                showToast('❌ حدث خطأ', 'error');
-            } finally {
-                stopProgress();
-            }
-        };
 
         window.clearAdvancedSearch = function() {
             document.getElementById('advancedSearch').value = '';
@@ -3890,201 +3690,7 @@ async function loadAdvancedSearchFilters() {
     }
 }
 
-// تنفيذ البحث المتقدم
-window.performAdvancedSearch = async function() {
-    const searchTerm = document.getElementById('advancedSearch')?.value.toLowerCase().trim();
-    const courseFilter = document.getElementById('advSearchCourse')?.value;
-    const gradeFilter = document.getElementById('advSearchGrade')?.value;
-    const dateFrom = document.getElementById('advSearchDateFrom')?.value;
-    const dateTo = document.getElementById('advSearchDateTo')?.value;
-    
-    startProgress();
-    
-    try {
-        const results = {
-            students: [],
-            exams: [],
-            courses: [],
-            activities: []
-        };
-        
-        // بحث في الطلاب
-        Object.entries(allStudents).forEach(([uid, student]) => {
-            let match = true;
-            
-            // فلترة حسب كلمة البحث
-            if (searchTerm) {
-                match = (student.name && student.name.toLowerCase().includes(searchTerm)) ||
-                        (student.shortId && student.shortId.toLowerCase().includes(searchTerm)) ||
-                        (student.email && student.email.toLowerCase().includes(searchTerm)) ||
-                        (student.whatsapp && student.whatsapp.includes(searchTerm));
-            }
-            
-            // فلترة حسب المرحلة
-            if (match && gradeFilter) {
-                match = student.grade === gradeFilter;
-            }
-            
-            if (match) {
-                results.students.push({ uid, ...student });
-            }
-        });
-        
-        // بحث في نتائج الامتحانات
-        Object.entries(allResults).forEach(([id, result]) => {
-            let match = true;
-            
-            if (searchTerm) {
-                match = (result.student && result.student.toLowerCase().includes(searchTerm)) ||
-                        (result.studentId && result.studentId.toLowerCase().includes(searchTerm)) ||
-                        (result.quiz && result.quiz.toLowerCase().includes(searchTerm));
-            }
-            
-            // فلترة حسب التاريخ
-            if (match && dateFrom && result.time) {
-                const resultDate = new Date(result.time.split(' ').reverse().join('-'));
-                const fromDate = new Date(dateFrom);
-                match = resultDate >= fromDate;
-            }
-            
-            if (match && dateTo && result.time) {
-                const resultDate = new Date(result.time.split(' ').reverse().join('-'));
-                const toDate = new Date(dateTo);
-                toDate.setDate(toDate.getDate() + 1);
-                match = resultDate <= toDate;
-            }
-            
-            if (match) {
-                results.exams.push({ id, ...result });
-            }
-        });
-        
-        // بحث في الكورسات
-        Object.entries(allFolders).forEach(([id, course]) => {
-            let match = true;
-            
-            if (searchTerm) {
-                match = course.name && course.name.toLowerCase().includes(searchTerm);
-            }
-            
-            if (match && courseFilter) {
-                match = id === courseFilter;
-            }
-            
-            if (match) {
-                results.courses.push({ id, ...course });
-            }
-        });
-        
-        // عرض النتائج
-        showAdvancedSearchResults(results);
-        
-    } catch (error) {
-        console.error('Advanced search error:', error);
-        showToast('❌ حدث خطأ في البحث', 'error');
-    } finally {
-        stopProgress();
-    }
-};
 
-// عرض نتائج البحث المتقدم
-// عرض نتائج البحث المتقدم
-function showAdvancedSearchResults(results) {
-    const container = document.getElementById('advancedSearchResults');
-    if (!container) return;
-    
-    let html = `
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-            <h4 style="margin:0;"><i class="fas fa-search" style="color: var(--primary);"></i> نتائج البحث</h4>
-            <button class="btn btn-secondary btn-sm" onclick="window.exportSearchResults()" style="display: inline-flex; align-items: center; gap: 5px;">
-                <i class="fas fa-download"></i> تصدير النتائج
-            </button>
-        </div>
-        
-        <div class="advanced-search-tabs">
-            <button class="tab-btn active" onclick="switchSearchTab('students')">
-                <i class="fas fa-users"></i> الطلاب (${results.students.length})
-            </button>
-            <button class="tab-btn" onclick="switchSearchTab('exams')">
-                <i class="fas fa-file-alt"></i> الامتحانات (${results.exams.length})
-            </button>
-            <button class="tab-btn" onclick="switchSearchTab('courses')">
-                <i class="fas fa-book"></i> الكورسات (${results.courses.length})
-            </button>
-        </div>
-        
-        <div id="searchTabStudents" class="search-tab active">
-    `;
-    
-    if (results.students.length > 0) {
-        html += '<div class="table-container"><table><thead><tr><th>الاسم</th><th>الكود</th><th>المرحلة</th><th>واتساب</th><th>النقاط</th><th></th></tr></thead><tbody>';
-        results.students.slice(0, 20).forEach(s => {
-            html += `<tr>
-                <td><strong>${escapeHTML(s.name)}</strong></td>
-                <td><span class="student-id-display">${escapeHTML(s.shortId)}</span></td>
-                <td><span class="badge-grade">${escapeHTML(s.grade || 'غير محدد')}</span></td>
-                <td>${escapeHTML(s.whatsapp || '—')}</td>
-                <td>${s.points || 0}</td>
-                <td><button class="btn-view btn-icon" onclick="viewStudentDetails('${s.uid}')" title="عرض التفاصيل"><i class="fas fa-eye"></i></button></td>
-            </tr>`;
-        });
-        if (results.students.length > 20) {
-            html += `<tr><td colspan="6" style="color: var(--primary); text-align: center;">... و ${results.students.length - 20} آخرين</td></tr>`;
-        }
-        html += '</tbody></table></div>';
-    } else {
-        html += '<div class="empty-state"><i class="fas fa-user-slash"></i><br>لا يوجد طلاب</div>';
-    }
-    
-    html += `</div>
-    
-    <div id="searchTabExams" class="search-tab" style="display: none;">`;
-    
-    if (results.exams.length > 0) {
-        html += '<div class="table-container"><table><thead><tr><th>الطالب</th><th>الكود</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th></tr></thead><tbody>';
-        results.exams.slice(0, 20).forEach(e => {
-            const percentage = Math.round((e.score / e.total) * 100);
-            html += `<tr>
-                <td>${escapeHTML(e.student)}</td>
-                <td><span class="student-id-display">${escapeHTML(e.studentId)}</span></td>
-                <td>${escapeHTML(e.quiz)}</td>
-                <td><span class="progress-badge">${e.score}/${e.total} (${percentage}%)</span></td>
-                <td>${escapeHTML(e.time || '')}</td>
-            </tr>`;
-        });
-        if (results.exams.length > 20) {
-            html += `<tr><td colspan="5" style="color: var(--primary); text-align: center;">... و ${results.exams.length - 20} آخرين</td></tr>`;
-        }
-        html += '</tbody></table></div>';
-    } else {
-        html += '<div class="empty-state"><i class="fas fa-file-alt"></i><br>لا توجد نتائج</div>';
-    }
-    
-    html += `</div>
-    
-    <div id="searchTabCourses" class="search-tab" style="display: none;">`;
-    
-    if (results.courses.length > 0) {
-        html += '<div class="grid-system" style="margin-top: 20px;">';
-        results.courses.forEach(c => {
-            const stars = '★'.repeat(Math.min(5, Math.round(c.avgRating || 0))) + '☆'.repeat(5 - Math.min(5, Math.round(c.avgRating || 0)));
-            html += `<div class="card" style="text-align: center;">
-                <img src="${escapeHTML(c.img || 'mona.jpg')}" style="width: 80px; height: 80px; border-radius: 15px; object-fit: cover; margin: 0 auto 10px;" onerror="this.src='mona.jpg'">
-                <h4>${escapeHTML(c.name)}</h4>
-                <span class="badge-grade">${escapeHTML(c.grade || 'غير محدد')}</span>
-                <div style="color: var(--gold); margin: 10px 0;">${stars}</div>
-            </div>`;
-        });
-        html += '</div>';
-    } else {
-        html += '<div class="empty-state"><i class="fas fa-book-open"></i><br>لا توجد كورسات</div>';
-    }
-    
-    html += `</div>`;
-    
-    container.innerHTML = html;
-    container.style.display = 'block';
-}
 
 // التبديل بين تبويبات البحث
 window.switchSearchTab = function(tab) {
@@ -4096,101 +3702,11 @@ window.switchSearchTab = function(tab) {
 };
 
 // تصدير نتائج البحث
-window.exportSearchResults = function() {
-    const results = document.querySelector('#advancedSearchResults .active .table-container');
-    if (!results) {
-        showToast('لا توجد نتائج للتصدير', 'error');
-        return;
-    }
-    
-    let csv = [];
-    const rows = results.querySelectorAll('tr');
-    
-    rows.forEach(row => {
-        const rowData = [];
-        row.querySelectorAll('td').forEach(cell => {
-            rowData.push(cell.textContent.trim());
-        });
-        csv.push(rowData.join(','));
-    });
-    
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `search_results_${new Date().toISOString().slice(0,10)}.csv`;
-    a.click();
-    
-    showToast('✅ تم تصدير النتائج');
-};
-
-// ================ إضافة واجهة البحث المتقدم ================
-function addAdvancedSearchUI() {
-    // إضافة زر البحث المتقدم في قسم البحث
-    const searchSection = document.querySelector('#studentSearchSection .card:first-child .flex');
-    if (searchSection) {
-        const advSearchBtn = document.createElement('button');
-        advSearchBtn.className = 'btn btn-secondary btn-sm touch-feedback';
-        advSearchBtn.innerHTML = '<i class="fas fa-sliders-h"></i> بحث متقدم';
-        advSearchBtn.onclick = window.advancedSearch;
-        advSearchBtn.style.marginRight = '10px';
-        searchSection.appendChild(advSearchBtn);
-    }
-    
-    // إنشاء مودال البحث المتقدم
-    const modalHtml = `
-        <div id="advancedSearchModal" class="modal">
-            <div class="modal-content" style="max-width: 800px;">
-                <button class="close-modal-btn" onclick="document.getElementById('advancedSearchModal').style.display='none'">
-                    <i class="fas fa-times"></i>
-                </button>
-                
-                <h3 style="color: var(--primary); margin-bottom: 25px;">
-                    <i class="fas fa-search"></i> بحث متقدم
-                </h3>
-                
-                <div class="grid-system" style="grid-template-columns: 1fr 1fr;">
-                    <input type="text" id="advancedSearch" placeholder="كلمة البحث..." class="reg-input">
-                    
-                    <select id="advSearchCourse" class="reg-input">
-                        <option value="">كل الكورسات</option>
-                    </select>
-                    
-                    <select id="advSearchGrade" class="reg-input">
-                        <option value="">كل المراحل</option>
-                    </select>
-                    
-                    <div style="display: flex; gap: 10px;">
-                        <input type="date" id="advSearchDateFrom" class="reg-input" placeholder="من تاريخ">
-                        <input type="date" id="advSearchDateTo" class="reg-input" placeholder="إلى تاريخ">
-                    </div>
-                </div>
-                
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button class="btn btn-main touch-feedback" onclick="window.performAdvancedSearch()" style="flex: 2;">
-                        <i class="fas fa-search"></i> بحث
-                    </button>
-                    <button class="btn btn-secondary touch-feedback" onclick="window.exportSearchResults()" style="flex: 1;">
-                        <i class="fas fa-download"></i> تصدير
-                    </button>
-                    <button class="btn btn-danger touch-feedback" onclick="document.getElementById('advancedSearchModal').style.display='none'" style="flex: 1;">
-                        <i class="fas fa-times"></i> إلغاء
-                    </button>
-                </div>
-                
-                <div id="advancedSearchResults" style="margin-top: 25px; display: none;"></div>
-            </div>
-        </div>
-    `;
-    
-    document.body.insertAdjacentHTML('beforeend', modalHtml);
-}
 
 // استدعاء الدوال بعد تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         setupInstantSearch();
-        addAdvancedSearchUI();
     }, 2000);
 }); 
 
