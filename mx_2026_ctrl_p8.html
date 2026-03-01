@@ -399,6 +399,19 @@
             margin-right: auto;
         }
 
+        .badge-beta {
+            background: linear-gradient(135deg, #ffd700, #ffaa00);
+            color: #2d3436;
+            padding: 2px 10px;
+            border-radius: 50px;
+            font-size: 0.65rem;
+            font-weight: 800;
+            margin-right: auto;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(255, 215, 0, 0.4);
+        }
+
         .sidebar-footer {
             margin-top: 30px;
             border-top: 1px solid rgba(255,255,255,0.1);
@@ -1483,6 +1496,14 @@
             <div class="nav-link touch-feedback" onclick="showSection('examsSection', this)">
                 <i class="fas fa-edit"></i> مصنع الاختبارات
             </div>
+            <div class="nav-link touch-feedback" onclick="showSection('importExamsSection', this)">
+                <i class="fas fa-file-import"></i> استيراد الامتحانات
+                <span class="badge-beta">تجريبي</span>
+            </div>
+            <div class="nav-link touch-feedback" onclick="showSection('importAssignmentsSection', this)">
+                <i class="fas fa-file-import"></i> استيراد الواجبات
+                <span class="badge-beta">تجريبي</span>
+            </div>
             <div class="nav-link touch-feedback" onclick="showSection('studentSearchSection', this)">
                 <i class="fas fa-search"></i> بحث متقدم
             </div>
@@ -1691,6 +1712,163 @@
                     </div>
                     
                     <button class="btn btn-main" style="margin-top: 20px;" onclick="saveAssignment()">
+                        <i class="fas fa-save"></i> حفظ الواجب
+                    </button>
+                </div>
+            </section>
+
+            <!-- Import Exams Section -->
+            <section id="importExamsSection" class="admin-section">
+                <div class="card">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-file-import" style="color: var(--primary);"></i>
+                        استيراد امتحان جديد
+                        <span class="badge-beta" style="margin-right: auto;">تجريبي</span>
+                    </h3>
+                    
+                    <div style="background: linear-gradient(135deg, #fff9e6, #fff3cd); border: 2px solid #ffd700; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+                        <h4 style="color: #856404; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> القواعد:</h4>
+                        <ul style="color: #856404; line-height: 2; padding-right: 20px;">
+                            <li>✅ لازم يكون في سطر فاضي واحد بين كل سؤال والتاني</li>
+                            <li>✅ الإجابة الصح: اكتب الحرف لوحده B أو بنجمة *B — الاتنين شغالين</li>
+                            <li>✅ سؤال True/False: اكتب True أو False في السطر الأخير</li>
+                            <li>✅ الخيارات لازم تبدأ بـ A: أو A- أو A. أو (A</li>
+                            <li>❌ لو نسيت السطر الفاضي بين الأسئلة مش هيشتغل</li>
+                        </ul>
+                    </div>
+                    
+                    <div style="background: linear-gradient(135deg, #e8f5e9, #c8e6c9); border: 2px solid #4caf50; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+                        <h4 style="color: #2e7d32; margin-bottom: 10px;"><i class="fas fa-lightbulb"></i> تيب: لو بتستخدم AI عشان تحول صور الامتحان:</h4>
+                        <p style="color: #2e7d32;">ابعت الصورة وقوله:</p>
+                        <code style="display: block; background: white; padding: 15px; border-radius: 10px; margin-top: 10px; direction: ltr; text-align: left; color: #333;">
+                            "Convert questions to: Question, A: B: C: D: then correct letter alone. Empty line between questions."
+                        </code>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>اختر الكورس:</label>
+                        <select id="importExamCourseSelect" class="reg-input">
+                            <option value="">-- اختر الكورس --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>عنوان الامتحان:</label>
+                        <input type="text" id="importExamTitle" class="reg-input" placeholder="مثلاً: Unit 1 Exam">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>الصق الأسئلة هنا:</label>
+                        <textarea id="importExamText" rows="15" class="reg-input" placeholder="Champions win medals after hard training.
+A: use to
+B: used to
+C: are used to
+D: using
+B
+
+The Nile is the longest river in Africa.
+True" style="font-family: monospace; line-height: 1.8;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-main touch-feedback" onclick="parseImportedExam()">
+                            <i class="fas fa-magic"></i> معاينة الأسئلة
+                        </button>
+                        <button class="btn btn-danger touch-feedback" onclick="clearImportExam()">
+                            <i class="fas fa-trash"></i> مسح
+                        </button>
+                        <button class="btn btn-secondary touch-feedback" onclick="showImportExamExample()">
+                            <i class="fas fa-lightbulb"></i> مثال
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="importExamPreview" class="card" style="display: none;">
+                    <h3><i class="fas fa-eye" style="color: var(--primary);"></i> معاينة الأسئلة</h3>
+                    <div id="importExamQuestionsList"></div>
+                    <button class="btn btn-main touch-feedback" style="margin-top: 20px;" onclick="saveImportedExam()">
+                        <i class="fas fa-save"></i> حفظ الامتحان
+                    </button>
+                </div>
+            </section>
+
+            <!-- Import Assignments Section -->
+            <section id="importAssignmentsSection" class="admin-section">
+                <div class="card">
+                    <h3 style="display: flex; align-items: center; gap: 10px; margin-bottom: 20px;">
+                        <i class="fas fa-file-import" style="color: var(--primary);"></i>
+                        استيراد واجب جديد
+                        <span class="badge-beta" style="margin-right: auto;">تجريبي</span>
+                    </h3>
+                    
+                    <div style="background: linear-gradient(135deg, #fff9e6, #fff3cd); border: 2px solid #ffd700; border-radius: 15px; padding: 20px; margin-bottom: 25px;">
+                        <h4 style="color: #856404; margin-bottom: 15px;"><i class="fas fa-exclamation-triangle"></i> القواعد:</h4>
+                        <ul style="color: #856404; line-height: 2; padding-right: 20px;">
+                            <li>✅ لازم يكون في سطر فاضي واحد بين كل سؤال والتاني</li>
+                            <li>✅ الإجابة الصح: اكتب الحرف لوحده B أو بنجمة *B</li>
+                            <li>✅ سؤال True/False: اكتب True أو False في السطر الأخير</li>
+                            <li>✅ سؤال مقالي: اكتب [ESSAY] في السطر الأخير</li>
+                            <li>✅ سؤال رفع ملف: اكتب [FILE] في السطر الأخير</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>اختر الكورس:</label>
+                        <select id="importAssignmentCourseSelect" class="reg-input">
+                            <option value="">-- اختر الكورس --</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>عنوان الواجب:</label>
+                        <input type="text" id="importAssignmentTitle" class="reg-input" placeholder="مثلاً: الواجب الأول">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>وصف الواجب:</label>
+                        <textarea id="importAssignmentDesc" rows="3" class="reg-input" placeholder="شرح الواجب..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تاريخ التسليم:</label>
+                        <input type="date" id="importAssignmentDueDate" class="reg-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>إجمالي الدرجات:</label>
+                        <input type="number" id="importAssignmentTotalPoints" class="reg-input" value="100">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>الصق الأسئلة هنا:</label>
+                        <textarea id="importAssignmentText" rows="15" class="reg-input" placeholder="What is the capital of Egypt?
+A: Cairo
+B: Alexandria
+C: Luxor
+D: Aswan
+A
+
+Write a short essay about your favorite hobby.
+[ESSAY]" style="font-family: monospace; line-height: 1.8;"></textarea>
+                    </div>
+                    
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                        <button class="btn btn-main touch-feedback" onclick="parseImportedAssignment()">
+                            <i class="fas fa-magic"></i> معاينة الأسئلة
+                        </button>
+                        <button class="btn btn-danger touch-feedback" onclick="clearImportAssignment()">
+                            <i class="fas fa-trash"></i> مسح
+                        </button>
+                        <button class="btn btn-secondary touch-feedback" onclick="showImportAssignmentExample()">
+                            <i class="fas fa-lightbulb"></i> مثال
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="importAssignmentPreview" class="card" style="display: none;">
+                    <h3><i class="fas fa-eye" style="color: var(--primary);"></i> معاينة الأسئلة</h3>
+                    <div id="importAssignmentQuestionsList"></div>
+                    <button class="btn btn-main touch-feedback" style="margin-top: 20px;" onclick="saveImportedAssignment()">
                         <i class="fas fa-save"></i> حفظ الواجب
                     </button>
                 </div>
@@ -4463,7 +4641,408 @@ window.saveAssignment = async function() {
 document.querySelector('[onclick="showSection(\'assignmentsSection\', this)"]').addEventListener('click', function() {
     setTimeout(loadAssignmentCourses, 200);
 });
+
+// ================ IMPORT EXAMS & ASSIGNMENTS FUNCTIONS ================
+
+// تحميل قائمة الكورسات في قوائم الاستيراد
+async function loadImportCourses() {
+    const foldersSnap = await get(child(dbRef, 'folders'));
+    const examSelect = document.getElementById('importExamCourseSelect');
+    const assignmentSelect = document.getElementById('importAssignmentCourseSelect');
+    
+    if (examSelect) {
+        examSelect.innerHTML = '<option value="">-- اختر الكورس --</option>';
+        foldersSnap.forEach(folder => {
+            examSelect.innerHTML += `<option value="${folder.key}">${escapeHTML(folder.val().name)}</option>`;
+        });
+    }
+    
+    if (assignmentSelect) {
+        assignmentSelect.innerHTML = '<option value="">-- اختر الكورس --</option>';
+        foldersSnap.forEach(folder => {
+            assignmentSelect.innerHTML += `<option value="${folder.key}">${escapeHTML(folder.val().name)}</option>`;
+        });
+    }
+}
+
+// استدعاء تحميل الكورسات عند فتح أقسام الاستيرار
+document.querySelector('[onclick="showSection(\'importExamsSection\', this)"]')?.addEventListener('click', function() {
+    setTimeout(loadImportCourses, 200);
+});
+document.querySelector('[onclick="showSection(\'importAssignmentsSection\', this)"]')?.addEventListener('click', function() {
+    setTimeout(loadImportCourses, 200);
+});
+
+// ==================== IMPORT EXAMS FUNCTIONS ====================
+
+window.parseImportedExam = function() {
+    const text = document.getElementById('importExamText').value.trim();
+    if (!text) {
+        showToast('❌ يرجى إدخال نص الأسئلة', 'error');
+        return;
+    }
+    
+    const questions = parseQuestionsText(text);
+    if (questions.length === 0) {
+        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+        return;
+    }
+    
+    displayImportedExamPreview(questions);
+    showToast(`✅ تم العثور على ${questions.length} سؤال`);
+};
+
+window.clearImportExam = function() {
+    document.getElementById('importExamText').value = '';
+    document.getElementById('importExamPreview').style.display = 'none';
+    document.getElementById('importExamTitle').value = '';
+};
+
+window.showImportExamExample = function() {
+    const example = `Champions win medals after hard training.
+A: use to
+B: used to
+C: are used to
+D: using
+B
+
+The Nile is the longest river in Africa.
+True
+
+What is the capital of Egypt?
+A: Alexandria
+B: Cairo
+C: Luxor
+D: Aswan
+B`;
+    document.getElementById('importExamText').value = example;
+};
+
+function parseQuestionsText(text) {
+    const questions = [];
+    // تقسيم النص على سطرين فارغين متتاليين أو أكثر
+    const blocks = text.split(/\n\s*\n+/).filter(b => b.trim());
+    
+    blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 2) return;
         
+        const questionText = lines[0];
+        const lastLine = lines[lines.length - 1];
+        
+        // التحقق من نوع السؤال
+        const isTrueFalse = lastLine.toLowerCase() === 'true' || lastLine.toLowerCase() === 'false';
+        const isMCQ = /^[A-Da-d]$/.test(lastLine.replace('*', '')) || /^\*[A-Da-d]$/.test(lastLine);
+        
+        if (isTrueFalse) {
+            questions.push({
+                type: 'tf',
+                text: questionText,
+                correctAnswer: lastLine.toLowerCase()
+            });
+        } else if (isMCQ) {
+            const options = {};
+            let correct = lastLine.replace('*', '').toLowerCase();
+            
+            // البحث عن الخيارات
+            for (let i = 1; i < lines.length - 1; i++) {
+                const line = lines[i];
+                const match = line.match(/^([A-Da-d])[\s:\-\.\)]\s*(.+)$/);
+                if (match) {
+                    options[match[1].toLowerCase()] = match[2];
+                }
+            }
+            
+            if (Object.keys(options).length >= 2) {
+                questions.push({
+                    type: 'mcq',
+                    text: questionText,
+                    options: options,
+                    correctAnswer: correct
+                });
+            }
+        }
+    });
+    
+    return questions;
+}
+
+function displayImportedExamPreview(questions) {
+    const preview = document.getElementById('importExamPreview');
+    const list = document.getElementById('importExamQuestionsList');
+    
+    let html = '';
+    questions.forEach((q, i) => {
+        html += `<div class="preview-question">
+            <h4>${i + 1}. ${escapeHTML(q.text)}</h4>
+            <div class="preview-options">`;
+        
+        if (q.type === 'mcq') {
+            Object.entries(q.options).forEach(([key, val]) => {
+                const isCorrect = key === q.correctAnswer;
+                html += `<div class="preview-option ${isCorrect ? 'correct' : ''}">
+                    <strong>${key.toUpperCase()}:</strong> ${escapeHTML(val)}
+                    ${isCorrect ? '<span class="correct-badge">الإجابة الصحيحة</span>' : ''}
+                </div>`;
+            });
+        } else {
+            html += `<div class="preview-tf">
+                <div class="preview-tf-option ${q.correctAnswer === 'true' ? 'correct' : ''}">صح</div>
+                <div class="preview-tf-option ${q.correctAnswer === 'false' ? 'correct' : ''}">خطأ</div>
+            </div>`;
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    list.innerHTML = html;
+    preview.style.display = 'block';
+    preview.scrollIntoView({ behavior: 'smooth' });
+}
+
+window.saveImportedExam = async function() {
+    const courseId = document.getElementById('importExamCourseSelect').value;
+    const title = document.getElementById('importExamTitle').value.trim();
+    const text = document.getElementById('importExamText').value.trim();
+    
+    if (!courseId) {
+        showToast('❌ يرجى اختيار الكورس', 'error');
+        return;
+    }
+    if (!title) {
+        showToast('❌ يرجى إدخال عنوان الامتحان', 'error');
+        return;
+    }
+    
+    const questions = parseQuestionsText(text);
+    if (questions.length === 0) {
+        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+        return;
+    }
+    
+    // تحويل الأسئلة إلى تنسيق قاعدة البيانات
+    const questionsObj = {};
+    questions.forEach((q, i) => {
+        questionsObj[`q${i}`] = q;
+    });
+    
+    const examData = {
+        name: title,
+        questions: questionsObj,
+        createdAt: new Date().toISOString()
+    };
+    
+    try {
+        startProgress();
+        await push(ref(db, `quizzes/${courseId}`), examData);
+        showToast(`✅ تم حفظ الامتحان بنجاح (${questions.length} سؤال)`);
+        clearImportExam();
+    } catch (error) {
+        showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+    } finally {
+        stopProgress();
+    }
+};
+
+// ==================== IMPORT ASSIGNMENTS FUNCTIONS ====================
+
+window.parseImportedAssignment = function() {
+    const text = document.getElementById('importAssignmentText').value.trim();
+    if (!text) {
+        showToast('❌ يرجى إدخال نص الأسئلة', 'error');
+        return;
+    }
+    
+    const questions = parseAssignmentQuestionsText(text);
+    if (questions.length === 0) {
+        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+        return;
+    }
+    
+    displayImportedAssignmentPreview(questions);
+    showToast(`✅ تم العثور على ${questions.length} سؤال`);
+};
+
+window.clearImportAssignment = function() {
+    document.getElementById('importAssignmentText').value = '';
+    document.getElementById('importAssignmentPreview').style.display = 'none';
+    document.getElementById('importAssignmentTitle').value = '';
+    document.getElementById('importAssignmentDesc').value = '';
+};
+
+window.showImportAssignmentExample = function() {
+    const example = `What is the capital of Egypt?
+A: Alexandria
+B: Cairo
+C: Luxor
+D: Aswan
+A
+
+Write a short essay about your favorite hobby.
+[ESSAY]
+
+Upload a PDF file with your homework answers.
+[FILE]
+
+The earth revolves around the sun.
+True`;
+    document.getElementById('importAssignmentText').value = example;
+};
+
+function parseAssignmentQuestionsText(text) {
+    const questions = [];
+    const blocks = text.split(/\n\s*\n+/).filter(b => b.trim());
+    
+    blocks.forEach(block => {
+        const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 2) return;
+        
+        const questionText = lines[0];
+        const lastLine = lines[lines.length - 1];
+        
+        // التحقق من نوع السؤال
+        const isTrueFalse = lastLine.toLowerCase() === 'true' || lastLine.toLowerCase() === 'false';
+        const isEssay = lastLine.toUpperCase() === '[ESSAY]';
+        const isFile = lastLine.toUpperCase() === '[FILE]';
+        const isMCQ = /^[A-Da-d]$/.test(lastLine.replace('*', '')) || /^\*[A-Da-d]$/.test(lastLine);
+        
+        if (isTrueFalse) {
+            questions.push({
+                type: 'tf',
+                text: questionText,
+                correctAnswer: lastLine.toLowerCase(),
+                points: 10
+            });
+        } else if (isEssay) {
+            questions.push({
+                type: 'essay',
+                text: questionText,
+                points: 20
+            });
+        } else if (isFile) {
+            questions.push({
+                type: 'file',
+                text: questionText,
+                points: 20
+            });
+        } else if (isMCQ) {
+            const options = {};
+            let correct = lastLine.replace('*', '').toLowerCase();
+            
+            for (let i = 1; i < lines.length - 1; i++) {
+                const line = lines[i];
+                const match = line.match(/^([A-Da-d])[\s:\-\.\)]\s*(.+)$/);
+                if (match) {
+                    options[match[1].toLowerCase()] = match[2];
+                }
+            }
+            
+            if (Object.keys(options).length >= 2) {
+                questions.push({
+                    type: 'mcq',
+                    text: questionText,
+                    options: options,
+                    correctAnswer: correct,
+                    points: 10
+                });
+            }
+        }
+    });
+    
+    return questions;
+}
+
+function displayImportedAssignmentPreview(questions) {
+    const preview = document.getElementById('importAssignmentPreview');
+    const list = document.getElementById('importAssignmentQuestionsList');
+    
+    let html = '';
+    questions.forEach((q, i) => {
+        html += `<div class="preview-question">
+            <h4>${i + 1}. ${escapeHTML(q.text)} <span class="badge-grade">${q.points} درجة</span></h4>
+            <div class="preview-options">`;
+        
+        if (q.type === 'mcq') {
+            Object.entries(q.options).forEach(([key, val]) => {
+                const isCorrect = key === q.correctAnswer;
+                html += `<div class="preview-option ${isCorrect ? 'correct' : ''}">
+                    <strong>${key.toUpperCase()}:</strong> ${escapeHTML(val)}
+                    ${isCorrect ? '<span class="correct-badge">الإجابة الصحيحة</span>' : ''}
+                </div>`;
+            });
+        } else if (q.type === 'tf') {
+            html += `<div class="preview-tf">
+                <div class="preview-tf-option ${q.correctAnswer === 'true' ? 'correct' : ''}">صح</div>
+                <div class="preview-tf-option ${q.correctAnswer === 'false' ? 'correct' : ''}">خطأ</div>
+            </div>`;
+        } else if (q.type === 'essay') {
+            html += `<p style="color: var(--primary);"><i class="fas fa-pen"></i> سؤال مقالي - يتم تصحيحه يدوياً</p>`;
+        } else if (q.type === 'file') {
+            html += `<p style="color: var(--secondary);"><i class="fas fa-file-upload"></i> سؤال رفع ملف - يتم تصحيحه يدوياً</p>`;
+        }
+        
+        html += `</div></div>`;
+    });
+    
+    list.innerHTML = html;
+    preview.style.display = 'block';
+    preview.scrollIntoView({ behavior: 'smooth' });
+}
+
+window.saveImportedAssignment = async function() {
+    const courseId = document.getElementById('importAssignmentCourseSelect').value;
+    const title = document.getElementById('importAssignmentTitle').value.trim();
+    const desc = document.getElementById('importAssignmentDesc').value.trim();
+    const dueDate = document.getElementById('importAssignmentDueDate').value;
+    const totalPoints = parseInt(document.getElementById('importAssignmentTotalPoints').value) || 100;
+    const text = document.getElementById('importAssignmentText').value.trim();
+    
+    if (!courseId) {
+        showToast('❌ يرجى اختيار الكورس', 'error');
+        return;
+    }
+    if (!title) {
+        showToast('❌ يرجى إدخال عنوان الواجب', 'error');
+        return;
+    }
+    if (!dueDate) {
+        showToast('❌ يرجى اختيار تاريخ التسليم', 'error');
+        return;
+    }
+    
+    const questions = parseAssignmentQuestionsText(text);
+    if (questions.length === 0) {
+        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+        return;
+    }
+    
+    // تحويل الأسئلة إلى تنسيق قاعدة البيانات
+    const questionsObj = {};
+    questions.forEach((q, i) => {
+        questionsObj[`q${i}`] = q;
+    });
+    
+    const assignmentData = {
+        title: title,
+        description: desc,
+        dueDate: dueDate,
+        totalPoints: totalPoints,
+        questions: questionsObj,
+        createdAt: new Date().toISOString()
+    };
+    
+    try {
+        startProgress();
+        await push(ref(db, `assignments/${courseId}`), assignmentData);
+        showToast(`✅ تم حفظ الواجب بنجاح (${questions.length} سؤال)`);
+        clearImportAssignment();
+    } catch (error) {
+        showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+    } finally {
+        stopProgress();
+    }
+};
+
     </script>
     <script src="parent-reporter.js?v=1.0"></script>
 </body>
