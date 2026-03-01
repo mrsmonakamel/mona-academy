@@ -1,5 +1,19 @@
+// ======= Firebase globals (مُحمَّلة من script.js عبر window) =======
+(function() {
+    // انتظار تهيئة Firebase قبل تشغيل الكود
+    function waitForFirebase(callback, retries = 50) {
+        if (window.db && window.dbRef) {
+            callback();
+        } else if (retries > 0) {
+            setTimeout(() => waitForFirebase(callback, retries - 1), 100);
+        } else {
+            console.error('Firebase not initialized after timeout');
+        }
+    }
+    window._waitForFirebase = waitForFirebase;
+})();
+
 // ================ NOTIFICATIONS SYSTEM ================
-// ملاحظة: waitForFirebase موجودة في utils.js
 // تنبيه: هذا الملف يعتمد على المتغيرات التالية من script.js:
 // - window.db, window.dbRef, window.currentUser, window.ref, window.get, window.child, window.push, window.update, window.remove (Firebase)
 // - window.escapeHTML (helper function)
@@ -286,7 +300,7 @@ window.deleteNotification = async function(notificationId) {
         
         // لو مفيش إشعارات، اعرض رسالة empty
         const container = document.getElementById('notificationsList');
-        if (container && container.querySelectorAll('.notification-item').length === 0) {
+        if (container && container.children.length === 0) {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><br>لا توجد إشعارات</div>';
         }
         
@@ -307,15 +321,11 @@ window.clearAllNotifications = async function() {
             container.innerHTML = '<div class="empty-state"><i class="fas fa-bell-slash"></i><br>لا توجد إشعارات</div>';
         }
         
-        const badge = document.getElementById('notificationBadge');
-        if (badge) badge.style.display = 'none';
-        
         await updateNotificationBadge(window.currentUser.uid);
         window.showToast('✅ تم حذف كل الإشعارات');
         
     } catch (error) {
         console.error('Error clearing notifications:', error);
-        window.showToast('❌ حدث خطأ أثناء الحذف', 'error');
     }
 };
 

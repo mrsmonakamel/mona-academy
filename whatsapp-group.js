@@ -1,24 +1,26 @@
+// ======= Firebase globals (مُحمَّلة من script.js عبر window) =======
+(function() {
+    // انتظار تهيئة Firebase قبل تشغيل الكود
+    function waitForFirebase(callback, retries = 50) {
+        if (window.db && window.dbRef) {
+            callback();
+        } else if (retries > 0) {
+            setTimeout(() => waitForFirebase(callback, retries - 1), 100);
+        } else {
+            console.error('Firebase not initialized after timeout');
+        }
+    }
+    window._waitForFirebase = waitForFirebase;
+})();
+
 // whatsapp-group.js
 // عرض رابط مجموعة الواتساب للكورس (للمشتركين فقط)
-// ملاحظة: waitForFirebase موجودة في utils.js
 
 window.displayWhatsappGroup = async function(courseId) {
     const container = document.getElementById('whatsappGroupContainer');
     if (!container) return;
 
-    // التحقق من تسجيل الدخول أولاً
-    if (!window.currentUser) {
-        container.innerHTML = '';
-        return;
-    }
-
     try {
-        // التحقق من الاشتراك في الكورس
-        const subSnap = await window.get(window.child(window.dbRef, `students/${window.currentUser.uid}/subscriptions/${courseId}`));
-        if (!subSnap.exists()) {
-            container.innerHTML = '';
-            return;
-        }
         const snap = await window.get(window.child(window.dbRef, `folders/${courseId}/whatsappGroupLink`));
         if (snap.exists() && snap.val()) {
             const rawLink = snap.val();

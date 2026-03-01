@@ -217,15 +217,12 @@ window.checkStep1Completion = function() {
     
     if (!nextBtn || !errorDiv) return false;
     
-    // التحقق من أن الاسم يحتوي على حروف فقط (عربية أو إنجليزية) وليس أرقاماً
-    const nameRegex = /^[\u0600-\u06FFa-zA-Z\s]+$/;
-    const isNameValid = n1 !== '' && n4 !== '' && nameRegex.test(n1) && nameRegex.test(n4);
+    const isNameValid = n1 !== '' && n4 !== '';
     const isWhatsappValid = whatsapp !== '' && validatePhoneNumber(whatsapp, countryCode);
     const isParentPhoneValid = parentPhone === '' || validatePhoneNumber(parentPhone, parentCountryCode);
     
     let errorMessage = '';
-    if (!n1 || !n4) errorMessage = '❌ يرجى إدخال الاسم الأول واللقب على الأقل';
-    else if (!nameRegex.test(n1) || !nameRegex.test(n4)) errorMessage = '❌ الاسم يجب أن يحتوي على حروف فقط (بدون أرقام أو رموز)';
+    if (!isNameValid) errorMessage = '❌ يرجى إدخال الاسم الأول واللقب على الأقل';
     else if (!isWhatsappValid) errorMessage = '❌ يرجى إدخال رقم واتساب صحيح';
     else if (!isParentPhoneValid) errorMessage = '❌ رقم ولي الأمر غير صحيح';
     
@@ -320,44 +317,6 @@ const handleFirebaseError = (error, customMessage = 'حدث خطأ') => {
     window.showToast(`❌ ${message}`, 'error');
     return message;
 };
-
-// ================ RATE LIMITING للحماية من Brute Force ================
-const _loginAttempts = {};
-const MAX_LOGIN_ATTEMPTS = 5;
-const LOCKOUT_DURATION = 15 * 60 * 1000; // 15 دقيقة
-
-function checkRateLimit(identifier) {
-    const now = Date.now();
-    if (!_loginAttempts[identifier]) {
-        _loginAttempts[identifier] = { count: 0, firstAttempt: now, lockedUntil: 0 };
-    }
-    const entry = _loginAttempts[identifier];
-    
-    // تحقق من الحظر
-    if (entry.lockedUntil > now) {
-        const minutesLeft = Math.ceil((entry.lockedUntil - now) / 60000);
-        window.showToast(`❌ تم تجميد محاولات الدخول. حاول بعد ${minutesLeft} دقيقة`, 'error');
-        return false;
-    }
-    
-    // إعادة ضبط العداد بعد انتهاء المدة
-    if (now - entry.firstAttempt > LOCKOUT_DURATION) {
-        entry.count = 0;
-        entry.firstAttempt = now;
-    }
-    
-    entry.count++;
-    if (entry.count >= MAX_LOGIN_ATTEMPTS) {
-        entry.lockedUntil = now + LOCKOUT_DURATION;
-        window.showToast('❌ تجاوزت عدد المحاولات المسموحة. تم تجميد الحساب 15 دقيقة', 'error');
-        return false;
-    }
-    return true;
-}
-
-function resetRateLimit(identifier) {
-    delete _loginAttempts[identifier];
-}
 
 const ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
 
@@ -663,18 +622,9 @@ window.registerWithGoogle = async function() {
         const result = await signInWithPopup(auth, provider);
         const user = result.user;
         
-        // التحقق من وجود مستخدم بهذا البريد قبل إكمال التسجيل
         const emailExists = await isEmailExists(user.email);
         if (emailExists) {
             window.showToast('❌ هذا البريد الإلكتروني مستخدم بالفعل. يرجى تسجيل الدخول مباشرة.', 'error');
-            await signOut(auth); // تسجيل الخروج لأن الحساب موجود مسبقاً
-            return;
-        }
-        
-        // التحقق أيضاً من قاعدة البيانات مباشرة للمستخدم الجديد
-        const userSnap = await get(child(dbRef, `students/${user.uid}`));
-        if (userSnap.exists()) {
-            window.showToast('❌ هذا الحساب مسجل بالفعل. يرجى تسجيل الدخول.', 'error');
             await signOut(auth);
             return;
         }
@@ -735,9 +685,6 @@ window.loginEmailSubmit = async function(e) {
         return;
     }
     
-    // تطبيق rate limiting
-    if (!checkRateLimit(e_mail)) return;
-    
     const btn = document.getElementById('loginEmailSubmitBtn');
     if (btn) {
         btn.disabled = true;
@@ -747,7 +694,6 @@ window.loginEmailSubmit = async function(e) {
     
     try {
         await signInWithEmailAndPassword(auth, e_mail, p);
-        resetRateLimit(e_mail); // إعادة ضبط العداد عند النجاح
         window.closeLogin();
         window.showToast('✅ مرحباً بك مجدداً!', 'success');
     } catch(err) {
@@ -780,9 +726,6 @@ window.loginUsernameSubmit = async function(e) {
         window.showToast('❌ يرجى إدخال اسم المستخدم وكلمة المرور', 'error');
         return;
     }
-    
-    // تطبيق rate limiting
-    if (!checkRateLimit(username)) return;
     
     const btn = document.getElementById('loginUsernameSubmitBtn');
     if (btn) {
@@ -877,78 +820,8 @@ window.loginGoogle = async function() {
     }
 };
 
-// ================ CORRUPTED DATA MODAL ================
-function showCorruptedDataModal() {
-    // أزل أي modal قديم
-    const old = document.getElementById('corruptedDataModal');
-    if (old) old.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'corruptedDataModal';
-    modal.style.cssText = `
-        position: fixed; inset: 0; z-index: 99999;
-        display: flex; align-items: center; justify-content: center;
-        background: rgba(0,0,0,0.85); padding: 20px;
-    `;
-    modal.innerHTML = `
-        <div style="
-            background: var(--card, #1e1e2e);
-            border: 2px solid #e17055;
-            border-radius: 20px;
-            padding: 40px 30px;
-            max-width: 480px;
-            width: 100%;
-            text-align: center;
-            color: var(--text, #fff);
-            font-family: 'Cairo', sans-serif;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
-        ">
-            <div style="font-size: 3.5rem; margin-bottom: 15px;">⚠️</div>
-            <h2 style="color: #e17055; margin-bottom: 12px; font-size: 1.4rem;">
-                تعذّر تحميل بياناتك
-            </h2>
-            <p style="color: #b2bec3; line-height: 1.8; margin-bottom: 25px; font-size: 0.95rem;">
-                لم يتم العثور على ما يكفي من بيانات حسابك.<br>
-                يرجى إعادة تسجيل الدخول مرةً أخرى لإصلاح هذه المشكلة.
-            </p>
-            <div style="
-                background: rgba(225,112,85,0.1);
-                border: 1px solid rgba(225,112,85,0.3);
-                border-radius: 10px;
-                padding: 12px;
-                margin-bottom: 25px;
-                font-size: 0.85rem;
-                color: #fdcb6e;
-            ">
-                <i class="fas fa-info-circle"></i>
-                إذا استمرت المشكلة، تواصل مع الدعم الفني
-            </div>
-            <button
-                onclick="document.getElementById('corruptedDataModal').remove(); window.openLogin();"
-                style="
-                    background: linear-gradient(135deg, #e17055, #d63031);
-                    color: white;
-                    border: none;
-                    padding: 14px 40px;
-                    border-radius: 50px;
-                    font-size: 1rem;
-                    font-weight: bold;
-                    font-family: 'Cairo', sans-serif;
-                    cursor: pointer;
-                    width: 100%;
-                    transition: opacity 0.2s;
-                "
-                onmouseover="this.style.opacity='0.85'"
-                onmouseout="this.style.opacity='1'"
-            >
-                <i class="fas fa-sign-in-alt"></i> إعادة تسجيل الدخول
-            </button>
-        </div>
-    `;
-    document.body.appendChild(modal);
-}
-
-
+// ================ AUTH STATE ================
+onAuthStateChanged(auth, async user => {
     currentUser = user;
     const statusDiv = document.getElementById('authStatus');
     const reviewContainer = document.getElementById('reviewSectionContainer');
@@ -969,24 +842,9 @@ function showCorruptedDataModal() {
             
             if (userSnap.exists()) {
                 const data = userSnap.val();
-
-                // ===== كشف البيانات المعطوبة أو الناقصة =====
-                const hasCorruptedData = !data.shortId || !data.name || !data.grade;
-                if (hasCorruptedData) {
-                    // سجّل الخروج تلقائياً وأبلغ المستخدم
-                    await signOut(auth);
-                    showCorruptedDataModal();
-                    return;
-                }
-
                 myShortId = data.shortId || '';
                 displayName = data.name || user.displayName || '';
                 currentStudentGrade = data.grade;
-            } else if (!isAdminUser) {
-                // المستخدم مسجل في Firebase Auth لكن ليس له سجل في قاعدة البيانات
-                await signOut(auth);
-                showCorruptedDataModal();
-                return;
             } else {
                 currentStudentGrade = null;
                 myShortId = "";
@@ -1835,9 +1693,7 @@ window.submitQuiz = async function(folderId, quizId) {
 
         await push(ref(db, 'quiz_results'), {
             student: currentUser.displayName || '',
-            studentName: currentUser.displayName || '',
             studentId: myShortId,
-            studentGrade: currentStudentGrade || 'غير محدد',
             uid: currentUser.uid,
             quizId: quizId,
             quiz: quizData.name || '',
@@ -1960,18 +1816,6 @@ window.viewQuizResult = async function(folderId, quizId) {
 window.closeQuiz = function() { 
     const quizOverlay = document.getElementById('quizOverlay');
     const quizContainer = document.getElementById('quizContainer');
-    
-    // إيقاف تشغيل الفيديو عند إغلاق النافذة
-    const iframe = document.getElementById('youtubePlayer');
-    if (iframe) {
-        try {
-            iframe.contentWindow.postMessage(JSON.stringify({
-                event: 'command',
-                func: 'stopVideo'
-            }), '*');
-            iframe.src = ''; // إيقاف الفيديو فوراً
-        } catch(e) { /* تجاهل أخطاء postMessage */ }
-    }
     
     // تنظيف موارد تتبع الفيديو لتفادي memory leaks
     if (window._videoProgressInterval) {
@@ -2151,9 +1995,6 @@ window.updateGrades = function() {
 
 // ================ UTILITY FUNCTIONS ================
 window.logout = function() { 
-    // تنظيف الـ cache عند تسجيل الخروج
-    studentDataCache = {};
-    cacheTime = {};
     signOut(auth);
     window.showToast('👋 تم تسجيل الخروج', 'success');
 };
@@ -2500,13 +2341,13 @@ window.loadContinueWatching = async function() {
         progresses.sort((a, b) => new Date(b.lastWatchedAt) - new Date(a.lastWatchedAt));
         
         progresses.slice(0, 6).forEach(prog => {
+            // جلب صورة الفيديو من يوتيوب
             const videoId = prog.videoId;
-            const thumbUrl = `https://img.youtube.com/vi/${escapeHTML(videoId)}/mqdefault.jpg`;
-            const safeKey = `cw_${prog.id || videoId}`;
+            const thumbUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
             
             html += `
-                <div class="continue-card" data-course="${escapeHTML(prog.courseId)}" data-video="${escapeHTML(prog.videoId)}" data-time="${parseFloat(prog.currentTime) || 0}" onclick="window._onContinueCard(this)">
-                    <img src="${thumbUrl}" class="continue-thumb" loading="lazy" onerror="this.src='mona.jpg'">
+                <div class="continue-card" onclick="window.continueWatching('${prog.courseId}', '${prog.videoId}', '${prog.currentTime}')">
+                    <img src="${thumbUrl}" class="continue-thumb" loading="lazy">
                     <div class="continue-info">
                         <h4>${escapeHTML(prog.videoTitle)}</h4>
                         <p class="continue-course">${escapeHTML(prog.courseName)}</p>
@@ -2527,14 +2368,6 @@ window.loadContinueWatching = async function() {
     } catch (error) {
         console.error('Error loading continue watching:', error);
     }
-};
-
-// handler آمن لبطاقات متابعة المشاهدة (بدلاً من حقن onclick مباشرة)
-window._onContinueCard = function(el) {
-    const courseId = el.getAttribute('data-course');
-    const videoId  = el.getAttribute('data-video');
-    const time     = parseFloat(el.getAttribute('data-time')) || 0;
-    if (courseId && videoId) window.continueWatching(courseId, videoId, time);
 };
 
 // متابعة المشاهدة من حيث توقفت

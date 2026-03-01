@@ -1996,6 +1996,52 @@
                  </div>
              </div>
          </section>
+                     <!-- Assignments Section -->
+            <section id="assignmentsSection" class="admin-section">
+                <div class="card">
+                    <h3><i class="fas fa-book"></i> إدارة الواجبات</h3>
+                    
+                    <div class="form-group">
+                        <label>اختر الكورس</label>
+                        <select id="assignmentCourseSelect" class="reg-input"></select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>عنوان الواجب</label>
+                        <input type="text" id="assignmentTitle" class="reg-input" placeholder="مثلاً: الواجب الأول">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>وصف الواجب</label>
+                        <textarea id="assignmentDesc" rows="3" class="reg-input" placeholder="شرح الواجب..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>تاريخ التسليم</label>
+                        <input type="date" id="assignmentDueDate" class="reg-input">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>إجمالي الدرجات</label>
+                        <input type="number" id="assignmentTotalPoints" class="reg-input" value="100">
+                    </div>
+                    
+                    <hr>
+                    <h4>الأسئلة</h4>
+                    <div id="assignmentQuestionsArea"></div>
+                    
+                    <div style="display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap;">
+                        <button class="btn btn-secondary" onclick="addAssignmentQuestion('mcq')">+ سؤال اختيارات</button>
+                        <button class="btn btn-warning" onclick="addAssignmentQuestion('tf')">+ صح/خطأ</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('essay')">+ سؤال مقالي</button>
+                        <button class="btn btn-info" onclick="addAssignmentQuestion('file')">+ رفع ملف</button>
+                    </div>
+                    
+                    <button class="btn btn-main" style="margin-top: 20px;" onclick="saveAssignment()">
+                        <i class="fas fa-save"></i> حفظ الواجب
+                    </button>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -2459,11 +2505,7 @@
                 allCourseAccess = data;
             });
             
-            // إيقاف مؤشر التقدم عند اكتمال تحميل البيانات الأولى (إصلاح #82)
-            // استخدام Promise.allSettled بدلاً من setTimeout عشوائي
-            Promise.allSettled([
-                new Promise(res => setTimeout(res, 300)) // انتظار بسيط للـ listeners تبدأ
-            ]).then(() => stopProgress());
+            setTimeout(stopProgress, 1000);
         }
 
         // ================ UPDATE COUNTS ================
@@ -2709,51 +2751,36 @@
             const grid = document.getElementById('coursesGrid');
             if (!grid) return;
             
-            grid.querySelectorAll('.skeleton').forEach(el => el.remove());
-            grid.innerHTML = '';
-            
-            if (!folders || Object.keys(folders).length === 0) {
-                grid.innerHTML = '<div class="empty-state"><i class="fas fa-book"></i><br>لا توجد كورسات</div>';
-                return;
+            let html = '';
+            if (folders && Object.keys(folders).length > 0) {
+                Object.entries(folders).forEach(([id, f]) => {
+                    const imgSrc = f.img || 'mona.jpg';
+                    const stars = '★'.repeat(Math.min(5, Math.round(f.avgRating || 0))) + '☆'.repeat(5 - Math.min(5, Math.round(f.avgRating || 0)));
+                    
+                    html += `<div class="card" style="text-align:center;">
+                        <img src="${escapeHTML(imgSrc)}" style="width:100px; height:100px; border-radius:20px; object-fit:cover; border: 4px solid var(--primary); margin: 0 auto 15px;" onerror="this.src='mona.jpg'">
+                        <h4 style="margin:10px 0;">${escapeHTML(f.name)}</h4>
+                        <span class="badge-grade">${escapeHTML(f.grade || 'غير محدد')}</span>
+                        <div style="margin:10px 0; color: var(--gold);">
+                            ${stars} (${f.reviewCount || 0})
+                        </div>
+                        <div class="flex gap-1" style="justify-content: center;">
+                            <button class="btn btn-main btn-sm" onclick='openEditModal("${id}", ${JSON.stringify(f).replace(/</g, '\\u003c')})'>
+                                <i class="fas fa-edit"></i> تعديل
+                            </button>
+                            <button class="btn btn-danger btn-sm" onclick="delData('folders/${id}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                html = '<div class="empty-state"><i class="fas fa-book"></i><br>لا توجد كورسات</div>';
             }
             
-            Object.entries(folders).forEach(([id, f]) => {
-                const imgSrc = escapeHTML(f.img || 'mona.jpg');
-                const stars = '★'.repeat(Math.min(5, Math.round(f.avgRating || 0))) + '☆'.repeat(5 - Math.min(5, Math.round(f.avgRating || 0)));
-                
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.style.textAlign = 'center';
-                
-                card.innerHTML = `
-                    <img src="${imgSrc}" style="width:100px; height:100px; border-radius:20px; object-fit:cover; border: 4px solid var(--primary); margin: 0 auto 15px;" onerror="this.src='mona.jpg'">
-                    <h4 style="margin:10px 0;">${escapeHTML(f.name)}</h4>
-                    <span class="badge-grade">${escapeHTML(f.grade || 'غير محدد')}</span>
-                    <div style="margin:10px 0; color: var(--gold);">${stars} (${parseInt(f.reviewCount) || 0})</div>
-                    <div class="flex gap-1" style="justify-content: center;">
-                        <button class="btn btn-main btn-sm edit-course-btn" data-course-id="${escapeHTML(id)}">
-                            <i class="fas fa-edit"></i> تعديل
-                        </button>
-                        <button class="btn btn-danger btn-sm delete-course-btn" data-course-id="${escapeHTML(id)}">
-                            <i class="fas fa-trash"></i>
-                        </button>
-                    </div>
-                `;
-                
-                // أحداث آمنة بدلاً من inline onclick (إصلاح #5 - XSS)
-                card.querySelector('.edit-course-btn').addEventListener('click', async () => {
-                    const snap = await get(ref(db, `folders/${id}`));
-                    openEditModal(id, snap.exists() ? snap.val() : {});
-                });
-                card.querySelector('.delete-course-btn').addEventListener('click', () => {
-                    // إضافة تأكيد قبل الحذف (إصلاح #51/#59)
-                    if (confirm(`هل تريد حذف كورس "${escapeHTML(f.name)}"؟ هذا الإجراء لا يمكن التراجع عنه.`)) {
-                        delData('folders/' + id);
-                    }
-                });
-                
-                grid.appendChild(card);
-            });
+            // Remove skeletons
+            grid.querySelectorAll('.skeleton').forEach(el => el.remove());
+            grid.innerHTML = html;
         }
 
         // ================ ADD COURSE ================
@@ -2773,10 +2800,7 @@
                 showToast('يرجى اختيار المرحلة الدراسية', 'error');
                 return;
             }
-            
-            // تعطيل الزر أثناء العملية (إصلاح #48)
-            const addBtn = document.querySelector('[onclick="addCourse()"]');
-            if (addBtn) { addBtn.disabled = true; addBtn.classList.add('btn-loading'); }
+      
             
             let imageData = 'mona.jpg';
             
@@ -2786,27 +2810,18 @@
                     imageData = await uploadToImgBB(imgFile);
                 } catch (error) {
                     showToast('❌ ' + error.message, 'error');
-                    if (addBtn) { addBtn.disabled = false; addBtn.classList.remove('btn-loading'); }
                     return;
                 }
             } else if (imgUrl) {
-                // التحقق الشامل من رابط الصورة (إصلاح #25)
                 if (!isValidImageUrl(imgUrl)) {
-                    showToast('❌ رابط الصورة غير صالح. يجب أن ينتهي بـ .jpg, .png, .gif, .webp, .jpeg', 'error');
-                    if (addBtn) { addBtn.disabled = false; addBtn.classList.remove('btn-loading'); }
+                    showToast('❌ رابط الصورة غير صالح. يجب أن ينتهي بـ .jpg, .png, .gif, إلخ', 'error');
                     return;
                 }
                 try {
-                    const parsed = new URL(imgUrl);
-                    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-                        showToast('❌ يجب أن يبدأ الرابط بـ https:// أو http://', 'error');
-                        if (addBtn) { addBtn.disabled = false; addBtn.classList.remove('btn-loading'); }
-                        return;
-                    }
-                    imageData = parsed.href;
+                    new URL(imgUrl);
+                    imageData = imgUrl;
                 } catch {
                     showToast('❌ رابط الصورة غير صحيح', 'error');
-                    if (addBtn) { addBtn.disabled = false; addBtn.classList.remove('btn-loading'); }
                     return;
                 }
             }
@@ -2832,7 +2847,6 @@
                 showToast('❌ حدث خطأ', 'error');
             } finally {
                 stopProgress();
-                if (addBtn) { addBtn.disabled = false; addBtn.classList.remove('btn-loading'); }
             }
         };
 
@@ -4196,14 +4210,11 @@ function addAdvancedSearchUI() {
     document.body.insertAdjacentHTML('beforeend', modalHtml);
 }
 
-// استدعاء الدوال بعد تحميل الصفحة (إصلاح #75 - إزالة الاستدعاء المكرر)
+// استدعاء الدوال بعد تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     setTimeout(() => {
         setupInstantSearch();
-        // addAdvancedSearchUI تُستدعى مرة واحدة فقط هنا
-        if (!document.getElementById('advancedSearchModal')) {
-            addAdvancedSearchUI();
-        }
+        addAdvancedSearchUI();
     }, 2000);
 }); 
 

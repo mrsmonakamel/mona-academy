@@ -1,17 +1,20 @@
+// ======= Firebase globals (مُحمَّلة من script.js عبر window) =======
+(function() {
+    // انتظار تهيئة Firebase قبل تشغيل الكود
+    function waitForFirebase(callback, retries = 50) {
+        if (window.db && window.dbRef) {
+            callback();
+        } else if (retries > 0) {
+            setTimeout(() => waitForFirebase(callback, retries - 1), 100);
+        } else {
+            console.error('Firebase not initialized after timeout');
+        }
+    }
+    window._waitForFirebase = waitForFirebase;
+})();
+
 // progress-visual.js
 // ================ الرسوم البيانية لتقدم الطالب ================
-// ملاحظة: waitForFirebase موجودة في utils.js
-
-// دالة للانتظار حتى يتحمل Chart.js
-function waitForChartJs(callback, retries = 30) {
-    if (typeof Chart !== 'undefined') {
-        callback();
-    } else if (retries > 0) {
-        setTimeout(() => waitForChartJs(callback, retries - 1), 200);
-    } else {
-        console.warn('Chart.js لم يتحمل بعد انتظار طويل');
-    }
-}
 
 // دالة رئيسية لتحميل كل الإحصائيات والرسوم البيانية
 window.loadProgressVisuals = async function() {
@@ -26,24 +29,22 @@ window.loadProgressVisuals = async function() {
         // تحديث الأرقام الأساسية
         updateStatsNumbers(studentData);
         
-        // انتظار تحميل Chart.js قبل رسم المخططات
-        waitForChartJs(() => {
-            // رسم بياني للشارات (يحتاج بيانات من badges.js)
-            if (typeof window.loadUserBadges === 'function') {
-                setTimeout(() => {
-                    drawBadgesChart();
-                    drawLevelsDistribution();
-                }, 500);
-            }
-            
-            // رسم بياني لنتائج الامتحانات
-            if (studentData.examResults) {
-                drawScoresChart(studentData.examResults);
-            }
-            
-            // رسم بياني للنشاط الأسبوعي
-            drawActivityChart(studentData);
-        });
+        // رسم بياني للشارات (يحتاج بيانات من badges.js)
+        if (typeof window.loadUserBadges === 'function') {
+            // ننتظر قليلاً حتى تتحميل الشارات
+            setTimeout(() => {
+                drawBadgesChart();
+                drawLevelsDistribution();
+            }, 500);
+        }
+        
+        // رسم بياني لنتائج الامتحانات
+        if (studentData.examResults) {
+            drawScoresChart(studentData.examResults);
+        }
+        
+        // رسم بياني للنشاط الأسبوعي
+        drawActivityChart(studentData);
         
     } catch (error) {
         console.error('❌ خطأ في تحميل الرسوم البيانية:', error);

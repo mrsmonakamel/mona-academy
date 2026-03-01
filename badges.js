@@ -1,5 +1,19 @@
+// ======= Firebase globals (مُحمَّلة من script.js عبر window) =======
+(function() {
+    // انتظار تهيئة Firebase قبل تشغيل الكود
+    function waitForFirebase(callback, retries = 50) {
+        if (window.db && window.dbRef) {
+            callback();
+        } else if (retries > 0) {
+            setTimeout(() => waitForFirebase(callback, retries - 1), 100);
+        } else {
+            console.error('Firebase not initialized after timeout');
+        }
+    }
+    window._waitForFirebase = waitForFirebase;
+})();
+
 // ================ BADGES & CHALLENGES SYSTEM ================
-// ملاحظة: waitForFirebase موجودة في utils.js
 // تنبيه: هذا الملف يعتمد على المتغيرات التالية من script.js:
 // - window.db, window.dbRef, window.ref, window.get, window.child, window.push, window.update, window.set (Firebase)
 // - window.escapeHTML (helper function)
