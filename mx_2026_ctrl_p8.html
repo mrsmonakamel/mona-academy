@@ -3080,46 +3080,24 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
 
         // ================ ADMIN FUNCTIONS ================
         window.addAdmin = async function() {
-            const email = document.getElementById('newAdminEmail')?.value.trim().toLowerCase();
+            const email = document.getElementById('newAdminEmail')?.value.trim();
             const name = document.getElementById('newAdminName')?.value.trim();
             
             if (!email || !name) {
-                showToast('❌ أدخل البريد والاسم', 'error');
-                return;
-            }
-            
-            // التحقق من صحة البريد الإلكتروني
-            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            if (!emailRegex.test(email)) {
-                showToast('❌ البريد الإلكتروني غير صالح', 'error');
-                return;
-            }
-            
-            // منع إضافة نفس البريد مرتين
-            const adminId = email.replace(/[.#$[\]]/g, '_');
-            const existingAdmin = await get(ref(db, `admins/${adminId}`));
-            if (existingAdmin.exists()) {
-                showToast('❌ هذا البريد مسجل كأدمن بالفعل', 'error');
+                showToast('أدخل البريد والاسم', 'error');
                 return;
             }
             
             try {
                 startProgress();
-                
-                // حفظ بيانات الأدمن في قاعدة البيانات
-                await set(ref(db, `admins/${adminId}`), { 
-                    email: email, 
-                    name: name,
-                    addedAt: new Date().toISOString(),
-                    addedBy: currentUser?.email || 'unknown'
-                });
+                const adminId = email.replace(/[.#$[\]]/g, '_');
+                await set(ref(db, `admins/${adminId}`), { email, name });
                 
                 document.getElementById('newAdminEmail').value = '';
                 document.getElementById('newAdminName').value = '';
-                showToast('✅ تم إضافة الأدمن بنجاح!');
+                showToast('✅ تم إضافة الأدمن');
             } catch (error) {
-                console.error('Error adding admin:', error);
-                showToast('❌ حدث خطأ: ' + error.message, 'error');
+                showToast('❌ حدث خطأ', 'error');
             } finally {
                 stopProgress();
             }
@@ -3969,38 +3947,50 @@ window.searchStudentForPoints = async function() {
             return;
         }
         
-        let foundStudent = null;
-        let foundStudentKey = null;
-        
+        // جمع كل الطلاب المتطابقين
+        const foundStudents = [];
         studentsSnap.forEach(student => {
             const data = student.val();
             const nameMatch = data.name && data.name.toLowerCase().includes(searchTerm.toLowerCase());
             const idMatch = data.shortId && data.shortId.includes(searchTerm);
-            
             if (nameMatch || idMatch) {
-                foundStudent = data;
-                foundStudentKey = student.key;
+                foundStudents.push({ key: student.key, ...data });
             }
         });
         
-        if (!foundStudent) {
+        if (foundStudents.length === 0) {
             showToast('❌ لم يتم العثور على الطالب', 'error');
             document.getElementById('pointsStudentResult').style.display = 'none';
             return;
         }
         
-        selectedStudentForPoints = { key: foundStudentKey, ...foundStudent };
+        // لو طالب واحد بس اختاره تلقائياً
+        if (foundStudents.length === 1) {
+            selectStudentForPoints(foundStudents[0]);
+            return;
+        }
         
-        // عرض معلومات الطالب
-        const currentPoints = foundStudent.points || 0;
-        document.getElementById('pointsStudentInfo').innerHTML = `
-            <div><strong>الاسم:</strong> ${escapeHTML(foundStudent.name)}</div>
-            <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(foundStudent.shortId)}</span></div>
-            <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(foundStudent.grade || 'غير محدد')}</span></div>
-            <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${currentPoints} ⭐</span></div>
-        `;
+        // لو أكتر من طالب اعرض قايمة للاختيار
+        let listHtml = `<p style="margin-bottom:15px; color:#666;">تم العثور على ${foundStudents.length} طلاب، اختر الطالب المطلوب:</p>`;
+        listHtml += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+        foundStudents.forEach(s => {
+            listHtml += `
+                <div onclick="selectStudentForPoints(${JSON.stringify(s).replace(/"/g, '&quot;')})" 
+                     style="background:#f8f9fa; padding:12px 15px; border-radius:10px; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"
+                     onmouseover="this.style.borderColor='var(--primary)'" 
+                     onmouseout="this.style.borderColor='transparent'">
+                    <strong>${escapeHTML(s.name)}</strong>
+                    <span style="color:#666; margin-right:10px; font-size:0.85rem;">كود: ${escapeHTML(s.shortId || 'بدون كود')}</span>
+                    <span style="color:#666; font-size:0.85rem;">| ${escapeHTML(s.grade || 'غير محدد')}</span>
+                    <span style="color:var(--gold); font-size:0.85rem; margin-right:10px;">⭐ ${s.points || 0} نقطة</span>
+                </div>`;
+        });
+        listHtml += `</div>`;
         
+        document.getElementById('pointsStudentInfo').innerHTML = listHtml;
         document.getElementById('pointsStudentResult').style.display = 'block';
+        // إخفاء حقول الإضافة لحد ما يختار طالب
+        document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = 'none');
         
     } catch (error) {
         console.error('Error searching student:', error);
@@ -4008,6 +3998,21 @@ window.searchStudentForPoints = async function() {
     } finally {
         stopProgress();
     }
+};
+
+// اختيار طالب من القايمة
+window.selectStudentForPoints = function(student) {
+    selectedStudentForPoints = student;
+    const currentPoints = student.points || 0;
+    document.getElementById('pointsStudentInfo').innerHTML = `
+        <div><strong>الاسم:</strong> ${escapeHTML(student.name)}</div>
+        <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(student.shortId || 'بدون كود')}</span></div>
+        <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(student.grade || 'غير محدد')}</span></div>
+        <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${currentPoints} ⭐</span></div>
+    `;
+    // إظهار حقول الإضافة
+    document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = '');
+    document.getElementById('pointsStudentResult').style.display = 'block';
 };
 
 // إضافة النقاط للطالب
