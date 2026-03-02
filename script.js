@@ -831,14 +831,15 @@ onAuthStateChanged(auth, async user => {
     if (user) {
         window.startProgress();
         try {
-            // التحقق من صلاحيات الأدمن (غير حساس لحالة الأحرف)
-            const userEmail = user.email?.toLowerCase() || '';
-            const isAdmin = userEmail === ADMIN_EMAIL.toLowerCase();
-            const adminsSnap = await get(ref(db, 'admins'));
-            const admins = adminsSnap.val() || {};
-            const isAddedAdmin = admins && Object.values(admins).some(a => 
-                (a.email?.toLowerCase() || '') === userEmail
-            );
+            const isAdmin = user.email === ADMIN_EMAIL;
+            let isAddedAdmin = false;
+            try {
+                const adminsSnap = await get(ref(db, 'admins'));
+                const admins = adminsSnap.val() || {};
+                isAddedAdmin = admins && Object.values(admins).some(a => a.email === user.email);
+            } catch (e) {
+                // الطالب العادي مش عنده صلاحية قراءة الأدمنز - ده طبيعي
+            }
             isAdminUser = isAdmin || isAddedAdmin;
             
             const userSnap = await get(child(dbRef, `students/${user.uid}`));
@@ -880,8 +881,39 @@ onAuthStateChanged(auth, async user => {
             await window.loadContinueWatching();
             
             // ========== البادجز ==========
-            // شارة الترحيب
+            // شارة الترحيب + حفظ سجل الدخول للشارات
             if (typeof window.checkLoginBadges === 'function') {
+                // حفظ تاريخ الدخول لحساب الـ streak
+                try {
+                    const today = new Date().toISOString().split('T')[0];
+                    const streakRef = ref(db, `students/${user.uid}/loginStreak`);
+                    const streakSnap = await get(streakRef);
+                    
+                    if (streakSnap.exists()) {
+                        const streakData = streakSnap.val();
+                        const lastLogin = streakData.lastLogin || '';
+                        const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+                        
+                        if (lastLogin === today) {
+                            // نفس اليوم - مش بيتعد
+                        } else if (lastLogin === yesterday) {
+                            // يوم متتالي
+                            await set(streakRef, {
+                                current: (streakData.current || 0) + 1,
+                                lastLogin: today
+                            });
+                        } else {
+                            // انقطع الـ streak
+                            await set(streakRef, { current: 1, lastLogin: today });
+                        }
+                    } else {
+                        // أول دخول
+                        await set(streakRef, { current: 1, lastLogin: today });
+                    }
+                } catch (e) {
+                    console.error('Error saving streak:', e);
+                }
+                
                 await window.checkLoginBadges(user.uid);
             }
             
@@ -911,29 +943,21 @@ onAuthStateChanged(auth, async user => {
 // ================ HAMBURGER MENU ================
 window.toggleMenu = function() {
     const menu = document.getElementById('menuDropdown');
-    const overlay = document.getElementById('menuOverlay');
     if (menu) {
-        menu.classList.toggle('show');
-        if (overlay) {
-            overlay.classList.toggle('show');
-        }
+        menu.style.display = menu.style.display === 'none' || menu.style.display === '' ? 'block' : 'none';
     }
 };
 
 window.closeMenu = function() {
     const menu = document.getElementById('menuDropdown');
-    const overlay = document.getElementById('menuOverlay');
-    if (menu) menu.classList.remove('show');
-    if (overlay) overlay.classList.remove('show');
+    if (menu) menu.style.display = 'none';
 };
 
 document.addEventListener('click', (e) => {
     const menu = document.getElementById('menuDropdown');
     const hamburger = document.querySelector('.hamburger-menu');
     if (menu && hamburger && !menu.contains(e.target) && !hamburger.contains(e.target)) {
-        menu.classList.remove('show');
-        const overlay = document.getElementById('menuOverlay');
-        if (overlay) overlay.classList.remove('show');
+        menu.style.display = 'none';
     }
 });
 
@@ -1152,6 +1176,12 @@ window.openContent = async function(folderId, folderName) {
     try {
         currentFolderId = folderId;
         currentFolderName = folderName;
+        
+        // الأدمن يدخل على الكورس على طول بدون اشتراك
+        if (isAdminUser) {
+            await window.loadCourseContent(folderId, folderName, true);
+            return;
+        }
         
         const studentData = await getCachedStudentData(currentUser.uid);
         const isSubscribed = studentData && studentData.subscriptions && studentData.subscriptions[folderId];
@@ -1684,7 +1714,9 @@ window.submitQuiz = async function(folderId, quizId) {
 
         await push(ref(db, 'quiz_results'), {
             student: currentUser.displayName || '',
+            studentName: currentUser.displayName || '',
             studentId: myShortId,
+            studentGrade: currentStudentGrade || '',
             uid: currentUser.uid,
             quizId: quizId,
             quiz: quizData.name || '',
