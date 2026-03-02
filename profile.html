@@ -36,7 +36,7 @@
     
     <!-- Hamburger Dropdown Menu -->
     <div id="menuDropdown" style="display:none; position:fixed; top:60px; left:10px; background:var(--card-bg, #fff); border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.15); z-index:9999; min-width:180px; overflow:hidden;">
-        <a id="homeMenuItem" href="index.html" style="display:none; padding:14px 20px; text-decoration:none; color:var(--text,#333); font-weight:600; border-bottom:1px solid rgba(0,0,0,0.07);">
+        <a id="homeMenuItem" href="index.html" onclick="window.location.href='index.html'; return false;" style="display:none; padding:14px 20px; text-decoration:none; color:var(--text,#333); font-weight:600; border-bottom:1px solid rgba(0,0,0,0.07);">
             <i class="fas fa-home" style="margin-left:8px; color:#6c5ce7;"></i> الرئيسية
         </a>
         <a id="profileMenuItem" href="profile.html" style="display:none; padding:14px 20px; text-decoration:none; color:var(--text,#333); font-weight:600; border-bottom:1px solid rgba(0,0,0,0.07);">
@@ -386,7 +386,7 @@
     </footer>
 
     <script>
-        // في profile.html: goHome يرجع لـ index.html
+        // في profile.html: goHome يرجع لـ index.html - يتعرف قبل script.js
         window.goHome = function() {
             window.location.href = 'index.html';
         };
@@ -400,6 +400,21 @@
 
     <!-- Scripts - يجب تحميل script.js أولاً (module) ثم باقي السكريبتات بـ defer -->
     <script type="module" src="script.js"></script>
+    <script>
+        // نعيد تعريف goHome بعد تحميل script.js مباشرة
+        document.addEventListener('DOMContentLoaded', function() {
+            // نستخدم MutationObserver أو setTimeout لضمان التنفيذ بعد script.js
+            function overrideGoHome() {
+                window.goHome = function() {
+                    window.location.href = 'index.html';
+                };
+            }
+            overrideGoHome();
+            // نعيد التعريف بعد ثانية كـ fallback لأن script.js module قد يأخر
+            setTimeout(overrideGoHome, 500);
+            setTimeout(overrideGoHome, 1500);
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="notifications.js" defer></script>
     <script src="badges.js" defer></script>
