@@ -68,12 +68,12 @@
         .ramadan-section {
             padding: 60px 5%;
             position: relative;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .ramadan-section::before {
             content: '';
-            position: absolute;
+            position: fixed;
             top: -50%;
             left: -50%;
             width: 200%;
@@ -81,6 +81,7 @@
             background: radial-gradient(circle, rgba(255,215,0,0.07) 0%, transparent 70%);
             animation: ramadanRotate 30s linear infinite;
             pointer-events: none;
+            z-index: 0;
         }
 
         @keyframes ramadanRotate {
@@ -152,7 +153,7 @@
 
         .ramadan-questions-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 25px;
             position: relative;
             z-index: 2;
@@ -502,7 +503,6 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getDatabase, ref, get, push, onValue, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
-        import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
         // تكوين Firebase
         const firebaseConfig = {
@@ -516,7 +516,6 @@
 
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
-        const auth = getAuth(app);
 
         // قائمة السور
         const SURAHS = [
@@ -536,7 +535,7 @@
 
         // دالة لتحويل الأرقام العربية إلى إنجليزية
         function toEnglishDigits(str) {
-            return String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+            return String(str).replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.split('').indexOf(d));
         }
 
         // دالة تطبيع النص للمقارنة
@@ -577,7 +576,7 @@
                 }
 
                 const questions = [];
-                snapshot.forEach(child => questions.push({ id: child.key, ...child.val() }));
+                snapshot.forEach(child => { questions.push({ id: child.key, ...child.val() }); });
                 questions.sort((a, b) => a.day - b.day);
 
                 container.innerHTML = questions.map(q => `
@@ -604,6 +603,7 @@
             // إعادة تعيين حقول الإدخال
             const surahSelect = document.getElementById('ramadanSurahSelect');
             const newSelect = surahSelect.cloneNode(false);
+            newSelect.id = 'ramadanSurahSelect';
             newSelect.innerHTML = '<option value="">-- اختر السورة --</option>';
             SURAHS.forEach(s => {
                 const opt = document.createElement('option');
@@ -615,6 +615,7 @@
 
             const ayaInput = document.getElementById('ramadanAyaInput');
             const newAya = ayaInput.cloneNode(true);
+            newAya.id = 'ramadanAyaInput';
             newAya.value = '';
             ayaInput.replaceWith(newAya);
             newAya.addEventListener('input', updatePreview);
@@ -630,7 +631,9 @@
 
             // إعادة تعيين زر الإرسال
             const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
-            submitBtn.replaceWith(submitBtn.cloneNode(true));
+            const newBtn = submitBtn.cloneNode(true);
+            newBtn.id = 'ramadanSubmitAnswerBtn';
+            submitBtn.replaceWith(newBtn);
             document.getElementById('ramadanSubmitAnswerBtn').addEventListener('click', submitRamadanAnswer);
 
             // تحميل الإجابات السابقة
@@ -670,8 +673,12 @@
                         if (ans.questionId === questionId) answers.push(ans);
                     });
                 }
-                // ترتيب حسب الوقت (الأحدث أولاً)
-                answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                // ترتيب حسب الوقت (الأحدث أولاً) - timestamp قد يكون رقم أو null عند serverTimestamp pending
+                answers.sort((a, b) => {
+                    const ta = typeof a.timestamp === 'number' ? a.timestamp : 0;
+                    const tb = typeof b.timestamp === 'number' ? b.timestamp : 0;
+                    return tb - ta;
+                });
 
                 if (!answers.length) {
                     container.innerHTML = '<p style="color:#666;text-align:center;">لا توجد إجابات بعد. كن أول من يجيب!</p>';
@@ -679,7 +686,7 @@
                 }
 
                 container.innerHTML = answers.map(ans => {
-                    const ok = ans.answer === correctAnswer; // المقارنة المباشرة (تم تسويتها وقت الحفظ)
+                    const ok = normalizeAnswer(ans.answer) === normalizeAnswer(correctAnswer);
                     return `
                         <div class="ramadan-answer-item ${ok ? 'correct' : 'wrong'}">
                             <div class="ramadan-answer-name"><i class="fas fa-user"></i> ${escapeHTML(ans.name)}</div>
@@ -709,8 +716,8 @@
             if (!name) { showToast('❌ يرجى إدخال الاسم', 'error'); return; }
             if (!studentId) { showToast('❌ يرجى إدخال كود الطالب', 'error'); return; }
             if (!/^\d{10}$/.test(studentId)) { showToast('❌ كود الطالب يجب أن يكون 10 أرقام فقط', 'error'); return; }
-            if (!surah || !aya) { showToast('❌ يرجى اختيار السورة ورقم الآية', 'error'); return; }
-            if (parseInt(aya) <= 0) { showToast('❌ رقم الآية يجب أن يكون أكبر من صفر', 'error'); return; }
+            if (!surah || !aya || aya.trim() === '') { showToast('❌ يرجى اختيار السورة ورقم الآية', 'error'); return; }
+            if (isNaN(parseInt(aya)) || parseInt(aya) <= 0) { showToast('❌ رقم الآية يجب أن يكون أكبر من صفر', 'error'); return; }
 
             // التحقق من التكرار
             try {
@@ -734,6 +741,9 @@
             const isCorrect = normalizedAnswer === normalizedCorrect;
 
             // حفظ في Firebase
+            const submitBtn = document.getElementById('ramadanSubmitAnswerBtn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ جاري الإرسال...';
             try {
                 await push(ref(db, 'ramadan_answers'), {
                     questionId,
@@ -759,6 +769,9 @@
             } catch (e) {
                 console.error(e);
                 showToast('❌ حدث خطأ في إرسال الإجابة', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'إرسال الإجابة ✅';
             }
         }
 

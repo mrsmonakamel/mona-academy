@@ -849,7 +849,7 @@
                         <input type="hidden" id="editingQuestionId" value="">
 
                         <label>اليوم (1-30)</label>
-                        <input type="number" id="questionDay" min="1" max="30" value="${dayOfRamadan}" placeholder="اليوم">
+                        <input type="number" id="questionDay" min="1" max="30" value="" placeholder="اليوم (1-30)">
 
                         <label>السؤال</label>
                         <textarea id="questionText" rows="3" placeholder="اكتب السؤال هنا..."></textarea>
@@ -979,6 +979,7 @@
         // ================ SHOW / CANCEL FORM ================
         window.showAddQuestionForm = function() {
             document.getElementById('editingQuestionId').value = '';
+            document.getElementById('questionDay').value = '';   // ✅ إفراغ اليوم عشان المستخدم يكتبه يدوياً
             document.getElementById('questionText').value = '';
             document.getElementById('questionDay').classList.remove('error');
             document.getElementById('questionText').classList.remove('error');
@@ -1154,7 +1155,7 @@
             }
 
             const questions = [];
-            snapshot.forEach(child => questions.push({ id: child.key, ...child.val() }));
+            snapshot.forEach(child => { questions.push({ id: child.key, ...child.val() }); });
             questions.sort((a, b) => a.day - b.day);
 
             document.getElementById('totalQuestions').textContent = questions.length;
@@ -1249,7 +1250,7 @@
                 }
 
                 const answers = [];
-                snapshot.forEach(child => answers.push({ id: child.key, ...child.val() }));
+                snapshot.forEach(child => { answers.push({ id: child.key, ...child.val() }); });
 
                 // الترتيب حسب التاريخ (الأحدث أولاً)
                 answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
@@ -1367,7 +1368,7 @@
                 }
 
                 const answers = [];
-                answersSnap.forEach(child => answers.push(child.val()));
+                answersSnap.forEach(child => { answers.push(child.val()); });
                 answers.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
 
                 const escCsv = val => {
