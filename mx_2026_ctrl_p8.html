@@ -1430,7 +1430,6 @@
     font-size: 0.8rem;
 }
 
-/* تحسينات البحث */
 #studentSearch, #resultSearch, #logSearch, #notificationSearch, #perfectScoreSearch {
     transition: all 0.3s ease;
     border: 2px solid transparent;
@@ -1441,7 +1440,6 @@
     box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
 }
 
-/* نتائج البحث */
 .search-result-highlight {
     background-color: rgba(255, 215, 0, 0.2);
     padding: 2px 4px;
@@ -2099,22 +2097,26 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const auth = getAuth(app);
-        const dbRef = ref(db); // ✅ مرجع جذر قاعدة البيانات – مطلوب في child(dbRef, ...)
+        const dbRef = ref(db);
 
         // ================ CONSTANTS ================
-        // ⚠️ تم نقل مفتاح ImgBB إلى Firebase (إصلاح #19 - لا تضع المفاتيح في الكود)
-        // يجب تخزينه في: settings/imgbbApiKey في Firebase
+        // ✅ إصلاح: تم تصحيح اسم المفتاح من imgbbApiKey إلى imgbbKey ليتطابق مع Firebase
         let IMGBB_API_KEY = null;
         (async () => {
             try {
-                const keySnap = await get(child(ref(db), 'settings/imgbbApiKey'));
-                if (keySnap.exists()) IMGBB_API_KEY = keySnap.val();
-                else console.warn('⚠️ مفتاح ImgBB غير مُعرَّف في settings/imgbbApiKey');
-            } catch(e) { console.error('خطأ في جلب مفتاح ImgBB:', e); }
+                const keySnap = await get(child(ref(db), 'settings/imgbbKey'));
+                if (keySnap.exists()) {
+                    IMGBB_API_KEY = keySnap.val();
+                    console.log('✅ تم تحميل مفتاح ImgBB بنجاح');
+                } else {
+                    console.warn('⚠️ مفتاح ImgBB غير مُعرَّف في settings/imgbbKey');
+                }
+            } catch(e) {
+                console.error('خطأ في جلب مفتاح ImgBB:', e);
+            }
         })();
-        // إصلاح #20: يمكن تخزين قائمة الأدمن في Firebase
-        // للتطوير المستقبلي: جلب من settings/adminEmails
-        const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com"; // يمكن نقله لـ Firebase لاحقاً
+
+        const SUPER_ADMIN_EMAIL = "mrsmonakamel6@gmail.com";
         
         // ================ GLOBAL VARIABLES ================
         let activeCID = "";
@@ -2193,6 +2195,10 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             if (!file.type.startsWith('image/')) throw new Error('الملف ليس صورة');
             if (file.size > 5 * 1024 * 1024) throw new Error('حجم الصورة كبير جداً (الحد الأقصى 5 ميجابايت)');
             
+            if (!IMGBB_API_KEY) {
+                throw new Error('مفتاح ImgBB غير متاح، تأكد من وجوده في settings/imgbbKey في Firebase');
+            }
+            
             const formData = new FormData();
             formData.append('key', IMGBB_API_KEY);
             formData.append('image', file);
@@ -2250,7 +2256,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             document.querySelectorAll('.nav-link').forEach(n => n.classList.remove('active'));
             if (element) element.classList.add('active');
             
-            // Close sidebar on mobile after selection
             if (window.innerWidth <= 992) {
                 closeSidebar();
             }
@@ -2582,7 +2587,7 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             const tbody = document.getElementById('perfectScoresList');
             if (!tbody) return;
             
-            let html = '', index = 0;
+            let html = '';
             if (results) {
                 Object.entries(results).forEach(([id, res]) => {
                     if (res.score === res.total && res.score > 0) {
@@ -2642,7 +2647,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 html = '<div class="empty-state"><i class="fas fa-book"></i><br>لا توجد كورسات</div>';
             }
             
-            // Remove skeletons
             grid.querySelectorAll('.skeleton').forEach(el => el.remove());
             grid.innerHTML = html;
         }
@@ -2663,7 +2667,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 showToast('يرجى اختيار المرحلة الدراسية', 'error');
                 return;
             }
-      
             
             let imageData = 'mona.jpg';
             
@@ -2854,42 +2857,40 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
 
         // ================ VIDEO FUNCTIONS ================
         window.addVideoToCourse = function() {
-    const title = document.getElementById('vTitle')?.value.trim();
-    const url = document.getElementById('vUrl')?.value.trim();
-    const order = document.getElementById('vOrder')?.value;
-    
-    if (!activeCID) {
-        showToast('لم يتم تحديد الكورس', 'error');
-        return;
-    }
-    if (!title || !url) {
-        showToast('يرجى إدخال عنوان الفيديو والرابط', 'error');
-        return;
-    }
-    
-    push(ref(db, `folders/${activeCID}/videos`), { 
-        title, 
-        url, 
-        order: parseInt(order) || 0 
-    }).then(() => {
-        showToast('✅ تم إضافة الفيديو');
-        
-        // ===== إرسال إشعار للمشتركين =====
-        if (typeof window.notifyNewVideo === 'function') {
-            const courseName = document.getElementById('editNameField')?.value || '';
-            window.notifyNewVideo(activeCID, courseName, title);
-        }
-        // =================================
-        
-        document.getElementById('vTitle').value = '';
-        document.getElementById('vUrl').value = '';
-        document.getElementById('vOrder').value = '';
-        openEditModal(activeCID, { 
-            name: document.getElementById('editNameField')?.value || '',
-            grade: document.getElementById('editGradeField')?.value || ''
-        });
-    }).catch(() => showToast('❌ حدث خطأ', 'error'));
-};
+            const title = document.getElementById('vTitle')?.value.trim();
+            const url = document.getElementById('vUrl')?.value.trim();
+            const order = document.getElementById('vOrder')?.value;
+            
+            if (!activeCID) {
+                showToast('لم يتم تحديد الكورس', 'error');
+                return;
+            }
+            if (!title || !url) {
+                showToast('يرجى إدخال عنوان الفيديو والرابط', 'error');
+                return;
+            }
+            
+            push(ref(db, `folders/${activeCID}/videos`), { 
+                title, 
+                url, 
+                order: parseInt(order) || 0 
+            }).then(() => {
+                showToast('✅ تم إضافة الفيديو');
+                
+                if (typeof window.notifyNewVideo === 'function') {
+                    const courseName = document.getElementById('editNameField')?.value || '';
+                    window.notifyNewVideo(activeCID, courseName, title);
+                }
+                
+                document.getElementById('vTitle').value = '';
+                document.getElementById('vUrl').value = '';
+                document.getElementById('vOrder').value = '';
+                openEditModal(activeCID, { 
+                    name: document.getElementById('editNameField')?.value || '',
+                    grade: document.getElementById('editGradeField')?.value || ''
+                });
+            }).catch(() => showToast('❌ حدث خطأ', 'error'));
+        };
 
         window.openEditVideoModal = function(courseId, videoId, videoData) {
             document.getElementById('editVideoCourseId').value = courseId;
@@ -2998,64 +2999,62 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
         };
 
         window.saveFinalExam = function() {
-    const folderId = document.getElementById('exFolderSelect')?.value;
-    const title = document.getElementById('exTitle')?.value.trim();
-    
-    if (!folderId) {
-        showToast('اختر الكورس', 'error');
-        return;
-    }
-    if (!title) {
-        showToast('أدخل عنوان الاختبار', 'error');
-        return;
-    }
-    
-    let questions = {};
-    let qIndex = 0;
-    
-    document.querySelectorAll('#questionsArea .card').forEach(card => {
-        const qText = card.querySelector('.q-text')?.value.trim();
-        if (!qText) return;
-        
-        const correct = card.querySelector('.q-correct')?.value;
-        const oA = card.querySelector('.oA')?.value.trim();
-        const oB = card.querySelector('.oB')?.value.trim();
-        
-        if (oA && oB) {
-            const oC = card.querySelector('.oC')?.value.trim() || '';
-            const oD = card.querySelector('.oD')?.value.trim() || '';
-            questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
-        } else {
-            questions[`q${qIndex}`] = { text: qText, a: 'صح', b: 'خطأ', correct };
-        }
-        qIndex++;
-    });
-    
-    if (Object.keys(questions).length === 0) {
-        showToast('أضف سؤالاً على الأقل', 'error');
-        return;
-    }
-    
-    push(ref(db, `quizzes/${folderId}`), { 
-        name: title, 
-        questions,
-        createdAt: new Date().toLocaleString('ar-EG')
-    }).then(() => {
-        showToast('✅ تم نشر الامتحان');
-        
-        // ===== إرسال إشعار للمشتركين =====
-        if (typeof window.notifyNewExam === 'function') {
-            const selectEl = document.getElementById('exFolderSelect');
-            const selectedOption = selectEl.options[selectEl.selectedIndex];
-            const courseName = selectedOption ? selectedOption.text.split(' (')[0] : '';
-            window.notifyNewExam(folderId, courseName, title);
-        }
-        // =================================
-        
-        document.getElementById('questionsArea').innerHTML = '';
-        document.getElementById('exTitle').value = '';
-    }).catch(() => showToast('❌ حدث خطأ', 'error'));
-};
+            const folderId = document.getElementById('exFolderSelect')?.value;
+            const title = document.getElementById('exTitle')?.value.trim();
+            
+            if (!folderId) {
+                showToast('اختر الكورس', 'error');
+                return;
+            }
+            if (!title) {
+                showToast('أدخل عنوان الاختبار', 'error');
+                return;
+            }
+            
+            let questions = {};
+            let qIndex = 0;
+            
+            document.querySelectorAll('#questionsArea .card').forEach(card => {
+                const qText = card.querySelector('.q-text')?.value.trim();
+                if (!qText) return;
+                
+                const correct = card.querySelector('.q-correct')?.value;
+                const oA = card.querySelector('.oA')?.value.trim();
+                const oB = card.querySelector('.oB')?.value.trim();
+                
+                if (oA && oB) {
+                    const oC = card.querySelector('.oC')?.value.trim() || '';
+                    const oD = card.querySelector('.oD')?.value.trim() || '';
+                    questions[`q${qIndex}`] = { text: qText, a: oA, b: oB, c: oC, d: oD, correct };
+                } else {
+                    questions[`q${qIndex}`] = { text: qText, a: 'صح', b: 'خطأ', correct };
+                }
+                qIndex++;
+            });
+            
+            if (Object.keys(questions).length === 0) {
+                showToast('أضف سؤالاً على الأقل', 'error');
+                return;
+            }
+            
+            push(ref(db, `quizzes/${folderId}`), { 
+                name: title, 
+                questions,
+                createdAt: new Date().toLocaleString('ar-EG')
+            }).then(() => {
+                showToast('✅ تم نشر الامتحان');
+                
+                if (typeof window.notifyNewExam === 'function') {
+                    const selectEl = document.getElementById('exFolderSelect');
+                    const selectedOption = selectEl.options[selectEl.selectedIndex];
+                    const courseName = selectedOption ? selectedOption.text.split(' (')[0] : '';
+                    window.notifyNewExam(folderId, courseName, title);
+                }
+                
+                document.getElementById('questionsArea').innerHTML = '';
+                document.getElementById('exTitle').value = '';
+            }).catch(() => showToast('❌ حدث خطأ', 'error'));
+        };
 
         function fillDropdowns(folders) {
             const select = document.getElementById('exFolderSelect');
@@ -3068,15 +3067,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 });
             }
         }
-
-        // ================ ADVANCED SEARCH ================
-
-        window.clearAdvancedSearch = function() {
-            document.getElementById('advancedSearch').value = '';
-            document.getElementById('searchResults').style.display = 'none';
-            currentStudentData = null;
-            currentStudentUid = null;
-        };
 
         // ================ ADMIN FUNCTIONS ================
         window.addAdmin = async function() {
@@ -3420,7 +3410,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 `;
             }
             
-            // Charts
             if (charts.topCourses) charts.topCourses.destroy();
             if (charts.examScores) charts.examScores.destroy();
             if (charts.activity) charts.activity.destroy();
@@ -3561,7 +3550,6 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 });
             }
             
-            // Hide skeletons
             setTimeout(() => {
                 document.querySelectorAll('.skeleton').forEach(el => el.remove());
             }, 2000);
@@ -3572,216 +3560,118 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             cleanupListeners();
         });
         
-       // ================ SEARCH ENHANCEMENTS ================
+        // ================ SEARCH ENHANCEMENTS ================
+        function setupInstantSearch() {
+            const searchInputs = [
+                { id: 'studentSearch', tableId: 'studentList', columns: [0,1,2,3] },
+                { id: 'resultSearch', tableId: 'resultsList', columns: [0,1,2,5] },
+                { id: 'logSearch', tableId: 'logsList', columns: [0,1,2,3] },
+                { id: 'notificationSearch', tableId: 'notificationsList', columns: [0,1,2,3] },
+                { id: 'perfectScoreSearch', tableId: 'perfectScoresList', columns: [0,1,2,4] }
+            ];
+            
+            searchInputs.forEach(({ id, tableId, columns }) => {
+                const input = document.getElementById(id);
+                if (!input) return;
+                
+                input.addEventListener('keyup', function(e) {
+                    const searchTerm = this.value.toLowerCase().trim();
+                    const tbody = document.getElementById(tableId);
+                    if (!tbody) return;
+                    
+                    const rows = tbody.getElementsByTagName('tr');
+                    let visibleCount = 0;
+                    
+                    for (let row of rows) {
+                        if (row.classList.contains('empty-state') || row.classList.contains('no-results-row')) continue;
+                        
+                        let found = false;
+                        const cells = row.getElementsByTagName('td');
+                        
+                        if (!columns) {
+                            for (let cell of cells) {
+                                if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        } else {
+                            for (let idx of columns) {
+                                if (cells[idx] && cells[idx].textContent.toLowerCase().includes(searchTerm)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        row.style.display = found ? '' : 'none';
+                        if (found) visibleCount++;
+                    }
+                    
+                    let noResultsRow = tbody.querySelector('.no-results-row');
+                    if (visibleCount === 0 && rows.length > 0) {
+                        if (!noResultsRow) {
+                            noResultsRow = document.createElement('tr');
+                            noResultsRow.className = 'no-results-row';
+                            const colspan = tbody.parentElement?.querySelector('thead tr')?.children.length || 7;
+                            noResultsRow.innerHTML = `<td colspan="${colspan}" class="empty-state"><i class="fas fa-search"></i><br>لا توجد نتائج للبحث "${escapeHTML(searchTerm)}"</td>`;
+                            tbody.appendChild(noResultsRow);
+                        }
+                    } else if (noResultsRow) {
+                        noResultsRow.remove();
+                    }
+                });
+            });
+        }
 
-// بحث فوري في الجداول
-function setupInstantSearch() {
-    const searchInputs = [
-        { id: 'studentSearch', tableId: 'studentList', columns: [0,1,2,3] }, // اسم, كود, مرحلة, واتساب
-        { id: 'resultSearch', tableId: 'resultsList', columns: [0,1,2,5] }, // طالب, كود, امتحان, تاريخ
-        { id: 'logSearch', tableId: 'logsList', columns: [0,1,2,3] }, // طالب, كود, كورس, وقت
-        { id: 'notificationSearch', tableId: 'notificationsList', columns: [0,1,2,3] },
-        { id: 'perfectScoreSearch', tableId: 'perfectScoresList', columns: [0,1,2,4] }
-    ];
-    
-    searchInputs.forEach(({ id, tableId, columns }) => {
-        const input = document.getElementById(id);
-        if (!input) return;
-        
-        input.addEventListener('keyup', function(e) {
-            const searchTerm = this.value.toLowerCase().trim();
-            const tbody = document.getElementById(tableId);
-            if (!tbody) return;
-            
-            const rows = tbody.getElementsByTagName('tr');
-            let visibleCount = 0;
-            
-            for (let row of rows) {
-                if (row.classList.contains('empty-state') || row.classList.contains('no-results-row')) continue;
-                
-                let found = false;
-                const cells = row.getElementsByTagName('td');
-                
-                // لو المش user محدد الأعمدة، دور في كل الأعمدة
-                if (!columns) {
-                    for (let cell of cells) {
-                        if (cell.textContent.toLowerCase().includes(searchTerm)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                } else {
-                    // دور في الأعمدة المحددة بس
-                    for (let idx of columns) {
-                        if (cells[idx] && cells[idx].textContent.toLowerCase().includes(searchTerm)) {
-                            found = true;
-                            break;
-                        }
-                    }
-                }
-                
-                row.style.display = found ? '' : 'none';
-                if (found) visibleCount++;
-            }
-            
-            // عرض رسالة "لا توجد نتائج" لو مفيش نتايج
-            let noResultsRow = tbody.querySelector('.no-results-row');
-            if (visibleCount === 0 && rows.length > 0) {
-                if (!noResultsRow) {
-                    noResultsRow = document.createElement('tr');
-                    noResultsRow.className = 'no-results-row';
-                    const colspan = tbody.parentElement?.querySelector('thead tr')?.children.length || 7;
-                    noResultsRow.innerHTML = `<td colspan="${colspan}" class="empty-state"><i class="fas fa-search"></i><br>لا توجد نتائج للبحث "${escapeHTML(searchTerm)}"</td>`;
-                    tbody.appendChild(noResultsRow);
-                }
-            } else if (noResultsRow) {
-                noResultsRow.remove();
-            }
-            
-            // عرض عدد النتائج
-            const resultCount = document.getElementById(`${id}Count`);
-            if (resultCount) {
-                resultCount.textContent = visibleCount;
-            }
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                setupInstantSearch();
+            }, 2000);
         });
-        
-        // إضافة عداد النتائج
-        const countSpan = document.createElement('span');
-        countSpan.id = `${id}Count`;
-        countSpan.className = 'search-count';
-        countSpan.style.cssText = 'margin-right: 10px; color: var(--text-muted); font-size: 0.85rem;';
-        input.parentNode?.insertBefore(countSpan, input.nextSibling);
-    });
-}
 
-// بحث متقدم مع فلترة متعددة
-window.advancedSearch = function() {
-    const modal = document.getElementById('advancedSearchModal');
-    if (modal) {
-        loadAdvancedSearchFilters();
-        modal.style.display = 'flex';
-    }
-};
-
-// تحميل فلترات البحث المتقدم
-async function loadAdvancedSearchFilters() {
-    try {
-        // تحميل قائمة الكورسات للفلترة
-        const foldersSelect = document.getElementById('advSearchCourse');
-        if (foldersSelect) {
-            foldersSelect.innerHTML = '<option value="">كل الكورسات</option>';
-            Object.entries(allFolders).forEach(([id, f]) => {
-                foldersSelect.innerHTML += `<option value="${id}">${escapeHTML(f.name)}</option>`;
-            });
-        }
-        
-        // تحميل قائمة المراحل
-        const gradesSelect = document.getElementById('advSearchGrade');
-        if (gradesSelect) {
-            const grades = [...new Set(Object.values(allStudents).map(s => s.grade).filter(Boolean))];
-            gradesSelect.innerHTML = '<option value="">كل المراحل</option>';
-            grades.forEach(grade => {
-                gradesSelect.innerHTML += `<option value="${grade}">${escapeHTML(grade)}</option>`;
-            });
-        }
-        
-    } catch (error) {
-        console.error('Error loading filters:', error);
-    }
-}
-
-
-
-// التبديل بين تبويبات البحث
-window.switchSearchTab = function(tab) {
-    document.querySelectorAll('.search-tab').forEach(t => t.style.display = 'none');
-    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    
-    document.getElementById(`searchTab${tab.charAt(0).toUpperCase() + tab.slice(1)}`).style.display = 'block';
-    event.target.classList.add('active');
-};
-
-// تصدير نتائج البحث
-
-// استدعاء الدوال بعد تحميل الصفحة
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        setupInstantSearch();
-    }, 2000);
-}); 
-
-                // وظائف الصيانة
-        window.loadMaintenanceSettings = async function() {
-            const status = await window.getMaintenanceStatus();
-            document.getElementById('maintenanceEnabled').checked = status.enabled;
-            document.getElementById('maintenanceMessage').value = status.message || '';
-            if (status.updatedAt) {
-                document.getElementById('maintenanceStatus').style.display = 'block';
-                document.getElementById('maintenanceUpdatedAt').textContent = new Date(status.updatedAt).toLocaleString('ar-EG');
+        // ================ IMPORT EXAMS FUNCTIONS ================
+        async function loadImportCourses() {
+            const foldersSnap = await get(child(dbRef, 'folders'));
+            const examSelect = document.getElementById('importExamCourseSelect');
+            
+            if (examSelect) {
+                examSelect.innerHTML = '<option value="">-- اختر الكورس --</option>';
+                foldersSnap.forEach(folder => {
+                    examSelect.innerHTML += `<option value="${folder.key}">${escapeHTML(folder.val().name)}</option>`;
+                });
             }
-        };
+        }
 
-        window.saveMaintenanceSettings = async function() {
-            const enabled = document.getElementById('maintenanceEnabled').checked;
-            const message = document.getElementById('maintenanceMessage').value.trim();
-            if (enabled && !message) {
-                showToast('❌ يرجى إدخال رسالة الصيانة', 'error');
+        document.querySelector('[onclick="showSection(\'importExamsSection\', this)"]')?.addEventListener('click', function() {
+            setTimeout(loadImportCourses, 200);
+        });
+
+        window.parseImportedExam = function() {
+            const text = document.getElementById('importExamText').value.trim();
+            if (!text) {
+                showToast('❌ يرجى إدخال نص الأسئلة', 'error');
                 return;
             }
-            startProgress();
-            await window.updateMaintenanceMode(enabled, message);
-            stopProgress();
-            showToast('✅ تم الحفظ', 'success');
-            loadMaintenanceSettings();
+            
+            const questions = parseQuestionsText(text);
+            if (questions.length === 0) {
+                showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+                return;
+            }
+            
+            displayImportedExamPreview(questions);
+            showToast(`✅ تم العثور على ${questions.length} سؤال`);
         };
-        
-    // ================ IMPORT EXAMS FUNCTIONS ================
 
-// تحميل قائمة الكورسات في قوائم الاستيراد
-async function loadImportCourses() {
-    const foldersSnap = await get(child(dbRef, 'folders'));
-    const examSelect = document.getElementById('importExamCourseSelect');
-    
-    if (examSelect) {
-        examSelect.innerHTML = '<option value="">-- اختر الكورس --</option>';
-        foldersSnap.forEach(folder => {
-            examSelect.innerHTML += `<option value="${folder.key}">${escapeHTML(folder.val().name)}</option>`;
-        });
-    }
-}
+        window.clearImportExam = function() {
+            document.getElementById('importExamText').value = '';
+            document.getElementById('importExamPreview').style.display = 'none';
+            document.getElementById('importExamTitle').value = '';
+        };
 
-// استدعاء تحميل الكورسات عند فتح أقسام الاستيرار
-document.querySelector('[onclick="showSection(\'importExamsSection\', this)"]')?.addEventListener('click', function() {
-    setTimeout(loadImportCourses, 200);
-});
-
-// ==================== IMPORT EXAMS FUNCTIONS ====================
-
-window.parseImportedExam = function() {
-    const text = document.getElementById('importExamText').value.trim();
-    if (!text) {
-        showToast('❌ يرجى إدخال نص الأسئلة', 'error');
-        return;
-    }
-    
-    const questions = parseQuestionsText(text);
-    if (questions.length === 0) {
-        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
-        return;
-    }
-    
-    displayImportedExamPreview(questions);
-    showToast(`✅ تم العثور على ${questions.length} سؤال`);
-};
-
-window.clearImportExam = function() {
-    document.getElementById('importExamText').value = '';
-    document.getElementById('importExamPreview').style.display = 'none';
-    document.getElementById('importExamTitle').value = '';
-};
-
-window.showImportExamExample = function() {
-    const example = `Champions win medals after hard training.
+        window.showImportExamExample = function() {
+            const example = `Champions win medals after hard training.
 A: use to
 B: used to
 C: are used to
@@ -3797,344 +3687,320 @@ B: Cairo
 C: Luxor
 D: Aswan
 B`;
-    document.getElementById('importExamText').value = example;
-};
+            document.getElementById('importExamText').value = example;
+        };
 
-function parseQuestionsText(text) {
-    const questions = [];
-    // تقسيم النص على سطرين فارغين متتاليين أو أكثر
-    const blocks = text.split(/\n\s*\n+/).filter(b => b.trim());
-    
-    blocks.forEach(block => {
-        const lines = block.split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length < 2) return;
-        
-        const questionText = lines[0];
-        const lastLine = lines[lines.length - 1];
-        
-        // التحقق من نوع السؤال
-        const isTrueFalse = lastLine.toLowerCase() === 'true' || lastLine.toLowerCase() === 'false';
-        const isMCQ = /^[A-Da-d]$/.test(lastLine.replace('*', '')) || /^\*[A-Da-d]$/.test(lastLine);
-        
-        if (isTrueFalse) {
-            questions.push({
-                type: 'tf',
-                text: questionText,
-                correctAnswer: lastLine.toLowerCase()
-            });
-        } else if (isMCQ) {
-            const options = {};
-            let correct = lastLine.replace('*', '').toLowerCase();
+        function parseQuestionsText(text) {
+            const questions = [];
+            const blocks = text.split(/\n\s*\n+/).filter(b => b.trim());
             
-            // البحث عن الخيارات
-            for (let i = 1; i < lines.length - 1; i++) {
-                const line = lines[i];
-                const match = line.match(/^([A-Da-d])[\s:\-\.\)]\s*(.+)$/);
-                if (match) {
-                    options[match[1].toLowerCase()] = match[2];
+            blocks.forEach(block => {
+                const lines = block.split('\n').map(l => l.trim()).filter(l => l);
+                if (lines.length < 2) return;
+                
+                const questionText = lines[0];
+                const lastLine = lines[lines.length - 1];
+                
+                const isTrueFalse = lastLine.toLowerCase() === 'true' || lastLine.toLowerCase() === 'false';
+                const isMCQ = /^[A-Da-d]$/.test(lastLine.replace('*', '')) || /^\*[A-Da-d]$/.test(lastLine);
+                
+                if (isTrueFalse) {
+                    questions.push({
+                        type: 'tf',
+                        text: questionText,
+                        correctAnswer: lastLine.toLowerCase()
+                    });
+                } else if (isMCQ) {
+                    const options = {};
+                    let correct = lastLine.replace('*', '').toLowerCase();
+                    
+                    for (let i = 1; i < lines.length - 1; i++) {
+                        const line = lines[i];
+                        const match = line.match(/^([A-Da-d])[\s:\-\.\)]\s*(.+)$/);
+                        if (match) {
+                            options[match[1].toLowerCase()] = match[2];
+                        }
+                    }
+                    
+                    if (Object.keys(options).length >= 2) {
+                        questions.push({
+                            type: 'mcq',
+                            text: questionText,
+                            options: options,
+                            correctAnswer: correct
+                        });
+                    }
                 }
+            });
+            
+            return questions;
+        }
+
+        function displayImportedExamPreview(questions) {
+            const preview = document.getElementById('importExamPreview');
+            const list = document.getElementById('importExamQuestionsList');
+            
+            let html = '';
+            questions.forEach((q, i) => {
+                html += `<div class="preview-question">
+                    <h4>${i + 1}. ${escapeHTML(q.text)}</h4>
+                    <div class="preview-options">`;
+                
+                if (q.type === 'mcq') {
+                    Object.entries(q.options).forEach(([key, val]) => {
+                        const isCorrect = key === q.correctAnswer;
+                        html += `<div class="preview-option ${isCorrect ? 'correct' : ''}">
+                            <strong>${key.toUpperCase()}:</strong> ${escapeHTML(val)}
+                            ${isCorrect ? '<span class="correct-badge">الإجابة الصحيحة</span>' : ''}
+                        </div>`;
+                    });
+                } else {
+                    html += `<div class="preview-tf">
+                        <div class="preview-tf-option ${q.correctAnswer === 'true' ? 'correct' : ''}">صح</div>
+                        <div class="preview-tf-option ${q.correctAnswer === 'false' ? 'correct' : ''}">خطأ</div>
+                    </div>`;
+                }
+                
+                html += `</div></div>`;
+            });
+            
+            list.innerHTML = html;
+            preview.style.display = 'block';
+            preview.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        window.saveImportedExam = async function() {
+            const courseId = document.getElementById('importExamCourseSelect').value;
+            const title = document.getElementById('importExamTitle').value.trim();
+            const text = document.getElementById('importExamText').value.trim();
+            
+            if (!courseId) {
+                showToast('❌ يرجى اختيار الكورس', 'error');
+                return;
+            }
+            if (!title) {
+                showToast('❌ يرجى إدخال عنوان الامتحان', 'error');
+                return;
             }
             
-            if (Object.keys(options).length >= 2) {
-                questions.push({
-                    type: 'mcq',
-                    text: questionText,
-                    options: options,
-                    correctAnswer: correct
-                });
+            const questions = parseQuestionsText(text);
+            if (questions.length === 0) {
+                showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
+                return;
             }
-        }
-    });
-    
-    return questions;
-}
-
-function displayImportedExamPreview(questions) {
-    const preview = document.getElementById('importExamPreview');
-    const list = document.getElementById('importExamQuestionsList');
-    
-    let html = '';
-    questions.forEach((q, i) => {
-        html += `<div class="preview-question">
-            <h4>${i + 1}. ${escapeHTML(q.text)}</h4>
-            <div class="preview-options">`;
-        
-        if (q.type === 'mcq') {
-            Object.entries(q.options).forEach(([key, val]) => {
-                const isCorrect = key === q.correctAnswer;
-                html += `<div class="preview-option ${isCorrect ? 'correct' : ''}">
-                    <strong>${key.toUpperCase()}:</strong> ${escapeHTML(val)}
-                    ${isCorrect ? '<span class="correct-badge">الإجابة الصحيحة</span>' : ''}
-                </div>`;
+            
+            const questionsObj = {};
+            questions.forEach((q, i) => {
+                questionsObj[`q${i}`] = q;
             });
-        } else {
-            html += `<div class="preview-tf">
-                <div class="preview-tf-option ${q.correctAnswer === 'true' ? 'correct' : ''}">صح</div>
-                <div class="preview-tf-option ${q.correctAnswer === 'false' ? 'correct' : ''}">خطأ</div>
-            </div>`;
-        }
-        
-        html += `</div></div>`;
-    });
-    
-    list.innerHTML = html;
-    preview.style.display = 'block';
-    preview.scrollIntoView({ behavior: 'smooth' });
-}
-
-window.saveImportedExam = async function() {
-    const courseId = document.getElementById('importExamCourseSelect').value;
-    const title = document.getElementById('importExamTitle').value.trim();
-    const text = document.getElementById('importExamText').value.trim();
-    
-    if (!courseId) {
-        showToast('❌ يرجى اختيار الكورس', 'error');
-        return;
-    }
-    if (!title) {
-        showToast('❌ يرجى إدخال عنوان الامتحان', 'error');
-        return;
-    }
-    
-    const questions = parseQuestionsText(text);
-    if (questions.length === 0) {
-        showToast('❌ لم يتم العثور على أسئلة صالحة', 'error');
-        return;
-    }
-    
-    // تحويل الأسئلة إلى تنسيق قاعدة البيانات
-    const questionsObj = {};
-    questions.forEach((q, i) => {
-        questionsObj[`q${i}`] = q;
-    });
-    
-    const examData = {
-        name: title,
-        questions: questionsObj,
-        createdAt: new Date().toISOString()
-    };
-    
-    try {
-        startProgress();
-        await push(ref(db, `quizzes/${courseId}`), examData);
-        showToast(`✅ تم حفظ الامتحان بنجاح (${questions.length} سؤال)`);
-        clearImportExam();
-    } catch (error) {
-        showToast('❌ حدث خطأ أثناء الحفظ', 'error');
-    } finally {
-        stopProgress();
-    }
-};
-
-// ================ POINTS MANAGEMENT FUNCTIONS ================
-
-let selectedStudentForPoints = null;
-
-// البحث عن طالب لإضافة النقاط
-window.searchStudentForPoints = async function() {
-    const searchTerm = document.getElementById('pointsStudentSearch').value.trim();
-    if (!searchTerm) {
-        showToast('❌ يرجى إدخال اسم الطالب أو كود الطالب', 'error');
-        return;
-    }
-    
-    try {
-        startProgress();
-        const studentsSnap = await get(child(dbRef, 'students'));
-        
-        if (!studentsSnap.exists()) {
-            showToast('❌ لا يوجد طلاب', 'error');
-            return;
-        }
-        
-        // جمع كل الطلاب المتطابقين
-        const foundStudents = [];
-        studentsSnap.forEach(student => {
-            const data = student.val();
-            const nameMatch = data.name && data.name.toLowerCase().includes(searchTerm.toLowerCase());
-            const idMatch = data.shortId && data.shortId.includes(searchTerm);
-            if (nameMatch || idMatch) {
-                foundStudents.push({ key: student.key, ...data });
+            
+            const examData = {
+                name: title,
+                questions: questionsObj,
+                createdAt: new Date().toISOString()
+            };
+            
+            try {
+                startProgress();
+                await push(ref(db, `quizzes/${courseId}`), examData);
+                showToast(`✅ تم حفظ الامتحان بنجاح (${questions.length} سؤال)`);
+                clearImportExam();
+            } catch (error) {
+                showToast('❌ حدث خطأ أثناء الحفظ', 'error');
+            } finally {
+                stopProgress();
             }
-        });
-        
-        if (foundStudents.length === 0) {
-            showToast('❌ لم يتم العثور على الطالب', 'error');
+        };
+
+        // ================ POINTS MANAGEMENT FUNCTIONS ================
+        let selectedStudentForPoints = null;
+
+        window.searchStudentForPoints = async function() {
+            const searchTerm = document.getElementById('pointsStudentSearch').value.trim();
+            if (!searchTerm) {
+                showToast('❌ يرجى إدخال اسم الطالب أو كود الطالب', 'error');
+                return;
+            }
+            
+            try {
+                startProgress();
+                const studentsSnap = await get(child(dbRef, 'students'));
+                
+                if (!studentsSnap.exists()) {
+                    showToast('❌ لا يوجد طلاب', 'error');
+                    return;
+                }
+                
+                const foundStudents = [];
+                studentsSnap.forEach(student => {
+                    const data = student.val();
+                    const nameMatch = data.name && data.name.toLowerCase().includes(searchTerm.toLowerCase());
+                    const idMatch = data.shortId && data.shortId.includes(searchTerm);
+                    if (nameMatch || idMatch) {
+                        foundStudents.push({ key: student.key, ...data });
+                    }
+                });
+                
+                if (foundStudents.length === 0) {
+                    showToast('❌ لم يتم العثور على الطالب', 'error');
+                    document.getElementById('pointsStudentResult').style.display = 'none';
+                    return;
+                }
+                
+                if (foundStudents.length === 1) {
+                    selectStudentForPoints(foundStudents[0]);
+                    return;
+                }
+                
+                let listHtml = `<p style="margin-bottom:15px; color:#666;">تم العثور على ${foundStudents.length} طلاب، اختر الطالب المطلوب:</p>`;
+                listHtml += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
+                foundStudents.forEach(s => {
+                    listHtml += `
+                        <div onclick="selectStudentForPoints(${JSON.stringify(s).replace(/"/g, '&quot;')})" 
+                             style="background:#f8f9fa; padding:12px 15px; border-radius:10px; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"
+                             onmouseover="this.style.borderColor='var(--primary)'" 
+                             onmouseout="this.style.borderColor='transparent'">
+                            <strong>${escapeHTML(s.name)}</strong>
+                            <span style="color:#666; margin-right:10px; font-size:0.85rem;">كود: ${escapeHTML(s.shortId || 'بدون كود')}</span>
+                            <span style="color:#666; font-size:0.85rem;">| ${escapeHTML(s.grade || 'غير محدد')}</span>
+                            <span style="color:var(--gold); font-size:0.85rem; margin-right:10px;">⭐ ${s.points || 0} نقطة</span>
+                        </div>`;
+                });
+                listHtml += `</div>`;
+                
+                document.getElementById('pointsStudentInfo').innerHTML = listHtml;
+                document.getElementById('pointsStudentResult').style.display = 'block';
+                document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = 'none');
+                
+            } catch (error) {
+                console.error('Error searching student:', error);
+                showToast('❌ حدث خطأ أثناء البحث', 'error');
+            } finally {
+                stopProgress();
+            }
+        };
+
+        window.selectStudentForPoints = function(student) {
+            selectedStudentForPoints = student;
+            const currentPoints = student.points || 0;
+            document.getElementById('pointsStudentInfo').innerHTML = `
+                <div><strong>الاسم:</strong> ${escapeHTML(student.name)}</div>
+                <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(student.shortId || 'بدون كود')}</span></div>
+                <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(student.grade || 'غير محدد')}</span></div>
+                <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${currentPoints} ⭐</span></div>
+            `;
+            document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = '');
+            document.getElementById('pointsStudentResult').style.display = 'block';
+        };
+
+        window.addPointsToStudent = async function() {
+            if (!selectedStudentForPoints) {
+                showToast('❌ يرجى البحث عن طالب أولاً', 'error');
+                return;
+            }
+            
+            const pointsToAdd = parseInt(document.getElementById('pointsToAdd').value);
+            const reason = document.getElementById('pointsReason').value.trim() || 'إضافة نقاط';
+            
+            if (!pointsToAdd || pointsToAdd <= 0) {
+                showToast('❌ يرجى إدخال عدد نقاط صحيح', 'error');
+                return;
+            }
+            
+            try {
+                startProgress();
+                
+                const currentPoints = selectedStudentForPoints.points || 0;
+                const newPoints = currentPoints + pointsToAdd;
+                
+                await update(ref(db, `students/${selectedStudentForPoints.key}`), {
+                    points: newPoints
+                });
+                
+                await push(ref(db, 'points_history'), {
+                    studentId: selectedStudentForPoints.key,
+                    studentName: selectedStudentForPoints.name,
+                    studentShortId: selectedStudentForPoints.shortId,
+                    pointsAdded: pointsToAdd,
+                    previousPoints: currentPoints,
+                    newPoints: newPoints,
+                    reason: reason,
+                    addedBy: currentUser?.email || 'admin',
+                    timestamp: new Date().toISOString(),
+                    date: new Date().toLocaleString('ar-EG')
+                });
+                
+                showToast(`✅ تم إضافة ${pointsToAdd} نقطة بنجاح! النقاط الجديدة: ${newPoints}`, 'success');
+                
+                document.getElementById('pointsStudentInfo').innerHTML = `
+                    <div><strong>الاسم:</strong> ${escapeHTML(selectedStudentForPoints.name)}</div>
+                    <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(selectedStudentForPoints.shortId)}</span></div>
+                    <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(selectedStudentForPoints.grade || 'غير محدد')}</span></div>
+                    <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${newPoints} ⭐</span></div>
+                `;
+                
+                loadPointsHistory();
+                
+                document.getElementById('pointsToAdd').value = '';
+                document.getElementById('pointsReason').value = '';
+                
+                selectedStudentForPoints.points = newPoints;
+                
+            } catch (error) {
+                console.error('Error adding points:', error);
+                showToast('❌ حدث خطأ أثناء إضافة النقاط', 'error');
+            } finally {
+                stopProgress();
+            }
+        };
+
+        window.resetPointsForm = function() {
+            selectedStudentForPoints = null;
+            document.getElementById('pointsStudentSearch').value = '';
             document.getElementById('pointsStudentResult').style.display = 'none';
-            return;
+            document.getElementById('pointsToAdd').value = '';
+            document.getElementById('pointsReason').value = '';
+        };
+
+        async function loadPointsHistory() {
+            try {
+                const historySnap = await get(ref(db, 'points_history'));
+                const tbody = document.getElementById('pointsHistoryList');
+                
+                if (!historySnap.exists()) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="empty-state">لا يوجد سجل</td></tr>';
+                    return;
+                }
+                
+                let html = '';
+                const history = [];
+                
+                historySnap.forEach(record => {
+                    history.push(record.val());
+                });
+                
+                history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                
+                history.slice(0, 50).forEach(record => {
+                    html += `<tr>
+                        <td>${escapeHTML(record.studentName)}</td>
+                        <td><span class="student-id-display">${escapeHTML(record.studentShortId)}</span></td>
+                        <td><span style="color: var(--gold); font-weight: bold;">+${record.pointsAdded} ⭐</span></td>
+                        <td>${escapeHTML(record.reason)}</td>
+                        <td>${escapeHTML(record.date)}</td>
+                    </tr>`;
+                });
+                
+                tbody.innerHTML = html;
+                
+            } catch (error) {
+                console.error('Error loading points history:', error);
+            }
         }
-        
-        // لو طالب واحد بس اختاره تلقائياً
-        if (foundStudents.length === 1) {
-            selectStudentForPoints(foundStudents[0]);
-            return;
-        }
-        
-        // لو أكتر من طالب اعرض قايمة للاختيار
-        let listHtml = `<p style="margin-bottom:15px; color:#666;">تم العثور على ${foundStudents.length} طلاب، اختر الطالب المطلوب:</p>`;
-        listHtml += `<div style="display: flex; flex-direction: column; gap: 10px;">`;
-        foundStudents.forEach(s => {
-            listHtml += `
-                <div onclick="selectStudentForPoints(${JSON.stringify(s).replace(/"/g, '&quot;')})" 
-                     style="background:#f8f9fa; padding:12px 15px; border-radius:10px; cursor:pointer; border:2px solid transparent; transition:all 0.2s;"
-                     onmouseover="this.style.borderColor='var(--primary)'" 
-                     onmouseout="this.style.borderColor='transparent'">
-                    <strong>${escapeHTML(s.name)}</strong>
-                    <span style="color:#666; margin-right:10px; font-size:0.85rem;">كود: ${escapeHTML(s.shortId || 'بدون كود')}</span>
-                    <span style="color:#666; font-size:0.85rem;">| ${escapeHTML(s.grade || 'غير محدد')}</span>
-                    <span style="color:var(--gold); font-size:0.85rem; margin-right:10px;">⭐ ${s.points || 0} نقطة</span>
-                </div>`;
-        });
-        listHtml += `</div>`;
-        
-        document.getElementById('pointsStudentInfo').innerHTML = listHtml;
-        document.getElementById('pointsStudentResult').style.display = 'block';
-        // إخفاء حقول الإضافة لحد ما يختار طالب
-        document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = 'none');
-        
-    } catch (error) {
-        console.error('Error searching student:', error);
-        showToast('❌ حدث خطأ أثناء البحث', 'error');
-    } finally {
-        stopProgress();
-    }
-};
 
-// اختيار طالب من القايمة
-window.selectStudentForPoints = function(student) {
-    selectedStudentForPoints = student;
-    const currentPoints = student.points || 0;
-    document.getElementById('pointsStudentInfo').innerHTML = `
-        <div><strong>الاسم:</strong> ${escapeHTML(student.name)}</div>
-        <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(student.shortId || 'بدون كود')}</span></div>
-        <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(student.grade || 'غير محدد')}</span></div>
-        <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${currentPoints} ⭐</span></div>
-    `;
-    // إظهار حقول الإضافة
-    document.querySelectorAll('#pointsStudentResult .form-group, #pointsStudentResult div[style*="display: flex; gap"]').forEach(el => el.style.display = '');
-    document.getElementById('pointsStudentResult').style.display = 'block';
-};
-
-// إضافة النقاط للطالب
-window.addPointsToStudent = async function() {
-    if (!selectedStudentForPoints) {
-        showToast('❌ يرجى البحث عن طالب أولاً', 'error');
-        return;
-    }
-    
-    const pointsToAdd = parseInt(document.getElementById('pointsToAdd').value);
-    const reason = document.getElementById('pointsReason').value.trim() || 'إضافة نقاط';
-    
-    if (!pointsToAdd || pointsToAdd <= 0) {
-        showToast('❌ يرجى إدخال عدد نقاط صحيح', 'error');
-        return;
-    }
-    
-    try {
-        startProgress();
-        
-        const currentPoints = selectedStudentForPoints.points || 0;
-        const newPoints = currentPoints + pointsToAdd;
-        
-        // تحديث نقاط الطالب
-        await update(ref(db, `students/${selectedStudentForPoints.key}`), {
-            points: newPoints
+        document.querySelector('[onclick="showSection(\'pointsSection\', this)"]')?.addEventListener('click', function() {
+            setTimeout(loadPointsHistory, 200);
         });
-        
-        // تسجيل العملية في السجل
-        await push(ref(db, 'points_history'), {
-            studentId: selectedStudentForPoints.key,
-            studentName: selectedStudentForPoints.name,
-            studentShortId: selectedStudentForPoints.shortId,
-            pointsAdded: pointsToAdd,
-            previousPoints: currentPoints,
-            newPoints: newPoints,
-            reason: reason,
-            addedBy: currentUser?.email || 'admin',
-            timestamp: new Date().toISOString(),
-            date: new Date().toLocaleString('ar-EG')
-        });
-        
-        showToast(`✅ تم إضافة ${pointsToAdd} نقطة بنجاح! النقاط الجديدة: ${newPoints}`, 'success');
-        
-        // تحديث العرض
-        document.getElementById('pointsStudentInfo').innerHTML = `
-            <div><strong>الاسم:</strong> ${escapeHTML(selectedStudentForPoints.name)}</div>
-            <div><strong>كود الطالب:</strong> <span class="student-id-display">${escapeHTML(selectedStudentForPoints.shortId)}</span></div>
-            <div><strong>المرحلة:</strong> <span class="badge-grade">${escapeHTML(selectedStudentForPoints.grade || 'غير محدد')}</span></div>
-            <div><strong>النقاط الحالية:</strong> <span style="color: var(--gold); font-weight: bold; font-size: 1.2rem;">${newPoints} ⭐</span></div>
-        `;
-        
-        // تحديث السجل
-        loadPointsHistory();
-        
-        // تنظيف حقول الإدخال
-        document.getElementById('pointsToAdd').value = '';
-        document.getElementById('pointsReason').value = '';
-        
-        // تحديث البيانات المحلية
-        selectedStudentForPoints.points = newPoints;
-        
-    } catch (error) {
-        console.error('Error adding points:', error);
-        showToast('❌ حدث خطأ أثناء إضافة النقاط', 'error');
-    } finally {
-        stopProgress();
-    }
-};
-
-// إعادة تعيين نموذج النقاط
-window.resetPointsForm = function() {
-    selectedStudentForPoints = null;
-    document.getElementById('pointsStudentSearch').value = '';
-    document.getElementById('pointsStudentResult').style.display = 'none';
-    document.getElementById('pointsToAdd').value = '';
-    document.getElementById('pointsReason').value = '';
-};
-
-// تحميل سجل إضافة النقاط
-async function loadPointsHistory() {
-    try {
-        const historySnap = await get(ref(db, 'points_history'));
-        const tbody = document.getElementById('pointsHistoryList');
-        
-        if (!historySnap.exists()) {
-            tbody.innerHTML = '<tr><td colspan="5" class="empty-state">لا يوجد سجل</td></tr>';
-            return;
-        }
-        
-        let html = '';
-        const history = [];
-        
-        historySnap.forEach(record => {
-            history.push(record.val());
-        });
-        
-        // ترتيب حسب التاريخ (الأحدث أولاً)
-        history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-        
-        // عرض آخر 50 سجل
-        history.slice(0, 50).forEach(record => {
-            html += `<tr>
-                <td>${escapeHTML(record.studentName)}</td>
-                <td><span class="student-id-display">${escapeHTML(record.studentShortId)}</span></td>
-                <td><span style="color: var(--gold); font-weight: bold;">+${record.pointsAdded} ⭐</span></td>
-                <td>${escapeHTML(record.reason)}</td>
-                <td>${escapeHTML(record.date)}</td>
-            </tr>`;
-        });
-        
-        tbody.innerHTML = html;
-        
-    } catch (error) {
-        console.error('Error loading points history:', error);
-    }
-}
-
-// استدعاء تحميل السجل عند فتح القسم
-document.querySelector('[onclick="showSection(\'pointsSection\', this)"]')?.addEventListener('click', function() {
-    setTimeout(loadPointsHistory, 200);
-});
 
     </script>
 </body>
