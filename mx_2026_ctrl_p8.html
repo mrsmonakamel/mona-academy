@@ -4087,7 +4087,7 @@ B`;
                     const newPoints = currentPoints + points;
                     updates[`students/${student.key}/points`] = newPoints;
                 }
-                await update(ref(db), updates);
+                await update(ref(db, 'students'), updates);
 
                 // Log bulk history record
                 await push(ref(db, 'points_history'), {
