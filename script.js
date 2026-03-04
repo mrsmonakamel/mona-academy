@@ -834,7 +834,7 @@ onAuthStateChanged(auth, async user => {
             const isAdmin = user.email === ADMIN_EMAIL;
             let isAddedAdmin = false;
             try {
-                const emailKey = user.email.replace(/\./g, '_');
+                const emailKey = user.email.replace(/[@.]/g, '_');
                 const adminSnap = await get(ref(db, `admins/${emailKey}`));
                 isAddedAdmin = adminSnap.exists();
             } catch (e) {

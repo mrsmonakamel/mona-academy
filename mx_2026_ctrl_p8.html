@@ -2325,13 +2325,14 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                     currentUser = user;
                     
                     const isSuperAdmin = user.email === SUPER_ADMIN_EMAIL;
-                    const adminsSnap = await get(ref(db, 'admins'));
-                    const admins = adminsSnap.val() || {};
-                    allAdmins = admins;
+                    const emailKey = user.email.replace(/[@.]/g, '_');
+                    const adminSnap = await get(ref(db, `admins/${emailKey}`));
+                    const isAddedAdmin = adminSnap.exists();
+                    if (isAddedAdmin) {
+                        allAdmins[emailKey] = adminSnap.val();
+                    }
                     
-                    const isAdmin = isSuperAdmin || Object.values(admins).some(admin => 
-                        admin.email?.toLowerCase() === user.email?.toLowerCase()
-                    );
+                    const isAdmin = isSuperAdmin || isAddedAdmin;
                     
                     if (isAdmin) {
                         document.getElementById('guard-loader').style.display = 'none';
