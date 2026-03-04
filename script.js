@@ -1698,14 +1698,15 @@ window.submitQuiz = async function(folderId, quizId) {
         const folderTitleName = document.getElementById('folderTitleName');
         const courseName = folderTitleName ? folderTitleName.innerText : '';
         
-        // جلب الصف الدراسي مباشرة من قاعدة البيانات إذا لم يكن محفوظاً في المتغير العام
-        let studentGrade = currentStudentGrade;
-        if (!studentGrade) {
-            const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
-            if (studentSnap.exists()) {
-                studentGrade = studentSnap.val().grade || '';
-                currentStudentGrade = studentGrade; // تحديث المتغير العام
-            }
+        // جلب بيانات الطالب الكاملة من قاعدة البيانات
+        const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
+        let studentGrade = '';
+        let studentFullName = currentUser.displayName || '';
+        if (studentSnap.exists()) {
+            const studentData = studentSnap.val();
+            studentGrade = studentData.grade || '';
+            studentFullName = studentData.name || currentUser.displayName || '';
+            currentStudentGrade = studentGrade; // تحديث المتغير العام
         }
 
         await set(ref(db, `students/${currentUser.uid}/examResults/${quizId}`), {
@@ -1723,10 +1724,10 @@ window.submitQuiz = async function(folderId, quizId) {
         });
 
         await push(ref(db, 'quiz_results'), {
-            student: currentUser.displayName || '',
-            studentName: currentUser.displayName || '',
+            student: studentFullName,
+            studentName: studentFullName,
             studentId: myShortId,
-            studentGrade: studentGrade || '',
+            studentGrade: studentGrade,
             uid: currentUser.uid,
             quizId: quizId,
             quiz: quizData.name || '',
