@@ -3126,7 +3126,7 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             
             try {
                 startProgress();
-                const adminId = email.replace(/[.#$[\]]/g, '_');
+                const adminId = email.replace(/[@.#$[\]]/g, '_');
                 await set(ref(db, `admins/${adminId}`), { email, name });
                 
                 document.getElementById('newAdminEmail').value = '';
