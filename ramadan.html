@@ -660,7 +660,7 @@
         function loadRamadanAnswers(questionId, correctAnswer) {
             if (answersUnsubscribe) answersUnsubscribe();
 
-            const answersRef = ref(db, 'ramadan_answers'); // المسار في Firebase: ramadan_answers
+            const answersRef = ref(db, 'ramadan_leaderboard'); // القراءة من leaderboard فقط (اسم + صح/غلط)
             const container = document.getElementById('ramadanAnswersContainer');
             const listEl = document.getElementById('ramadanAnswersList');
 
@@ -745,17 +745,30 @@
             submitBtn.disabled = true;
             submitBtn.textContent = '⏳ جاري الإرسال...';
             try {
+                const dateStr = new Date().toLocaleString('ar-EG');
+
+                // الكتابة الكاملة في ramadan_answers (الأدمن بس يشوفها)
                 await push(ref(db, 'ramadan_answers'), {
                     questionId,
                     day: parseInt(day),
                     name,
                     studentId,
-                    answer, // الإجابة الأصلية كما أدخلها المستخدم
+                    answer,
                     surah,
                     aya: parseInt(aya),
                     isCorrect,
-                    date: new Date().toLocaleString('ar-EG'), // تاريخ محلي للعرض
-                    timestamp: serverTimestamp() // وقت الخادم
+                    date: dateStr,
+                    timestamp: serverTimestamp()
+                });
+
+                // الكتابة في ramadan_leaderboard (الكل يشوفها - اسم + صح/غلط بس)
+                await push(ref(db, 'ramadan_leaderboard'), {
+                    questionId,
+                    day: parseInt(day),
+                    name,
+                    isCorrect,
+                    date: dateStr,
+                    timestamp: serverTimestamp()
                 });
 
                 // إعادة تعيين الحقول بعد الإرسال
