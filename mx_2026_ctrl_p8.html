@@ -3844,7 +3844,24 @@ B`;
             
             const questionsObj = {};
             questions.forEach((q, i) => {
-                questionsObj[`q${i}`] = q;
+                if (q.type === 'mcq') {
+                    questionsObj[`q${i}`] = {
+                        text: q.text,
+                        a: q.options.a || '',
+                        b: q.options.b || '',
+                        c: q.options.c || '',
+                        d: q.options.d || '',
+                        correct: q.correctAnswer
+                    };
+                } else {
+                    // صح أو خطأ
+                    questionsObj[`q${i}`] = {
+                        text: q.text,
+                        a: 'صح',
+                        b: 'خطأ',
+                        correct: q.correctAnswer === 'true' ? 'a' : 'b'
+                    };
+                }
             });
             
             const examData = {
