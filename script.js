@@ -1712,6 +1712,17 @@ window.submitQuiz = async function(folderId, quizId) {
         if (studentSnap.exists()) {
             const studentData = studentSnap.val();
             studentGrade = studentData.grade || '';
+
+            // ✅ إذا كان الصف فارغاً، حاول استخراجه من المرحلة
+            if (!studentGrade && studentData.level) {
+                const gradeMap = {
+                    'primary': 'الابتدائية',
+                    'middle': 'الإعدادية',
+                    'secondary': 'الثانوية'
+                };
+                studentGrade = gradeMap[studentData.level] || '';
+            }
+
             studentFullName = studentData.name || currentUser.displayName || '';
             currentStudentGrade = studentGrade; // تحديث المتغير العام
         }

@@ -617,11 +617,20 @@
         function waitForUserAndLoad(retries = 100) {
             if (window.currentUser) {
                 setTimeout(() => {
+                    // ✅ التحقق من وجود الدالة قبل استدعائها مع try-catch
                     if (typeof window.loadProgressVisuals === 'function') {
-                        window.loadProgressVisuals();
+                        try {
+                            window.loadProgressVisuals();
+                        } catch (e) {
+                            console.warn('loadProgressVisuals error:', e);
+                        }
                     }
                     if (typeof window.loadUserBadges === 'function') {
-                        window.loadUserBadges(window.currentUser.uid);
+                        try {
+                            window.loadUserBadges(window.currentUser.uid);
+                        } catch (e) {
+                            console.warn('loadUserBadges error:', e);
+                        }
                     }
                 }, 300);
             } else if (retries > 0) {

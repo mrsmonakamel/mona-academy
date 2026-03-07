@@ -313,7 +313,10 @@ window.checkExamBadges = async function(userId) {
         let highScoreCount = 0;
         if (studentData.examResults) {
             Object.values(studentData.examResults).forEach(exam => {
-                if (exam.score === exam.total) perfectCount++;
+                // ✅ التحقق من وجود total و score قبل المقارنة
+                if (exam.score === exam.total && exam.total > 0 && exam.score > 0) {
+                    perfectCount++;
+                }
                 if (exam.percentage >= 90) highScoreCount++;
             });
         }

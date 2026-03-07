@@ -713,9 +713,12 @@
             const aya = document.getElementById('ramadanAyaInput').value;
 
             // التحقق من الحقول
-            if (!name) { showToast('❌ يرجى إدخال الاسم', 'error'); return; }
+            if (!name || name.length < 3) { showToast('❌ يرجى إدخال الاسم الثلاثي (3 أحرف على الأقل)', 'error'); return; }
             if (!studentId) { showToast('❌ يرجى إدخال كود الطالب', 'error'); return; }
             if (!/^\d{10}$/.test(studentId)) { showToast('❌ كود الطالب يجب أن يكون 10 أرقام فقط', 'error'); return; }
+            // ✅ التحقق من أن الاسم يحتوي على 3 كلمات على الأقل
+            const nameWords = name.trim().split(/\s+/).filter(w => w.length > 0);
+            if (nameWords.length < 3) { showToast('❌ يرجى إدخال الاسم الثلاثي كاملاً', 'error'); return; }
             if (!surah || !aya || aya.trim() === '') { showToast('❌ يرجى اختيار السورة ورقم الآية', 'error'); return; }
             if (isNaN(parseInt(aya)) || parseInt(aya) <= 0) { showToast('❌ رقم الآية يجب أن يكون أكبر من صفر', 'error'); return; }
 
