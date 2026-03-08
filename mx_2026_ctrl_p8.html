@@ -3232,7 +3232,7 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 </div>
                 
                 ${isMcq ? `
-                <select class="q-correct reg-input" style="margin-top: 15px;">
+                <select class="q-correct-mcq reg-input" style="margin-top: 15px;">
                     <option value="a" ${questionData?.correct === 'a' ? 'selected' : ''}>الإجابة: A</option>
                     <option value="b" ${questionData?.correct === 'b' ? 'selected' : ''}>الإجابة: B</option>
                     <option value="c" ${questionData?.correct === 'c' ? 'selected' : ''}>الإجابة: C</option>
@@ -3252,9 +3252,27 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             if (select.value === 'mcq') {
                 mcqDiv.style.display = 'grid';
                 tfDiv.style.display = 'none';
+                // أضف select الإجابة للـ MCQ لو مش موجود
+                if (!card.querySelector('.q-correct-mcq')) {
+                    const mcqCorrect = document.createElement('select');
+                    mcqCorrect.className = 'q-correct-mcq reg-input';
+                    mcqCorrect.style.marginTop = '15px';
+                    mcqCorrect.innerHTML = `
+                        <option value="a">الإجابة: A</option>
+                        <option value="b">الإجابة: B</option>
+                        <option value="c">الإجابة: C</option>
+                        <option value="d">الإجابة: D</option>
+                    `;
+                    card.appendChild(mcqCorrect);
+                } else {
+                    card.querySelector('.q-correct-mcq').style.display = '';
+                }
             } else {
                 mcqDiv.style.display = 'none';
                 tfDiv.style.display = 'block';
+                // اخفي الـ MCQ correct select لو موجود
+                const mcqCorrect = card.querySelector('.q-correct-mcq');
+                if (mcqCorrect) mcqCorrect.style.display = 'none';
             }
         };
 
@@ -3280,8 +3298,10 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                 const qText = card.querySelector('.q-text')?.value.trim();
                 if (!qText) return;
                 
-                const correct = card.querySelector('.q-correct')?.value;
                 const isMcq = card.querySelector('.q-type')?.value === 'mcq';
+                const correct = isMcq
+                    ? card.querySelector('.q-correct-mcq')?.value
+                    : card.querySelector('.q-correct')?.value;
                 
                 if (isMcq) {
                     const oA = card.querySelector('.oA')?.value.trim() || '';
@@ -3356,6 +3376,11 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             const courseId = document.getElementById('editExamCourseId')?.value;
             const examId = document.getElementById('editExamId')?.value;
             const name = document.getElementById('editExamName')?.value.trim();
+            
+            if (!courseId || !examId) {
+                showToast('❌ خطأ: بيانات الامتحان ناقصة، أغلق وافتح من جديد', 'error');
+                return;
+            }
             
             if (!name) {
                 showToast('أدخل اسم الامتحان', 'error');
