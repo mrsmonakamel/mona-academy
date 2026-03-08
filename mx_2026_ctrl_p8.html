@@ -2077,7 +2077,7 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
             
             <div class="card" style="background: linear-gradient(145deg, #f8f9fa, #ffffff); margin-bottom: 25px;">
                 <label style="font-weight: bold;">اسم الامتحان:</label>
-                <input type="text" id="editExamName" style="margin-bottom: 15px;">
+                <input type="text" id="editExamName" class="reg-input" style="margin-bottom: 15px;">
             </div>
             
             <div style="display: flex; justify-content: space-between; align-items: center; margin: 20px 0; flex-wrap: wrap; gap: 10px;">
@@ -2824,13 +2824,13 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                                 <span class="badge-grade" style="margin-right: 10px;">${qCount} سؤال</span>
                             </div>
                             <div class="item-actions">
-                                <button class="btn-view btn-icon" onclick='previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="معاينة">
+                                <button class="btn-view btn-icon" onclick='previewExamFromList("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c').replace(/'/g, '\\u0027')})' title="معاينة">
                                     <i class="fas fa-eye"></i>
                                 </button>
-                                <button class="btn-edit btn-icon" onclick='openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c')})' title="تعديل">
+                                <button class="btn-edit btn-icon" onclick='openEditExamModal("${id}", "${q.key}", ${JSON.stringify(qData).replace(/</g, '\\u003c').replace(/'/g, '\\u0027')})' title="تعديل">
                                     <i class="fas fa-edit"></i>
                                 </button>
-                                <button class="btn-delete btn-icon" onclick="delData('quizzes/${id}/${q.key}')" title="حذف">
+                                <button class="btn-delete btn-icon" onclick="deleteExamFromList('${id}', '${q.key}')" title="حذف">
                                     <i class="fas fa-trash"></i>
                                 </button>
                             </div>
@@ -3589,6 +3589,22 @@ True" style="font-family: monospace; line-height: 1.8;"></textarea>
                     .then(() => showToast('✅ تم الحذف'))
                     .catch(err => showToast('❌ ' + err.message, 'error'))
                     .finally(stopProgress);
+            }
+        };
+
+        window.deleteExamFromList = async function(courseId, examId) {
+            if (!confirm('هل أنت متأكد من حذف الامتحان؟')) return;
+            try {
+                startProgress();
+                await remove(ref(db, `quizzes/${courseId}/${examId}`));
+                showToast('✅ تم حذف الامتحان');
+                // تحديث القائمة تلقائياً
+                const folderSnap = await get(ref(db, `folders/${courseId}`));
+                openEditModal(courseId, folderSnap.val() || {});
+            } catch (err) {
+                showToast('❌ ' + err.message, 'error');
+            } finally {
+                stopProgress();
             }
         };
 
