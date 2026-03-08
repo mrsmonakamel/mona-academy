@@ -186,19 +186,13 @@ setInterval(clearExpiredCache, 60000);
 // ================ PHONE VALIDATION ================
 function validatePhoneNumber(phone, countryCode = '') {
     if (!phone) return false;
-    // تنظيف الرقم من المسافات والشرطات
     let cleanPhone = phone.replace(/[\s\-]/g, '');
-    // إزالة الصفر الأول إذا كان يبدأ بصفر (مع كود الدولة)
     if (countryCode && cleanPhone.startsWith('0')) {
         cleanPhone = cleanPhone.substring(1);
     }
-    // التأكد أن الرقم يتكون من أرقام فقط
     if (!/^\d+$/.test(cleanPhone)) return false;
-    // التحقق من الطول الكلي مع كود الدولة
     const fullNumber = countryCode + cleanPhone;
-    // كود الدولة + 8-15 رقم
     const phoneRegex = /^\+[0-9]{9,16}$/;
-    // التحقق من عدم تكرار الأرقام
     const isRepeated = /^(.)\1{7,}$/.test(cleanPhone);
     
     return phoneRegex.test(fullNumber) && !isRepeated;
@@ -333,8 +327,6 @@ async function isEmailExists(email) {
         });
         return exists;
     } catch (error) {
-        // لو مفيش permission لقراءة كل الطلاب، نفترض الإيميل مش موجود
-        // Firebase Auth هتمنع التكرار تلقائياً
         console.warn('isEmailExists: permission denied, skipping check');
         return false;
     }
@@ -354,7 +346,6 @@ async function isUsernameExists(username) {
         });
         return exists;
     } catch (error) {
-        // لو مفيش permission، نتحقق من node مخصص للـ usernames
         try {
             const snap = await get(ref(db, `usernames/${username.toLowerCase()}`));
             return snap.exists();
@@ -367,25 +358,19 @@ async function isUsernameExists(username) {
 
 // ================ دالة توليد كود طالب فريد ================
 async function generateUniqueStudentId() {
-    // توليد كود عشوائي 10 أرقام بدون الحاجة لقراءة كل الطلاب
-    // احتمال التكرار ضئيل جداً (1 من 9 مليار)
     const MAX_ATTEMPTS = 10;
     for (let i = 0; i < MAX_ATTEMPTS; i++) {
         const newId = Math.floor(1000000000 + Math.random() * 9000000000).toString();
-        // التحقق فقط من هذا الكود المحدد بدل قراءة كل الطلاب
         try {
             const snap = await get(ref(db, `studentIds/${newId}`));
             if (!snap.exists()) {
-                // حجز الكود فوراً في node منفصل
                 await set(ref(db, `studentIds/${newId}`), true);
                 return newId;
             }
         } catch (e) {
-            // لو فشل التحقق (permission) ارجع الكود مباشرة - احتمال التكرار ضئيل جداً
             return newId;
         }
     }
-    // fallback نهائي
     return Date.now().toString().slice(-10);
 }
 
@@ -585,7 +570,6 @@ window.handleRegisterUsername = async function() {
             createdAt: new Date().toLocaleString('ar-EG')
         });
         
-        // حفظ اليوزرنيم في node منفصل للتحقق السريع
         await set(ref(db, `usernames/${username.toLowerCase()}`), res.user.uid);
         
         console.log('✅ تم التسجيل بنجاح!');
@@ -743,7 +727,6 @@ window.loginUsernameSubmit = async function(e) {
     window.startProgress();
     
     try {
-        // البحث عن اليوزرنيم عبر node المخصص بدلاً من قراءة كل الطلاب (أسرع وأكثر أماناً)
         const usernameSnap = await get(ref(db, `usernames/${username}`));
         
         if (!usernameSnap.exists()) {
@@ -758,7 +741,6 @@ window.loginUsernameSubmit = async function(e) {
             return;
         }
         
-        // جلب بيانات الطالب بـ uid المحدد فقط
         const userSnap = await get(ref(db, `students/${foundUid}`));
         if (!userSnap.exists()) {
             window.showToast('❌ اسم المستخدم غير موجود', 'error');
@@ -884,13 +866,9 @@ onAuthStateChanged(auth, async user => {
             window.loadFolders();
             await window.loadPerfectScores();
             
-            // ========== متابعة المشاهدة ==========
             await window.loadContinueWatching();
             
-            // ========== البادجز ==========
-            // شارة الترحيب + حفظ سجل الدخول للشارات
             if (typeof window.checkLoginBadges === 'function') {
-                // حفظ تاريخ الدخول لحساب الـ streak
                 try {
                     const today = new Date().toISOString().split('T')[0];
                     const streakRef = ref(db, `students/${user.uid}/loginStreak`);
@@ -904,17 +882,14 @@ onAuthStateChanged(auth, async user => {
                         if (lastLogin === today) {
                             // نفس اليوم - مش بيتعد
                         } else if (lastLogin === yesterday) {
-                            // يوم متتالي
                             await set(streakRef, {
                                 current: (streakData.current || 0) + 1,
                                 lastLogin: today
                             });
                         } else {
-                            // انقطع الـ streak
                             await set(streakRef, { current: 1, lastLogin: today });
                         }
                     } else {
-                        // أول دخول
                         await set(streakRef, { current: 1, lastLogin: today });
                     }
                 } catch (e) {
@@ -1004,7 +979,6 @@ function updateMenuItems(isLoggedIn) {
 // ================ PERFECT SCORES ================
 window.loadPerfectScores = async function() {
     try {
-        // نجيب نتائج الامتحانات (دلوقتي مسموح للكل)
         const resultsSnap = await get(child(dbRef, 'quiz_results'));
         
         const perfectScoresSection = document.getElementById('perfectScoresSection');
@@ -1023,22 +997,19 @@ window.loadPerfectScores = async function() {
         resultsSnap.forEach(result => {
             const res = result.val();
             
-            // فقط الامتحانات اللي فيها الدرجة كاملة
             if (res.score === res.total && res.score > 0) {
-                
                 perfectScores.push({
                     studentName: res.studentName || res.student || 'طالب',
                     examName: res.quiz || 'امتحان',
                     grade: res.studentGrade || 'غير محدد'
-                    // 🔥 مش بنحط score هنا عشان محدش يشوفه
                 });
             }
         });
 
-        // عرض البيانات
+        // ✅ عرض آخر 10 درجات نهائية فقط
         if (perfectScores.length > 0) {
             let html = '';
-            perfectScores.forEach(ps => {
+            perfectScores.slice(-10).forEach(ps => {
                 html += `<div class="perfect-card">
                     <div class="perfect-name">
                         <i class="fas fa-user-graduate"></i>
@@ -1184,7 +1155,6 @@ window.openContent = async function(folderId, folderName) {
         currentFolderId = folderId;
         currentFolderName = folderName;
         
-        // الأدمن يدخل على الكورس على طول بدون اشتراك
         if (isAdminUser) {
             await window.loadCourseContent(folderId, folderName, true);
             return;
@@ -1273,8 +1243,6 @@ window.confirmSubscription = async function() {
         
         await set(ref(db, `students/${currentUser.uid}/subscriptions/${currentFolderId}`), subscriptionData);
         
-        // ========== البادجز ==========
-        // التحقق من شارات الاشتراكات
         if (typeof window.checkSubscriptionBadges === 'function') {
             await window.checkSubscriptionBadges(currentUser.uid);
         }
@@ -1492,7 +1460,6 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
     if (grid.children.length === 0) {
         grid.innerHTML = "<p style='text-align:center; padding:40px; color:#999;'>لا يوجد محتوى في هذا الكورس بعد</p>";
     }
-    // عرض رابط واتساب إذا كان المستخدم مشتركاً
     if (hasAccess && typeof window.displayWhatsappGroup === 'function') {
         window.displayWhatsappGroup(folderId);
     } else {
@@ -1500,7 +1467,6 @@ window.loadCourseContent = async function(folderId, folderName, hasAccess) {
         if (container) container.innerHTML = '';
     }
 
-    // عرض الواجبات إذا كان المستخدم مشتركاً
     if (hasAccess && typeof window.loadAssignments === 'function') {
         window.loadAssignments(folderId, true);
     } else {
@@ -1533,8 +1499,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
             watchedAt: new Date().toLocaleString('ar-EG')
         });
         
-        // ========== البادجز ==========
-        // التحقق من شارات المشاهدة
         if (typeof window.checkWatchingBadges === 'function') {
             await window.checkWatchingBadges(currentUser.uid);
         }
@@ -1546,7 +1510,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
         if (quizTitle) quizTitle.innerText = title;
         if (quizOverlay) quizOverlay.style.display = 'block';
         if (quizContainer) {
-            // تنظيف أي tracking قديم قبل البدء
             if (window._videoProgressInterval) {
                 clearInterval(window._videoProgressInterval);
                 window._videoProgressInterval = null;
@@ -1556,7 +1519,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
                 window._videoMessageHandler = null;
             }
             
-            // أضف iframe مع إمكانية تتبع الوقت
             quizContainer.innerHTML = `
                 <div style="position: relative; padding-bottom: 56.25%; height: 0;">
                     <iframe 
@@ -1573,7 +1535,6 @@ window.openVideo = async function(url, title, videoId, folderId) {
                 </div>
             `;
             
-            // أضف tracking للوقت مع حفظ المرجع لإمكانية الإيقاف لاحقاً
             window._videoProgressInterval = setInterval(() => {
                 const iframe = document.getElementById('youtubePlayer');
                 if (iframe && iframe.contentWindow) {
@@ -1582,9 +1543,8 @@ window.openVideo = async function(url, title, videoId, folderId) {
                         func: 'getCurrentTime'
                     }), 'https://www.youtube.com');
                 }
-            }, 10000); // كل 10 ثواني
+            }, 10000);
             
-            // استقبال الوقت الحالي من اليوتيوب مع حفظ المرجع
             window._videoMessageHandler = (event) => {
                 try {
                     const data = JSON.parse(event.data);
@@ -1641,7 +1601,6 @@ window.startQuiz = async function(folderId, quizId) {
         
         if (!quizContainer) return;
         
-        // ========== TIMER SETUP ==========
         const timeLimitMinutes = quizData.timeLimitMinutes;
         let timerHtml = '';
         if (timeLimitMinutes && timeLimitMinutes > 0) {
@@ -1683,22 +1642,18 @@ window.startQuiz = async function(folderId, quizId) {
         html += `<button type="button" onclick="window.submitQuiz('${folderId}', '${quizId}')" style="background:var(--main); color:white; border:none; padding:15px; border-radius:15px; cursor:pointer; font-weight:bold; width:100%; font-size:1.1rem; font-family:'Cairo';">تسليم الإجابات</button>`;
         quizContainer.innerHTML = html;
         
-        // ========== START TIMER ==========
         if (timeLimitMinutes && timeLimitMinutes > 0) {
             const timerKey = `quizStartTime_${currentUser.uid}_${quizId}`;
             const totalSeconds = timeLimitMinutes * 60;
             
-            // جلب أو تسجيل وقت البداية
             let startTime = parseInt(localStorage.getItem(timerKey) || '0');
             if (!startTime) {
                 startTime = Date.now();
                 localStorage.setItem(timerKey, startTime);
             }
             
-            // حساب الوقت المتبقي بناءً على وقت البداية الفعلي
             let secondsLeft = totalSeconds - Math.floor((Date.now() - startTime) / 1000);
             
-            // لو الوقت خلص وهو بره الامتحان
             if (secondsLeft <= 0) {
                 localStorage.removeItem(timerKey);
                 window.showToast('⏰ انتهى وقت الامتحان! سيتم تسليم إجاباتك تلقائياً', 'warning', 3000);
@@ -1706,7 +1661,6 @@ window.startQuiz = async function(folderId, quizId) {
                 return;
             }
             
-            // حفظ الـ key عشان نمسحه بعد التسليم
             window._quizTimerKey = timerKey;
             
             function updateTimerDisplay() {
@@ -1730,7 +1684,6 @@ window.startQuiz = async function(folderId, quizId) {
             updateTimerDisplay();
             
             window._quizTimer = setInterval(() => {
-                // إعادة حساب من المصدر الحقيقي كل ثانية (دقة أعلى)
                 secondsLeft = totalSeconds - Math.floor((Date.now() - startTime) / 1000);
                 updateTimerDisplay();
                 if (secondsLeft <= 0) {
@@ -1792,7 +1745,6 @@ window.submitQuiz = async function(folderId, quizId) {
         const folderTitleName = document.getElementById('folderTitleName');
         const courseName = folderTitleName ? folderTitleName.innerText : '';
         
-        // جلب بيانات الطالب الكاملة من قاعدة البيانات
         const studentSnap = await get(child(dbRef, `students/${currentUser.uid}`));
         let studentGrade = '';
         let studentFullName = currentUser.displayName || '';
@@ -1800,7 +1752,6 @@ window.submitQuiz = async function(folderId, quizId) {
             const studentData = studentSnap.val();
             studentGrade = studentData.grade || '';
 
-            // ✅ إذا كان الصف فارغاً، حاول استخراجه من المرحلة
             if (!studentGrade && studentData.level) {
                 const gradeMap = {
                     'primary': 'الابتدائية',
@@ -1811,7 +1762,7 @@ window.submitQuiz = async function(folderId, quizId) {
             }
 
             studentFullName = studentData.name || currentUser.displayName || '';
-            currentStudentGrade = studentGrade; // تحديث المتغير العام
+            currentStudentGrade = studentGrade;
         }
 
         await set(ref(db, `students/${currentUser.uid}/examResults/${quizId}`), {
@@ -1842,14 +1793,11 @@ window.submitQuiz = async function(folderId, quizId) {
             time: new Date().toLocaleString('ar-EG')
         });
 
-        // ========== البادجز ==========
-        // التحقق من شارات الامتحانات
         if (typeof window.checkExamBadges === 'function') {
             await window.checkExamBadges(currentUser.uid);
         }
 
         await window.loadPerfectScores();
-        // مسح وقت البداية من localStorage بعد التسليم الناجح
         if (window._quizTimerKey) {
             localStorage.removeItem(window._quizTimerKey);
             window._quizTimerKey = null;
@@ -1961,13 +1909,11 @@ window.closeQuiz = function() {
     const quizOverlay = document.getElementById('quizOverlay');
     const quizContainer = document.getElementById('quizContainer');
     
-    // تنظيف مؤقت الامتحان
     if (window._quizTimer) {
         clearInterval(window._quizTimer);
         window._quizTimer = null;
     }
     
-    // تنظيف موارد تتبع الفيديو لتفادي memory leaks
     if (window._videoProgressInterval) {
         clearInterval(window._videoProgressInterval);
         window._videoProgressInterval = null;
@@ -2099,8 +2045,6 @@ window.sendStuReview = async function() {
             stuText.value = "";
             window.showToast('✅ شكراً لك! تم إرسال تقييمك.', 'success');
             
-            // ========== البادجز ==========
-            // شارة إضافة تقييم
             if (typeof window.checkAndAwardBadge === 'function') {
                 await window.checkAndAwardBadge(currentUser.uid, 'ADD_REVIEW');
             }
@@ -2392,14 +2336,12 @@ document.addEventListener('DOMContentLoaded', () => {
     window.loadReviews();
     window.loadPerfectScores();
     
-    // ✅ تم التصحيح - استخدام الدالة الصحيحة
     const quizResultsRef = ref(db, 'quiz_results');
     onValue(quizResultsRef, () => {
         window.loadPerfectScores();
     });
 });
 
-// تنظيف المستمعين عند إغلاق الصفحة
 window.addEventListener('beforeunload', () => {
     window.cleanupListeners();
 });
@@ -2418,10 +2360,8 @@ window.saveWatchingProgress = async function(videoId, folderId, videoTitle, curr
     if (!currentUser) return;
     
     try {
-        // احسب النسبة المئوية للمشاهدة
         const progressPercent = Math.round((currentTime / duration) * 100);
         
-        // لو قرب يخلص (أكثر من 90%) متحفظش التقدم عشان يعتبره خلص
         if (progressPercent > 90) return;
         
         const progressData = {
@@ -2438,7 +2378,6 @@ window.saveWatchingProgress = async function(videoId, folderId, videoTitle, curr
         
         await set(ref(db, `students/${currentUser.uid}/watchingProgress/${folderId}_${videoId}`), progressData);
         
-        // كمان سجل في history للطالب
         await push(ref(db, `students/${currentUser.uid}/watchingHistory`), {
             ...progressData,
             watchedAt: new Date().toLocaleString('ar-EG')
@@ -2449,7 +2388,6 @@ window.saveWatchingProgress = async function(videoId, folderId, videoTitle, curr
     }
 };
 
-// تحميل فيديوهات متابعة المشاهدة للطالب
 window.loadContinueWatching = async function() {
     if (!currentUser) return;
     
@@ -2468,7 +2406,6 @@ window.loadContinueWatching = async function() {
             <div id="continueGrid" class="continue-grid"></div>
         `;
         
-        // حط القسم تحت الهيرو مباشرة
         const hero = document.querySelector('.hero');
         if (hero && !document.getElementById('continueWatchingSection')) {
             hero.insertAdjacentElement('afterend', continueSection);
@@ -2487,11 +2424,9 @@ window.loadContinueWatching = async function() {
             });
         });
         
-        // رتب حسب آخر مشاهدة
         progresses.sort((a, b) => new Date(b.lastWatchedAt) - new Date(a.lastWatchedAt));
         
         progresses.slice(0, 6).forEach(prog => {
-            // جلب صورة الفيديو من يوتيوب
             const videoId = prog.videoId;
             const thumbUrl = `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`;
             
@@ -2520,16 +2455,13 @@ window.loadContinueWatching = async function() {
     }
 };
 
-// متابعة المشاهدة من حيث توقفت
 window.continueWatching = async function(courseId, videoId, currentTime) {
     if (!currentUser) { window.openLogin(); return; }
     
     try {
-        // جلب بيانات الكورس للحصول على الاسم
         const folderSnap = await get(child(dbRef, `folders/${courseId}`));
         const courseName = folderSnap.exists() ? (folderSnap.val().name || '') : '';
         
-        // جلب بيانات الفيديو
         const videoSnap = await get(child(dbRef, `folders/${courseId}/videos/${videoId}`));
         if (!videoSnap.exists()) {
             window.showToast('❌ الفيديو غير موجود', 'error');
@@ -2537,10 +2469,8 @@ window.continueWatching = async function(courseId, videoId, currentTime) {
         }
         const videoData = videoSnap.val();
         
-        // افتح الفيديو مباشرة
         await window.openVideo(videoData.url, videoData.title, videoId, courseId);
         
-        // بعد تحميل الـ iframe، انتقل للوقت المحدد
         setTimeout(() => {
             const iframe = document.getElementById('youtubePlayer');
             if (iframe) {
@@ -2558,35 +2488,31 @@ window.continueWatching = async function(courseId, videoId, currentTime) {
 };
 
 // ================ DARK MODE ================
-
-// التحقق من الوضع المخزن عند تحميل الصفحة
 function initDarkMode() {
-    const savedTheme = localStorage.getItem('theme') || 'dark'; // الوضع الافتراضي هو dark (style.css)
+    const savedTheme = localStorage.getItem('theme') || 'dark';
     const themeCss = document.getElementById('theme-css');
     const darkModeIcon = document.getElementById('darkModeIcon');
 
     if (savedTheme === 'light') {
-        themeCss.href = 'style-light.css?v=2.0'; // الوضع النهاري
+        themeCss.href = 'style-light.css?v=2.0';
         if (darkModeIcon) {
             darkModeIcon.classList.remove('fa-sun');
-            darkModeIcon.classList.add('fa-moon'); // أيقونة القمر تعني أن الضغط سينقل للنهاري
+            darkModeIcon.classList.add('fa-moon');
         }
     } else {
-        themeCss.href = 'style.css?v=2.0'; // الوضع الليلي
+        themeCss.href = 'style.css?v=2.0';
         if (darkModeIcon) {
             darkModeIcon.classList.remove('fa-moon');
-            darkModeIcon.classList.add('fa-sun'); // أيقونة الشمس تعني أن الضغط سينقل لليلي
+            darkModeIcon.classList.add('fa-sun');
         }
     }
 }
 
-// تبديل الوضع الليلي
 window.toggleDarkMode = function() {
     const themeCss = document.getElementById('theme-css');
     const darkModeIcon = document.getElementById('darkModeIcon');
 
     if (!themeCss.href.includes('style-light.css')) {
-        // التبديل إلى الوضع النهاري
         themeCss.href = 'style-light.css?v=2.0';
         localStorage.setItem('theme', 'light');
         if (darkModeIcon) {
@@ -2595,7 +2521,6 @@ window.toggleDarkMode = function() {
         }
         window.showToast('🌞 تم تفعيل الوضع النهاري', 'success');
     } else {
-        // التبديل إلى الوضع الليلي (style.css)
         themeCss.href = 'style.css?v=2.0';
         localStorage.setItem('theme', 'dark');
         if (darkModeIcon) {
@@ -2606,22 +2531,14 @@ window.toggleDarkMode = function() {
     }
 };
 
-// استدعاء الدالة عند تحميل الصفحة
 document.addEventListener('DOMContentLoaded', function() {
     initDarkMode();
 });
 
-
-
-// ================ UTILITY FUNCTIONS ================
-// دالة لتجنب XSS - تحويل الأحرف الخاصة (تم تعريفها سابقاً في السطر 104)
-
 // ================ PROFILE MENU ITEM ================
-// الانتقال لصفحة الملف الشخصي
 window.profileMenuItem = function() {
     window.location.href = 'profile.html';
 };
 
 // ================ FIREBASE INIT EVENT ================
-// إرسال حدث لإعلام الملفات الأخرى أن Firebase جاهز
 window.dispatchEvent(new CustomEvent('firebaseReady', { detail: { db, auth, dbRef } }));
