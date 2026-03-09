@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة إدارة مس منى</title>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+:root{
+  --primary:#6C3FC5;--primary-dark:#4A2A8A;--primary-light:#9B6EF0;
+  --accent:#FF6B35;--accent2:#FFD93D;--success:#2ECC71;--danger:#E74C3C;
+  --dark:#0D0D1A;--dark2:#13132A;--card-bg:#1A1A35;--card-border:rgba(108,63,197,0.3);
+  --text:#E8E8F5;--text-muted:#9898C0;--white:#fff;
+  --gradient:linear-gradient(135deg,#6C3FC5 0%,#FF6B35 100%);
+  --sidebar-w:260px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Cairo',sans-serif;background:var(--dark);color:var(--text);direction:rtl;overflow-x:hidden}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--dark2)}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
+
+/* LOGIN */
+#loginScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--dark);background-image:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(108,63,197,.15) 0%,transparent 70%)}
+.login-box{background:var(--card-bg);border:1px solid var(--card-border);border-radius:24px;padding:50px 40px;text-align:center;max-width:400px;width:90%}
+.login-box h1{font-size:1.6rem;font-weight:900;margin-bottom:8px}
+.login-box p{color:var(--text-muted);font-size:.9rem;margin-bottom:30px}
+.btn-google-login{width:100%;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:var(--text);font-family:'Cairo',sans-serif;font-weight:700;font-size:1rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:10px}
+.btn-google-login:hover{background:rgba(255,255,255,.12);transform:translateY(-2px)}
+.login-err{color:#E74C3C;font-size:.85rem;margin-top:14px;display:none}
+
+/* LAYOUT */
+#adminApp{display:none;min-height:100vh}
+.sidebar{position:fixed;right:0;top:0;width:var(--sidebar-w);height:100vh;background:var(--dark2);border-left:1px solid var(--card-border);display:flex;flex-direction:column;z-index:100;transition:transform .3s}
+.sidebar-logo{padding:20px;border-bottom:1px solid var(--card-border);display:flex;align-items:center;gap:10px}
+.sidebar-logo .ico{width:38px;height:38px;background:var(--gradient);border-radius:10px;display:flex;align-items:center;justify-content:center}
+.sidebar-logo span{font-weight:900;font-size:1rem}
+.sidebar-nav{flex:1;padding:14px 10px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.nav-item{padding:11px 14px;border-radius:10px;cursor:pointer;display:flex;align-items:center;gap:10px;font-weight:700;font-size:.88rem;color:var(--text-muted);transition:all .3s;border:none;background:none;font-family:'Cairo',sans-serif;width:100%;text-align:right}
+.nav-item:hover,.nav-item.active{background:rgba(108,63,197,.18);color:var(--text)}
+.nav-item.active{color:var(--primary-light)}
+.nav-item i{width:18px;text-align:center}
+.sidebar-bottom{padding:14px;border-top:1px solid var(--card-border);display:flex;flex-direction:column;gap:8px}
+.btn-back{padding:10px;border-radius:10px;border:1px solid rgba(108,63,197,.4);color:var(--primary-light);background:transparent;font-family:'Cairo',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-back:hover{background:rgba(108,63,197,.15)}
+.btn-logout{padding:10px;border-radius:10px;border:1px solid rgba(231,76,60,.3);color:#E74C3C;background:rgba(231,76,60,.08);font-family:'Cairo',sans-serif;font-weight:700;font-size:.85rem;cursor:pointer;transition:all .3s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-logout:hover{background:rgba(231,76,60,.15)}
+
+.main{margin-right:var(--sidebar-w);min-height:100vh;display:flex;flex-direction:column}
+.topbar{background:var(--dark2);border-bottom:1px solid var(--card-border);padding:16px 28px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50}
+.topbar h2{font-size:1.2rem;font-weight:900;display:flex;align-items:center;gap:10px}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.admin-badge{background:var(--gradient);color:white;padding:5px 14px;border-radius:20px;font-size:.8rem;font-weight:700}
+.content{padding:28px;flex:1}
+
+/* CARDS */
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:16px;margin-bottom:28px}
+.stat-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:22px;transition:all .3s}
+.stat-card:hover{transform:translateY(-3px);border-color:var(--primary)}
+.stat-card .ic{font-size:1.8rem;margin-bottom:10px}
+.stat-card .val{font-size:2rem;font-weight:900;color:var(--primary-light)}
+.stat-card .lbl{font-size:.8rem;color:var(--text-muted);margin-top:4px}
+
+/* PAGE SECTIONS */
+.page{display:none}.page.active{display:block}
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:1.3rem;font-weight:900;display:flex;align-items:center;gap:10px}
+
+/* FORMS */
+.form-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:24px;margin-bottom:20px}
+.form-card h3{font-size:1rem;font-weight:800;margin-bottom:18px;color:var(--primary-light)}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:.82rem;font-weight:700;color:var(--text-muted);margin-bottom:5px}
+.fi{width:100%;padding:11px 14px;border-radius:10px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--text);font-family:'Cairo',sans-serif;font-size:.9rem;transition:all .3s}
+.fi:focus{outline:none;border-color:var(--primary);background:rgba(108,63,197,.08)}
+.fi-ta{resize:vertical;min-height:120px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.btn{padding:10px 20px;border-radius:10px;border:none;font-family:'Cairo',sans-serif;font-weight:700;font-size:.88rem;cursor:pointer;transition:all .3s;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{transform:translateY(-1px)}
+.btn-primary{background:var(--gradient);color:white}
+.btn-success{background:rgba(46,204,113,.2);color:#2ECC71;border:1px solid rgba(46,204,113,.3)}
+.btn-danger{background:rgba(231,76,60,.15);color:#E74C3C;border:1px solid rgba(231,76,60,.3)}
+.btn-warning{background:rgba(255,193,7,.15);color:#FFC107;border:1px solid rgba(255,193,7,.3)}
+.btn-secondary{background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.1)}
+
+/* TABLE */
+.tbl-wrap{overflow-x:auto;border-radius:14px}
+table{width:100%;border-collapse:collapse;background:var(--card-bg)}
+th{background:rgba(108,63,197,.2);padding:12px 14px;text-align:right;font-size:.82rem;font-weight:700;color:var(--text-muted)}
+td{padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.85rem;vertical-align:middle}
+tr:hover td{background:rgba(108,63,197,.05)}
+.badge{padding:4px 10px;border-radius:6px;font-size:.75rem;font-weight:700;display:inline-block}
+.badge-success{background:rgba(46,204,113,.15);color:#2ECC71}
+.badge-danger{background:rgba(231,76,60,.15);color:#E74C3C}
+.badge-warning{background:rgba(255,193,7,.15);color:#FFC107}
+.badge-info{background:rgba(52,152,219,.15);color:#3498DB}
+.badge-purple{background:rgba(108,63,197,.2);color:var(--primary-light)}
+
+/* COURSES GRID */
+.courses-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:18px;margin-top:18px}
+.course-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;overflow:hidden;transition:all .3s}
+.course-card:hover{transform:translateY(-4px);border-color:var(--primary)}
+.course-thumb{width:100%;height:140px;object-fit:cover;background:var(--gradient2)}
+.course-thumb-placeholder{width:100%;height:140px;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-size:2.5rem}
+.course-body{padding:14px}
+.course-name{font-weight:800;font-size:.95rem;margin-bottom:4px}
+.course-grade{font-size:.8rem;color:var(--text-muted);margin-bottom:12px}
+.course-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* VIDEOS */
+.video-list{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.video-item{background:rgba(255,255,255,.04);border:1px solid var(--card-border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+.video-thumb{width:80px;height:50px;border-radius:8px;object-fit:cover;background:var(--dark);flex-shrink:0}
+.video-info{flex:1}
+.video-title{font-weight:700;font-size:.88rem;margin-bottom:3px}
+.video-meta{font-size:.76rem;color:var(--text-muted)}
+.video-actions{display:flex;gap:6px;flex-shrink:0}
+
+/* EXAM BUILDER */
+.exam-preview{background:var(--dark);border:1px solid var(--card-border);border-radius:12px;padding:18px;margin-top:14px}
+.q-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:16px;margin-bottom:12px;border-right:3px solid var(--primary)}
+.q-text{font-weight:700;font-size:.92rem;margin-bottom:12px}
+.q-opts{display:flex;flex-direction:column;gap:7px}
+.q-opt{padding:8px 12px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:.85rem;display:flex;align-items:center;justify-content:space-between}
+.q-opt.correct{background:rgba(46,204,113,.1);border-color:rgba(46,204,113,.4);color:#2ECC71}
+.q-tf{display:flex;gap:10px}
+.q-tf-btn{flex:1;padding:8px;border-radius:8px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);font-size:.85rem;font-weight:700;text-align:center}
+.q-tf-btn.correct{background:rgba(46,204,113,.1);border-color:rgba(46,204,113,.4);color:#2ECC71}
+
+/* SEARCH */
+.search-result-card{background:var(--card-bg);border:1px solid var(--card-border);border-radius:14px;padding:20px;margin-bottom:14px}
+.search-result-card h4{font-size:1rem;font-weight:800;margin-bottom:12px;color:var(--primary-light)}
+.info-row{display:flex;gap:8px;margin-bottom:6px;font-size:.85rem;flex-wrap:wrap}
+.info-label{color:var(--text-muted);min-width:120px}
+
+/* ANALYTICS */
+.chart-placeholder{background:var(--card-bg);border:1px solid var(--card-border);border-radius:16px;padding:28px;margin-bottom:16px;text-align:center;color:var(--text-muted)}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(6px)}
+.modal-bg.open{display:flex}
+.modal-box{background:var(--dark2);border:1px solid var(--card-border);border-radius:20px;padding:32px;width:90%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+.modal-box h3{font-size:1.1rem;font-weight:900;margin-bottom:20px}
+.modal-close{position:absolute;top:14px;left:14px;background:rgba(255,255,255,.08);border:none;color:var(--text);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center}
+
+/* NOTIFICATION */
+.notif{position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);background:var(--card-bg);border:1px solid var(--card-border);border-radius:12px;padding:12px 22px;display:flex;align-items:center;gap:10px;z-index:5000;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+.notif.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.notif.success{border-color:rgba(46,204,113,.4)}.notif.success i{color:#2ECC71}
+.notif.error{border-color:rgba(231,76,60,.4)}.notif.error i{color:#E74C3C}
+
+/* MOBILE */
+.hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px}
+.sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:99}
+
+/* FILTER ROW */
+.filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.filter-row .fi{max-width:200px}
+
+@media(max-width:768px){
+  .sidebar{transform:translateX(100%)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay.open{display:block}
+  .main{margin-right:0}
+  .hamburger{display:block}
+  .form-row{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .courses-grid{grid-template-columns:1fr}
+  .content{padding:16px}
+  .filter-row .fi{max-width:100%}
+}
+</style>
+</head>
+<body>
+
+<div class="notif" id="notif"><i class="fas fa-check-circle"></i><span id="notifMsg"></span></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div style="font-size:3rem;margin-bottom:12px">🛡️</div>
+    <h1>لوحة إدارة مس منى</h1>
+    <p>هذه الصفحة مخصصة للمشرف فقط</p>
+    <button class="btn-google-login" onclick="adminGoogleLogin()">
+      <i class="fab fa-google" style="color:#4285F4;font-size:1.1rem"></i>
+      تسجيل الدخول بـ Google
+    </button>
+    <div class="login-err" id="loginErr">⛔ ليس لديك صلاحية الوصول</div>
+  </div>
+</div>
+
+<!-- ADMIN APP -->
+<div id="adminApp">
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="ico">🌟</div>
+      <span>إدارة مس منى</span>
+    </div>
+    <nav class="sidebar-nav">
+      <button class="nav-item active" onclick="goTo('dashboard',this)"><i class="fas fa-home"></i> الرئيسية</button>
+      <button class="nav-item" onclick="goTo('courses',this)"><i class="fas fa-book"></i> الكورسات</button>
+      <button class="nav-item" onclick="goTo('students',this)"><i class="fas fa-users"></i> الطلاب</button>
+      <button class="nav-item" onclick="goTo('exams',this)"><i class="fas fa-file-alt"></i> الامتحانات</button>
+      <button class="nav-item" onclick="goTo('grades',this)"><i class="fas fa-star"></i> درجات الطلاب</button>
+      <button class="nav-item" onclick="goTo('scores',this)"><i class="fas fa-trophy"></i> قائمة الشرف</button>
+      <button class="nav-item" onclick="goTo('analytics',this)"><i class="fas fa-chart-bar"></i> التحاليل</button>
+      <button class="nav-item" onclick="goTo('search',this)"><i class="fas fa-search"></i> البحث الشامل</button>
+    </nav>
+    <div class="sidebar-bottom">
+      <button class="btn-back" onclick="window.location.href='index.html'"><i class="fas fa-arrow-left"></i> العودة للموقع</button>
+      <button class="btn-logout" onclick="adminLogout()"><i class="fas fa-sign-out-alt"></i> تسجيل الخروج</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:12px">
+        <button class="hamburger" onclick="openSidebar()"><i class="fas fa-bars"></i></button>
+        <h2 id="pageTitle"><i class="fas fa-home"></i> الرئيسية</h2>
+      </div>
+      <div class="topbar-right">
+        <span class="admin-badge">👑 مشرف</span>
+        <span id="adminName" style="font-size:.85rem;color:var(--text-muted)"></span>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stat-grid" id="statGrid">
+          <div class="stat-card"><div class="ic">👥</div><div class="val" id="st-students">0</div><div class="lbl">إجمالي الطلاب</div></div>
+          <div class="stat-card"><div class="ic">📚</div><div class="val" id="st-courses">0</div><div class="lbl">الكورسات</div></div>
+          <div class="stat-card"><div class="ic">🎬</div><div class="val" id="st-videos">0</div><div class="lbl">الفيديوهات</div></div>
+          <div class="stat-card"><div class="ic">📝</div><div class="val" id="st-exams">0</div><div class="lbl">الامتحانات</div></div>
+          <div class="stat-card"><div class="ic">🏆</div><div class="val" id="st-scores">0</div><div class="lbl">قائمة الشرف</div></div>
+          <div class="stat-card"><div class="ic">🚫</div><div class="val" id="st-banned">0</div><div class="lbl">المحظورون</div></div>
+        </div>
+        <div class="form-card">
+          <h3>📋 آخر الطلاب المسجلين</h3>
+          <div class="tbl-wrap"><table><thead><tr><th>الاسم</th><th>الصف</th><th>نوع الحساب</th><th>تاريخ التسجيل</th></tr></thead><tbody id="recentStudents"></tbody></table></div>
+        </div>
+      </div>
+
+      <!-- COURSES -->
+      <div class="page" id="page-courses">
+        <div class="page-header">
+          <div class="page-title"><i class="fas fa-book" style="color:var(--primary-light)"></i> الكورسات</div>
+          <button class="btn btn-primary" onclick="openModal('addCourse')"><i class="fas fa-plus"></i> كورس جديد</button>
+        </div>
+        <div class="courses-grid" id="coursesGrid"></div>
+      </div>
+
+      <!-- STUDENTS -->
+      <div class="page" id="page-students">
+        <div class="page-header">
+          <div class="page-title"><i class="fas fa-users" style="color:var(--primary-light)"></i> الطلاب</div>
+          <span id="studentsCount" style="color:var(--text-muted);font-size:.88rem"></span>
+        </div>
+        <div class="filter-row">
+          <input class="fi" id="studentSearch" placeholder="🔍 بحث بالاسم أو الواتساب..." oninput="filterStudents()" style="flex:1;max-width:300px">
+          <select class="fi" id="studentGradeFilter" onchange="filterStudents()">
+            <option value="">كل الصفوف</option>
+            <option>أول إعدادي</option><option>تاني إعدادي</option><option>تالتة إعدادي</option>
+            <option>أول ثانوي</option><option>تاني ثانوي</option><option>تالتة ثانوي</option>
+          </select>
+          <select class="fi" id="studentTypeFilter" onchange="filterStudents()">
+            <option value="">كل الأنواع</option>
+            <option value="email">إيميل</option>
+            <option value="google">جوجل</option>
+          </select>
+          <select class="fi" id="studentStatusFilter" onchange="filterStudents()">
+            <option value="">الكل</option>
+            <option value="active">نشط</option>
+            <option value="banned">محظور</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>الاسم الكامل</th><th>الصف</th><th>واتساب الطالب</th><th>واتساب ولي الأمر</th><th>نوع الحساب</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+          <tbody id="studentsTable"></tbody></table>
+        </div>
+      </div>
+
+      <!-- EXAMS -->
+      <div class="page" id="page-exams">
+        <div class="page-header">
+          <div class="page-title"><i class="fas fa-file-alt" style="color:var(--primary-light)"></i> الامتحانات</div>
+          <button class="btn btn-primary" onclick="openModal('addExam')"><i class="fas fa-plus"></i> امتحان جديد</button>
+        </div>
+        <div class="filter-row">
+          <select class="fi" id="examCourseFilter" onchange="renderExams()">
+            <option value="">كل الكورسات</option>
+          </select>
+        </div>
+        <div id="examsList"></div>
+      </div>
+
+      <!-- GRADES -->
+      <div class="page" id="page-grades">
+        <div class="page-header">
+          <div class="page-title"><i class="fas fa-star" style="color:var(--accent2)"></i> درجات الطلاب</div>
+        </div>
+        <div class="filter-row">
+          <input class="fi" id="gradesSearch" placeholder="🔍 بحث بالاسم..." oninput="filterGrades()" style="flex:1;max-width:260px">
+          <select class="fi" id="gradesExamFilter" onchange="filterGrades()"><option value="">كل الامتحانات</option></select>
+          <select class="fi" id="gradesStatusFilter" onchange="filterGrades()">
+            <option value="">الكل</option>
+            <option value="passed">ناجح</option>
+            <option value="failed">راسب</option>
+          </select>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>اسم الطالب</th><th>الامتحان</th><th>الدرجة</th><th>النسبة</th><th>النتيجة</th><th>الوقت</th></tr></thead>
+          <tbody id="gradesTable"></tbody></table>
+        </div>
+      </div>
+
+      <!-- SCORES (Honor List) -->
+      <div class="page" id="page-scores">
+        <div class="page-header">
+          <div class="page-title"><i class="fas fa-trophy" style="color:var(--accent2)"></i> قائمة الشرف</div>
+          <button class="btn btn-primary" onclick="openModal('addScore')"><i class="fas fa-plus"></i> إضافة طالب</button>
+        </div>
+        <div class="tbl-wrap">
+          <table><thead><tr><th>#</th><th>الاسم</th><th>الصف</th><th>الامتحان</th><th>الدرجة</th><th>التاريخ</th><th>حذف</th></tr></thead>
+          <tbody id="scoresAdminTable"></tbody></table>
+        </div>
+      </div>
+
+      <!-- ANALYTICS -->
+      <div class="page" id="page-analytics">
+        <div class="page-title" style="margin-bottom:20px"><i class="fas fa-chart-bar" style="color:var(--primary-light)"></i> التحاليل والإحصائيات</div>
+        <div class="stat-grid" id="analyticsStats"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px" id="analyticsCharts">
+          <div class="form-card"><h3>📊 توزيع الطلاب حسب الصف</h3><div id="gradeChart"></div></div>
+          <div class="form-card"><h3>🔐 طرق التسجيل</h3><div id="authChart"></div></div>
+        </div>
+        <div class="form-card"><h3>📈 أداء الامتحانات</h3><div id="examStats"></div></div>
+      </div>
+
+      <!-- SEARCH -->
+      <div class="page" id="page-search">
+        <div class="page-title" style="margin-bottom:20px"><i class="fas fa-search" style="color:var(--primary-light)"></i> البحث الشامل</div>
+        <div style="display:flex;gap:10px;margin-bottom:20px">
+          <input class="fi" id="globalSearchInput" placeholder="اكتب اسم الطالب أو الإيميل أو الواتساب..." style="flex:1" oninput="globalSearch()">
+        </div>
+        <div id="searchResults"></div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+</div><!-- /adminApp -->
+
+<!-- MODALS -->
+
+<!-- Add Course -->
+<div class="modal-bg" id="modal-addCourse">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addCourse')"><i class="fas fa-times"></i></button>
+    <h3>📚 إضافة كورس جديد</h3>
+    <div class="fg"><label>اسم الكورس</label><input class="fi" id="cName" placeholder="مثال: Grammar Unit 1"></div>
+    <div class="fg"><label>الصف الدراسي</label>
+      <select class="fi" id="cGrade">
+        <option value="">اختر الصف</option>
+        <option>الرابع الابتدائي</option><option>الخامس الابتدائي</option><option>السادس الابتدائي</option>
+        <option>أول إعدادي</option><option>تاني إعدادي</option><option>تالتة إعدادي</option>
+        <option>أول ثانوي</option><option>تاني ثانوي</option><option>تالتة ثانوي</option>
+      </select>
+    </div>
+    <div class="fg"><label>رابط صورة الكورس (URL أو اتركه فاضي)</label><input class="fi" id="cImage" placeholder="https://...jpg"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveCourse()"><i class="fas fa-save"></i> حفظ الكورس</button>
+      <button class="btn btn-secondary" onclick="closeModal('addCourse')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Course -->
+<div class="modal-bg" id="modal-editCourse">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('editCourse')"><i class="fas fa-times"></i></button>
+    <h3>✏️ تعديل الكورس</h3>
+    <input type="hidden" id="editCourseKey">
+    <div class="fg"><label>اسم الكورس</label><input class="fi" id="ecName"></div>
+    <div class="fg"><label>الصف الدراسي</label>
+      <select class="fi" id="ecGrade">
+        <option value="">اختر الصف</option>
+        <option>الرابع الابتدائي</option><option>الخامس الابتدائي</option><option>السادس الابتدائي</option>
+        <option>أول إعدادي</option><option>تاني إعدادي</option><option>تالتة إعدادي</option>
+        <option>أول ثانوي</option><option>تاني ثانوي</option><option>تالتة ثانوي</option>
+      </select>
+    </div>
+    <div class="fg"><label>رابط صورة الكورس</label><input class="fi" id="ecImage" placeholder="https://...jpg"></div>
+    <div style="display:flex;gap:10px;margin-top:4px">
+      <button class="btn btn-primary" style="flex:1" onclick="updateCourse()"><i class="fas fa-save"></i> حفظ التعديلات</button>
+      <button class="btn btn-secondary" onclick="closeModal('editCourse')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- Course Videos -->
+<div class="modal-bg" id="modal-courseVideos">
+  <div class="modal-box" style="max-width:620px">
+    <button class="modal-close" onclick="closeModal('courseVideos')"><i class="fas fa-times"></i></button>
+    <h3 id="cvTitle">🎬 فيديوهات الكورس</h3>
+    <div class="form-card" style="margin-bottom:14px">
+      <h3>إضافة فيديو جديد</h3>
+      <input type="hidden" id="cvCourseKey">
+      <div class="fg"><label>اسم الفيديو</label><input class="fi" id="vName" placeholder="مثال: شرح Present Simple"></div>
+      <div class="fg"><label>رابط يوتيوب</label><input class="fi" id="vUrl" placeholder="https://www.youtube.com/watch?v=..." oninput="previewYT()"></div>
+      <div id="ytPreviewWrap" style="display:none;margin-bottom:10px">
+        <img id="ytPreview" style="width:100%;border-radius:8px;max-height:160px;object-fit:cover">
+      </div>
+      <button class="btn btn-primary" onclick="addVideo()"><i class="fas fa-plus"></i> إضافة الفيديو</button>
+    </div>
+    <div class="video-list" id="videosList"></div>
+  </div>
+</div>
+
+<!-- Add Exam -->
+<div class="modal-bg" id="modal-addExam">
+  <div class="modal-box" style="max-width:680px">
+    <button class="modal-close" onclick="closeModal('addExam')"><i class="fas fa-times"></i></button>
+    <h3>📝 إضافة امتحان جديد</h3>
+
+    <div style="background:rgba(255,193,7,.08);border:1px solid rgba(255,193,7,.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:.83rem;line-height:1.9">
+      <strong style="color:#FFC107">⚠️ القواعد:</strong><br>
+      ✅ سطر فاضي واحد بين كل سؤال والتاني<br>
+      ✅ الإجابة الصح: اكتب الحرف لوحده <strong>B</strong> أو بنجمة <strong>B*</strong><br>
+      ✅ سؤال True/False: اكتب <strong>True</strong> أو <strong>False</strong> في السطر الأخير<br>
+      ✅ الخيارات لازم تبدأ بـ <strong>A:</strong> أو <strong>A-</strong> أو <strong>A.</strong> أو <strong>A)</strong>
+    </div>
+
+    <div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:14px;margin-bottom:16px;font-size:.82rem;line-height:1.8">
+      <strong style="color:#2ECC71">💡 تيب: لو بتستخدم AI عشان تحول صور الامتحان:</strong><br>
+      ابعت الصورة وقوله:<br>
+      <code style="background:rgba(0,0,0,.3);padding:4px 8px;border-radius:6px;display:block;margin-top:6px;direction:ltr">"Convert questions to: Question, A: B: C: D: then correct letter alone. Empty line between questions."</code>
+    </div>
+
+    <div class="fg"><label>اختر الكورس:</label>
+      <select class="fi" id="examCourse"><option value="">-- اختر الكورس --</option></select>
+    </div>
+    <div class="fg"><label>عنوان الامتحان:</label><input class="fi" id="examTitle" placeholder="مثال: Unit 1 Exam"></div>
+    <div class="fg">
+      <label>⏱️ وقت الامتحان (اختياري):</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input class="fi" id="examTimer" type="number" placeholder="اتركه فاضي لو مفيش وقت" style="flex:1">
+        <span style="color:var(--text-muted);white-space:nowrap;font-size:.85rem">دقيقة</span>
+      </div>
+    </div>
+    <div class="fg"><label>الصق الأسئلة هنا:</label>
+      <textarea class="fi fi-ta" id="examText" style="min-height:160px;direction:ltr;text-align:right" placeholder="Champions win medals after hard training.&#10;A: use to&#10;B: used to&#10;C: are used to&#10;D: using&#10;B&#10;&#10;The Nile is the longest river in Africa.&#10;True"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button class="btn btn-success" onclick="previewExam()"><i class="fas fa-eye"></i> معاينة الأسئلة</button>
+      <button class="btn btn-warning" onclick="clearExamForm()"><i class="fas fa-trash"></i> مسح</button>
+      <button class="btn btn-secondary" onclick="fillExamExample()"><i class="fas fa-lightbulb"></i> مثال</button>
+    </div>
+    <div id="examPreviewArea"></div>
+    <button class="btn btn-primary" style="width:100%;margin-top:12px" onclick="saveExam()"><i class="fas fa-save"></i> حفظ الامتحان</button>
+  </div>
+</div>
+
+<!-- Add Score -->
+<div class="modal-bg" id="modal-addScore">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('addScore')"><i class="fas fa-times"></i></button>
+    <h3>🏆 إضافة طالب لقائمة الشرف</h3>
+    <div class="form-row">
+      <div class="fg"><label>اسم الطالب</label><input class="fi" id="sName" placeholder="الاسم الكامل"></div>
+      <div class="fg"><label>الصف الدراسي</label><input class="fi" id="sGrade" placeholder="مثال: تالتة ثانوي"></div>
+    </div>
+    <div class="form-row">
+      <div class="fg"><label>اسم الامتحان</label><input class="fi" id="sExam" placeholder="مثال: امتحان الفصل الأول"></div>
+      <div class="fg"><label>الدرجة</label><input class="fi" id="sMark" placeholder="مثال: 30/30"></div>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-primary" style="flex:1" onclick="saveScore()"><i class="fas fa-plus"></i> إضافة</button>
+      <button class="btn btn-secondary" onclick="closeModal('addScore')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====== FIREBASE CONFIG ======
+const firebaseConfig = {
+  apiKey: "AIzaSyBalgsZ2MmHFkF7bvAGky0MImzTVgqXTy8",
+  authDomain: "monakamel-academy.firebaseapp.com",
+  databaseURL: "https://monakamel-academy-default-rtdb.firebaseio.com",
+  projectId: "monakamel-academy",
+  storageBucket: "monakamel-academy.firebasestorage.app",
+  messagingSenderId: "1012338556086",
+  appId: "1:1012338556086:web:1a0ea89ce0bf59268f3a17"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+const ADMIN_EMAIL = 'mrsmonakamel6@gmail.com';
+let allStudents = [], allCourses = {}, allExams = {}, allScores = {}, allGrades = {};
+
+// ====== AUTH ======
+auth.onAuthStateChanged(user => {
+  if (user && user.email === ADMIN_EMAIL) {
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('adminApp').style.display = 'block';
+    document.getElementById('adminName').textContent = user.displayName || user.email;
+    loadAll();
+  } else if (user) {
+    auth.signOut();
+    document.getElementById('loginErr').style.display = 'block';
+  }
+});
+
+function adminGoogleLogin() {
+  const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({ login_hint: ADMIN_EMAIL });
+  auth.signInWithPopup(provider).catch(err => {
+    document.getElementById('loginErr').style.display = 'block';
+  });
+}
+
+function adminLogout() {
+  auth.signOut().then(() => { window.location.reload(); });
+}
+
+// ====== NOTIFY ======
+function notify(msg, type='success') {
+  const el = document.getElementById('notif');
+  el.querySelector('i').className = type==='success' ? 'fas fa-check-circle' : 'fas fa-exclamation-circle';
+  document.getElementById('notifMsg').textContent = msg;
+  el.className = 'notif ' + type + ' show';
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ====== NAVIGATION ======
+function goTo(page, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  if (el) el.classList.add('active');
+  const titles = {
+    dashboard:'الرئيسية', courses:'الكورسات', students:'الطلاب',
+    exams:'الامتحانات', grades:'درجات الطلاب', scores:'قائمة الشرف',
+    analytics:'التحاليل', search:'البحث الشامل'
+  };
+  const icons = {
+    dashboard:'home', courses:'book', students:'users', exams:'file-alt',
+    grades:'star', scores:'trophy', analytics:'chart-bar', search:'search'
+  };
+  document.getElementById('pageTitle').innerHTML = `<i class="fas fa-${icons[page]}"></i> ${titles[page]}`;
+  closeSidebar();
+  if (page === 'analytics') renderAnalytics();
+  if (page === 'grades') renderGrades();
+  if (page === 'scores') renderScoresAdmin();
+}
+
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('sidebarOverlay').classList.add('open');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebarOverlay').classList.remove('open');
+}
+
+// ====== MODALS ======
+function openModal(id) {
+  document.getElementById('modal-' + id).classList.add('open');
+  if (id === 'addExam' || id === 'addCourse') populateCourseSelects();
+}
+function closeModal(id) { document.getElementById('modal-' + id).classList.remove('open'); }
+
+// ====== LOAD ALL ======
+async function loadAll() {
+  // Students
+  db.ref('website/students').on('value', snap => {
+    allStudents = snap.exists() ? Object.entries(snap.val()).map(([k,v]) => ({_key:k,...v})) : [];
+    renderStudents();
+    updateStats();
+  });
+  // Courses
+  db.ref('website/courses').on('value', snap => {
+    allCourses = snap.exists() ? snap.val() : {};
+    renderCourses();
+    updateStats();
+    populateCourseSelects();
+  });
+  // Exams
+  db.ref('website/exams_v2').on('value', snap => {
+    allExams = snap.exists() ? snap.val() : {};
+    renderExams();
+    updateStats();
+  });
+  // Scores
+  db.ref('website/scores').on('value', snap => {
+    allScores = snap.exists() ? snap.val() : {};
+    renderScoresAdmin();
+    updateStats();
+  });
+  // Grades
+  db.ref('website/grades').on('value', snap => {
+    allGrades = snap.exists() ? snap.val() : {};
+    renderGrades();
+  });
+}
+
+function updateStats() {
+  const students = allStudents;
+  const banned = students.filter(s => s.banned).length;
+  document.getElementById('st-students').textContent = students.length;
+  document.getElementById('st-courses').textContent = Object.keys(allCourses).length;
+  let videoCount = 0;
+  Object.values(allCourses).forEach(c => { if(c.videos) videoCount += Object.keys(c.videos).length; });
+  document.getElementById('st-videos').textContent = videoCount;
+  document.getElementById('st-exams').textContent = Object.keys(allExams).length;
+  document.getElementById('st-scores').textContent = Object.keys(allScores).length;
+  document.getElementById('st-banned').textContent = banned;
+
+  // Recent students
+  const recent = [...students].sort((a,b) => (b.createdAt||'') > (a.createdAt||'') ? 1 : -1).slice(0,5);
+  document.getElementById('recentStudents').innerHTML = recent.map(s => `
+    <tr>
+      <td>${s.name1||''} ${s.name2||''} ${s.name3||''} ${s.name4||''}</td>
+      <td>${s.grade||'—'}</td>
+      <td><span class="badge ${s.isGoogle?'badge-info':'badge-purple'}">${s.isGoogle?'جوجل':'إيميل'}</span></td>
+      <td>${s.createdAt||'—'}</td>
+    </tr>`).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--text-muted)">لا يوجد طلاب بعد</td></tr>';
+}
+
+// ====== COURSES ======
+function renderCourses() {
+  const grid = document.getElementById('coursesGrid');
+  const entries = Object.entries(allCourses);
+  if (!entries.length) { grid.innerHTML = '<p style="color:var(--text-muted);text-align:center;grid-column:1/-1;padding:40px">لا يوجد كورسات بعد — اضغط كورس جديد</p>'; return; }
+  grid.innerHTML = entries.map(([key, c]) => {
+    const vCount = c.videos ? Object.keys(c.videos).length : 0;
+    const img = c.image ? `<img src="${c.image}" class="course-thumb" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+      <div class="course-thumb-placeholder" style="display:none">📚</div>` : `<div class="course-thumb-placeholder">📚</div>`;
+    return `<div class="course-card">
+      ${img}
+      <div class="course-body">
+        <div class="course-name">${c.name}</div>
+        <div class="course-grade">${c.grade} · ${vCount} فيديو</div>
+        <div class="course-actions">
+          <button class="btn btn-success" style="font-size:.76rem;padding:6px 10px" onclick="openVideos('${key}')"><i class="fas fa-video"></i> الفيديوهات</button>
+          <button class="btn btn-warning" style="font-size:.76rem;padding:6px 10px" onclick="editCourse('${key}')"><i class="fas fa-edit"></i> تعديل</button>
+          <button class="btn btn-danger" style="font-size:.76rem;padding:6px 10px" onclick="deleteCourse('${key}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function saveCourse() {
+  const name = document.getElementById('cName').value.trim();
+  const grade = document.getElementById('cGrade').value;
+  const image = document.getElementById('cImage').value.trim();
+  if (!name || !grade) { notify('اكمل البيانات', 'error'); return; }
+  db.ref('website/courses').push({ name, grade, image: image||'', createdAt: new Date().toLocaleDateString('ar-EG') })
+    .then(() => { notify('تم إضافة الكورس ✅'); closeModal('addCourse'); document.getElementById('cName').value=''; document.getElementById('cGrade').value=''; document.getElementById('cImage').value=''; })
+    .catch(() => notify('خطأ في الحفظ', 'error'));
+}
+
+function editCourse(key) {
+  const c = allCourses[key];
+  document.getElementById('editCourseKey').value = key;
+  document.getElementById('ecName').value = c.name;
+  document.getElementById('ecGrade').value = c.grade;
+  document.getElementById('ecImage').value = c.image || '';
+  openModal('editCourse');
+}
+function updateCourse() {
+  const key = document.getElementById('editCourseKey').value;
+  const name = document.getElementById('ecName').value.trim();
+  const grade = document.getElementById('ecGrade').value;
+  const image = document.getElementById('ecImage').value.trim();
+  if (!name) { notify('اكتب اسم الكورس', 'error'); return; }
+  db.ref('website/courses/' + key).update({ name, grade, image })
+    .then(() => { notify('تم التعديل ✅'); closeModal('editCourse'); })
+    .catch(() => notify('خطأ', 'error'));
+}
+function deleteCourse(key) {
+  if (!confirm('هتحذف الكورس ده وكل فيديوهاته؟')) return;
+  db.ref('website/courses/' + key).remove().then(() => notify('تم الحذف')).catch(() => notify('خطأ', 'error'));
+}
+
+// ====== VIDEOS ======
+let currentCourseKey = null;
+function openVideos(key) {
+  currentCourseKey = key;
+  const c = allCourses[key];
+  document.getElementById('cvTitle').textContent = '🎬 فيديوهات: ' + c.name;
+  document.getElementById('cvCourseKey').value = key;
+  document.getElementById('vName').value = '';
+  document.getElementById('vUrl').value = '';
+  document.getElementById('ytPreviewWrap').style.display = 'none';
+  renderVideosList(key);
+  openModal('courseVideos');
+}
+
+function getYTId(url) {
+  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([^&?\/]+)/);
+  return m ? m[1] : null;
+}
+
+function previewYT() {
+  const url = document.getElementById('vUrl').value;
+  const id = getYTId(url);
+  if (id) {
+    document.getElementById('ytPreview').src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    document.getElementById('ytPreviewWrap').style.display = 'block';
+  } else {
+    document.getElementById('ytPreviewWrap').style.display = 'none';
+  }
+}
+
+function addVideo() {
+  const key = document.getElementById('cvCourseKey').value;
+  const name = document.getElementById('vName').value.trim();
+  const url = document.getElementById('vUrl').value.trim();
+  if (!name || !url) { notify('اكمل البيانات', 'error'); return; }
+  const ytId = getYTId(url);
+  if (!ytId) { notify('رابط يوتيوب غير صحيح', 'error'); return; }
+  const thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
+  db.ref('website/courses/' + key + '/videos').push({ name, url, ytId, thumb, createdAt: new Date().toLocaleDateString('ar-EG') })
+    .then(() => { notify('تم إضافة الفيديو ✅'); document.getElementById('vName').value=''; document.getElementById('vUrl').value=''; document.getElementById('ytPreviewWrap').style.display='none'; renderVideosList(key); })
+    .catch(() => notify('خطأ', 'error'));
+}
+
+function renderVideosList(key) {
+  const c = allCourses[key];
+  const wrap = document.getElementById('videosList');
+  if (!c || !c.videos) { wrap.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:20px">لا يوجد فيديوهات بعد</p>'; return; }
+  wrap.innerHTML = Object.entries(c.videos).map(([vk, v]) => `
+    <div class="video-item">
+      <img class="video-thumb" src="${v.thumb}" onerror="this.src='https://img.youtube.com/vi/${v.ytId}/default.jpg'">
+      <div class="video-info">
+        <div class="video-title">${v.name}</div>
+        <div class="video-meta"><i class="fab fa-youtube" style="color:#F00"></i> ${v.url.slice(0,40)}...</div>
+      </div>
+      <div class="video-actions">
+        <button class="btn btn-danger" style="padding:6px 10px;font-size:.76rem" onclick="deleteVideo('${key}','${vk}')"><i class="fas fa-trash"></i></button>
+      </div>
+    </div>`).join('');
+}
+
+function deleteVideo(courseKey, videoKey) {
+  if (!confirm('حذف الفيديو؟')) return;
+  db.ref('website/courses/' + courseKey + '/videos/' + videoKey).remove()
+    .then(() => { notify('تم الحذف'); renderVideosList(courseKey); })
+    .catch(() => notify('خطأ', 'error'));
+}
+
+// ====== STUDENTS ======
+function renderStudents(list) {
+  const data = list || allStudents;
+  document.getElementById('studentsCount').textContent = data.length + ' طالب';
+  document.getElementById('studentsTable').innerHTML = data.map(s => {
+    const name = [s.name1,s.name2,s.name3,s.name4].filter(Boolean).join(' ') || s.name || '—';
+    const authType = s.isGoogle ? '<span class="badge badge-info">جوجل</span>' : '<span class="badge badge-purple">إيميل</span>';
+    const status = s.banned ? '<span class="badge badge-danger">محظور</span>' : '<span class="badge badge-success">نشط</span>';
+    return `<tr>
+      <td>${name}</td>
+      <td>${s.grade||'—'}</td>
+      <td>${s.studentPhone||'—'}</td>
+      <td>${s.parentPhone||'—'}</td>
+      <td>${authType}</td>
+      <td>${status}</td>
+      <td>${s.createdAt||'—'}</td>
+      <td style="display:flex;gap:5px;flex-wrap:wrap">
+        ${s.banned
+          ? `<button class="btn btn-success" style="padding:5px 8px;font-size:.74rem" onclick="toggleBan('${s._key}',false)"><i class="fas fa-unlock"></i> رفع الحظر</button>`
+          : `<button class="btn btn-warning" style="padding:5px 8px;font-size:.74rem" onclick="toggleBan('${s._key}',true)"><i class="fas fa-ban"></i> حظر</button>`
+        }
+        <button class="btn btn-danger" style="padding:5px 8px;font-size:.74rem" onclick="deleteStudent('${s._key}')"><i class="fas fa-trash"></i></button>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">لا يوجد نتائج</td></tr>';
+}
+
+function filterStudents() {
+  const q = document.getElementById('studentSearch').value.trim().toLowerCase();
+  const grade = document.getElementById('studentGradeFilter').value;
+  const type = document.getElementById('studentTypeFilter').value;
+  const status = document.getElementById('studentStatusFilter').value;
+  let data = allStudents;
+  if (q) data = data.filter(s => {
+    const name = [s.name1,s.name2,s.name3,s.name4].filter(Boolean).join(' ').toLowerCase();
+    return name.includes(q) || (s.studentPhone||'').includes(q) || (s.email||'').toLowerCase().includes(q);
+  });
+  if (grade) data = data.filter(s => s.grade === grade);
+  if (type === 'google') data = data.filter(s => s.isGoogle);
+  if (type === 'email') data = data.filter(s => !s.isGoogle);
+  if (status === 'banned') data = data.filter(s => s.banned);
+  if (status === 'active') data = data.filter(s => !s.banned);
+  renderStudents(data);
+}
+
+function toggleBan(key, ban) {
+  db.ref('website/students/' + key).update({ banned: ban })
+    .then(() => notify(ban ? 'تم الحظر 🚫' : 'تم رفع الحظر ✅'))
+    .catch(() => notify('خطأ', 'error'));
+}
+function deleteStudent(key) {
+  if (!confirm('هتحذف الطالب ده نهائياً؟')) return;
+  db.ref('website/students/' + key).remove().then(() => notify('تم الحذف')).catch(() => notify('خطأ', 'error'));
+}
+
+// ====== POPULATE COURSE SELECTS ======
+function populateCourseSelects() {
+  const opts = '<option value="">-- اختر الكورس --</option>' +
+    Object.entries(allCourses).map(([k,c]) => `<option value="${k}">${c.name} (${c.grade})</option>`).join('');
+  ['examCourse','examCourseFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = id === 'examCourseFilter' ? '<option value="">كل الكورسات</option>' + Object.entries(allCourses).map(([k,c]) => `<option value="${k}">${c.name}</option>`).join('') : opts;
+  });
+}
+
+// ====== EXAMS ======
+function parseExamText(text) {
+  const questions = [];
+  const blocks = text.trim().split(/\n\s*\n/);
+  for (const block of blocks) {
+    const lines = block.trim().split('\n').map(l => l.trim()).filter(Boolean);
+    if (lines.length < 2) continue;
+    const qText = lines[0];
+    const last = lines[lines.length - 1];
+
+    // True/False
+    if (/^(true|false)$/i.test(last) && lines.length === 2) {
+      questions.push({ type: 'tf', text: qText, answer: last.toLowerCase() === 'true' });
+      continue;
+    }
+
+    // MCQ
+    const opts = [];
+    let answer = null;
+    for (let i = 1; i < lines.length; i++) {
+      const l = lines[i];
+      const optMatch = l.match(/^([A-Da-d])[:\-\.\)]\s*(.+)/);
+      if (optMatch) { opts.push({ letter: optMatch[1].toUpperCase(), text: optMatch[2] }); continue; }
+      const ansMatch = l.match(/^([A-Da-d])\*?$/);
+      if (ansMatch) { answer = ansMatch[1].toUpperCase(); continue; }
+    }
+    if (opts.length >= 2 && answer) {
+      questions.push({ type: 'mcq', text: qText, options: opts, answer });
+    }
+  }
+  return questions;
+}
+
+function previewExam() {
+  const text = document.getElementById('examText').value;
+  const questions = parseExamText(text);
+  const area = document.getElementById('examPreviewArea');
+  if (!questions.length) { area.innerHTML = '<p style="color:#E74C3C;font-size:.85rem">⚠️ مفيش أسئلة، تأكد من الفورمات</p>'; return; }
+  notify(`✅ تم العثور على ${questions.length} سؤال`);
+  area.innerHTML = `<div style="background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.3);border-radius:10px;padding:12px;margin-bottom:10px;font-size:.85rem;color:#2ECC71">✅ تم العثور على ${questions.length} سؤال</div>
+    <div class="exam-preview">` +
+    questions.map((q, i) => {
+      if (q.type === 'tf') return `<div class="q-card"><div class="q-text">${i+1}. ${q.text}</div>
+        <div class="q-tf">
+          <div class="q-tf-btn ${q.answer?'correct':''}">✅ صح</div>
+          <div class="q-tf-btn ${!q.answer?'correct':''}">❌ خطأ</div>
+        </div></div>`;
+      return `<div class="q-card"><div class="q-text">${i+1}. ${q.text}</div>
+        <div class="q-opts">${q.options.map(o => `
+          <div class="q-opt ${o.letter===q.answer?'correct':''}">
+            <span>${o.text}</span>
+            <span>${o.letter}: ${o.letter===q.answer?'<span class="badge badge-success">الإجابة الصحيحة</span>':''}</span>
+          </div>`).join('')}
+        </div></div>`;
+    }).join('') + '</div>';
+}
+
+function clearExamForm() {
+  document.getElementById('examText').value = '';
+  document.getElementById('examTitle').value = '';
+  document.getElementById('examTimer').value = '';
+  document.getElementById('examPreviewArea').innerHTML = '';
+}
+
+function fillExamExample() {
+  document.getElementById('examText').value = `Champions win medals after hard training.
+A: use to
+B: used to
+C: are used to
+D: using
+B
+
+The Nile is the longest river in Africa.
+True
+
+What is the capital of Egypt?
+A: Alexandria
+B: Cairo
+C: Luxor
+D: Aswan
+B`;
+  previewExam();
+}
+
+function saveExam() {
+  const courseKey = document.getElementById('examCourse').value;
+  const title = document.getElementById('examTitle').value.trim();
+  const timer = parseInt(document.getElementById('examTimer').value) || null;
+  const text = document.getElementById('examText').value;
+  if (!courseKey) { notify('اختر الكورس', 'error'); return; }
+  if (!title) { notify('اكتب عنوان الامتحان', 'error'); return; }
+  const questions = parseExamText(text);
+  if (!questions.length) { notify('مفيش أسئلة صحيحة', 'error'); return; }
+  const exam = { courseKey, title, timer, questions, createdAt: new Date().toLocaleDateString('ar-EG'), active: true };
+  db.ref('website/exams_v2').push(exam)
+    .then(() => { notify(`تم حفظ الامتحان (${questions.length} سؤال) ✅`); closeModal('addExam'); clearExamForm(); })
+    .catch(() => notify('خطأ في الحفظ', 'error'));
+}
+
+function renderExams() {
+  const filterCourse = document.getElementById('examCourseFilter')?.value || '';
+  const wrap = document.getElementById('examsList');
+  const entries = Object.entries(allExams).filter(([k,e]) => !filterCourse || e.courseKey === filterCourse);
+  if (!entries.length) { wrap.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:40px">لا يوجد امتحانات بعد</p>'; return; }
+  wrap.innerHTML = entries.map(([key, e]) => {
+    const course = allCourses[e.courseKey];
+    return `<div class="form-card" style="margin-bottom:12px">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div>
+          <strong style="font-size:.95rem">${e.title}</strong>
+          <div style="font-size:.8rem;color:var(--text-muted);margin-top:3px">
+            📚 ${course?.name||'—'} · ${e.questions?.length||0} سؤال · ${e.timer?'⏱️ '+e.timer+' دقيقة':'بدون وقت'} · ${e.createdAt||''}
+          </div>
+        </div>
+        <button class="btn btn-danger" style="padding:6px 12px;font-size:.8rem" onclick="deleteExam('${key}')"><i class="fas fa-trash"></i> حذف</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function deleteExam(key) {
+  if (!confirm('هتحذف الامتحان ده؟')) return;
+  db.ref('website/exams_v2/' + key).remove().then(() => notify('تم الحذف')).catch(() => notify('خطأ', 'error'));
+}
+
+// ====== GRADES ======
+function renderGrades(list) {
+  const entries = list || Object.entries(allGrades);
+  const wrap = document.getElementById('gradesTable');
+  
+  // Populate exam filter
+  const examSel = document.getElementById('gradesExamFilter');
+  const examNames = [...new Set(Object.values(allGrades).map(g => g.examTitle).filter(Boolean))];
+  examSel.innerHTML = '<option value="">كل الامتحانات</option>' + examNames.map(n => `<option>${n}</option>`).join('');
+
+  if (!entries.length) { wrap.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:30px">لا يوجد نتائج بعد</td></tr>'; return; }
+  wrap.innerHTML = entries.map(([k,g]) => {
+    const pct = g.total ? Math.round((g.score/g.total)*100) : 0;
+    const passed = pct >= 50;
+    return `<tr>
+      <td>${g.studentName||'—'}</td>
+      <td>${g.examTitle||'—'}</td>
+      <td>${g.score||0} / ${g.total||0}</td>
+      <td><strong style="color:${passed?'#2ECC71':'#E74C3C'}">${pct}%</strong></td>
+      <td><span class="badge ${passed?'badge-success':'badge-danger'}">${passed?'ناجح':'راسب'}</span></td>
+      <td>${g.date||'—'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function filterGrades() {
+  const q = document.getElementById('gradesSearch').value.toLowerCase();
+  const exam = document.getElementById('gradesExamFilter').value;
+  const status = document.getElementById('gradesStatusFilter').value;
+  let entries = Object.entries(allGrades);
+  if (q) entries = entries.filter(([k,g]) => (g.studentName||'').toLowerCase().includes(q));
+  if (exam) entries = entries.filter(([k,g]) => g.examTitle === exam);
+  if (status) {
+    entries = entries.filter(([k,g]) => {
+      const pct = g.total ? Math.round((g.score/g.total)*100) : 0;
+      return status === 'passed' ? pct >= 50 : pct < 50;
+    });
+  }
+  renderGrades(entries);
+}
+
+// ====== SCORES ======
+function saveScore() {
+  const name = document.getElementById('sName').value.trim();
+  const grade = document.getElementById('sGrade').value.trim();
+  const exam = document.getElementById('sExam').value.trim();
+  const mark = document.getElementById('sMark').value.trim();
+  if (!name||!grade||!exam||!mark) { notify('اكمل البيانات', 'error'); return; }
+  db.ref('website/scores').push({ name, grade, exam, mark, time: new Date().toLocaleDateString('ar-EG') })
+    .then(() => { notify('تم الإضافة 🏆'); closeModal('addScore'); ['sName','sGrade','sExam','sMark'].forEach(id => document.getElementById(id).value=''); })
+    .catch(() => notify('خطأ', 'error'));
+}
+
+function renderScoresAdmin() {
+  const entries = Object.entries(allScores);
+  document.getElementById('scoresAdminTable').innerHTML = entries.map(([k,s],i) => `
+    <tr>
+      <td>${i+1}</td><td>${s.name}</td><td>${s.grade}</td><td>${s.exam}</td>
+      <td><strong style="color:var(--accent2)">${s.mark}</strong></td><td>${s.time||'—'}</td>
+      <td><button class="btn btn-danger" style="padding:5px 10px;font-size:.78rem" onclick="deleteScore('${k}')"><i class="fas fa-trash"></i></button></td>
+    </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">قائمة الشرف فارغة</td></tr>';
+}
+
+function deleteScore(key) {
+  if (!confirm('حذف من قائمة الشرف؟')) return;
+  db.ref('website/scores/' + key).remove().then(() => notify('تم الحذف')).catch(() => notify('خطأ', 'error'));
+}
+
+// ====== ANALYTICS ======
+function renderAnalytics() {
+  const students = allStudents;
+  const totalExams = Object.keys(allExams).length;
+  const totalGrades = Object.keys(allGrades).length;
+  const passed = Object.values(allGrades).filter(g => g.total && (g.score/g.total) >= 0.5).length;
+
+  document.getElementById('analyticsStats').innerHTML = `
+    <div class="stat-card"><div class="ic">👥</div><div class="val">${students.length}</div><div class="lbl">إجمالي الطلاب</div></div>
+    <div class="stat-card"><div class="ic">📚</div><div class="val">${Object.keys(allCourses).length}</div><div class="lbl">كورسات</div></div>
+    <div class="stat-card"><div class="ic">📝</div><div class="val">${totalExams}</div><div class="lbl">امتحانات</div></div>
+    <div class="stat-card"><div class="ic">✅</div><div class="val">${passed}</div><div class="lbl">ناجح</div></div>
+    <div class="stat-card"><div class="ic">❌</div><div class="val">${totalGrades - passed}</div><div class="lbl">راسب</div></div>
+    <div class="stat-card"><div class="ic">🚫</div><div class="val">${students.filter(s=>s.banned).length}</div><div class="lbl">محظور</div></div>
+  `;
+
+  // Grade distribution
+  const gradeCounts = {};
+  students.forEach(s => { if (s.grade) gradeCounts[s.grade] = (gradeCounts[s.grade]||0) + 1; });
+  document.getElementById('gradeChart').innerHTML = Object.entries(gradeCounts).map(([g,c]) => `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px"><span>${g}</span><span>${c}</span></div>
+      <div style="background:rgba(255,255,255,.08);border-radius:4px;height:8px">
+        <div style="background:var(--gradient);height:8px;border-radius:4px;width:${Math.min(100,(c/students.length)*100)}%"></div>
+      </div>
+    </div>`).join('') || '<p style="color:var(--text-muted);font-size:.85rem">لا يوجد بيانات</p>';
+
+  // Auth chart
+  const google = students.filter(s => s.isGoogle).length;
+  const email = students.length - google;
+  document.getElementById('authChart').innerHTML = `
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px"><span>🔵 جوجل</span><span>${google}</span></div>
+      <div style="background:rgba(255,255,255,.08);border-radius:4px;height:10px">
+        <div style="background:#4285F4;height:10px;border-radius:4px;width:${students.length?Math.round(google/students.length*100):0}%"></div>
+      </div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:3px"><span>🟣 إيميل</span><span>${email}</span></div>
+      <div style="background:rgba(255,255,255,.08);border-radius:4px;height:10px">
+        <div style="background:var(--primary);height:10px;border-radius:4px;width:${students.length?Math.round(email/students.length*100):0}%"></div>
+      </div>
+    </div>`;
+
+  // Exam stats
+  const examPerf = {};
+  Object.values(allGrades).forEach(g => {
+    if (!examPerf[g.examTitle]) examPerf[g.examTitle] = { total: 0, passed: 0 };
+    examPerf[g.examTitle].total++;
+    if (g.total && g.score/g.total >= 0.5) examPerf[g.examTitle].passed++;
+  });
+  document.getElementById('examStats').innerHTML = Object.entries(examPerf).map(([name, p]) => `
+    <div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:4px">
+        <span>${name}</span>
+        <span style="color:var(--text-muted)">${p.passed}/${p.total} ناجح (${Math.round(p.passed/p.total*100)}%)</span>
+      </div>
+      <div style="background:rgba(255,255,255,.08);border-radius:4px;height:8px">
+        <div style="background:var(--success);height:8px;border-radius:4px;width:${Math.round(p.passed/p.total*100)}%"></div>
+      </div>
+    </div>`).join('') || '<p style="color:var(--text-muted);font-size:.85rem">لا يوجد بيانات امتحانات بعد</p>';
+}
+
+// ====== GLOBAL SEARCH ======
+function globalSearch() {
+  const q = document.getElementById('globalSearchInput').value.trim().toLowerCase();
+  const wrap = document.getElementById('searchResults');
+  if (q.length < 2) { wrap.innerHTML = ''; return; }
+
+  const results = allStudents.filter(s => {
+    const name = [s.name1,s.name2,s.name3,s.name4].filter(Boolean).join(' ').toLowerCase();
+    return name.includes(q) || (s.email||'').toLowerCase().includes(q) || (s.studentPhone||'').includes(q) || (s.username||'').toLowerCase().includes(q);
+  });
+
+  if (!results.length) { wrap.innerHTML = '<p style="color:var(--text-muted);text-align:center;padding:30px">لا يوجد نتائج</p>'; return; }
+
+  wrap.innerHTML = results.map(s => {
+    const name = [s.name1,s.name2,s.name3,s.name4].filter(Boolean).join(' ') || '—';
+    const studentGrades = Object.values(allGrades).filter(g => g.studentUid === s._key || g.studentName === name);
+    const passed = studentGrades.filter(g => g.total && g.score/g.total >= 0.5).length;
+    return `<div class="search-result-card">
+      <h4>👤 ${name}</h4>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;font-size:.85rem">
+        <div class="info-row"><span class="info-label">📧 الإيميل:</span><span>${s.email||'—'}</span></div>
+        <div class="info-row"><span class="info-label">📱 واتساب الطالب:</span><span>${s.studentPhone||'—'}</span></div>
+        <div class="info-row"><span class="info-label">👨‍👧 واتساب الولي:</span><span>${s.parentPhone||'—'}</span></div>
+        <div class="info-row"><span class="info-label">🎓 الصف:</span><span>${s.grade||'—'}</span></div>
+        <div class="info-row"><span class="info-label">🔐 نوع الحساب:</span><span>${s.isGoogle?'جوجل':'إيميل'}</span></div>
+        <div class="info-row"><span class="info-label">📅 تاريخ التسجيل:</span><span>${s.createdAt||'—'}</span></div>
+        <div class="info-row"><span class="info-label">📝 عدد الامتحانات:</span><span>${studentGrades.length}</span></div>
+        <div class="info-row"><span class="info-label">✅ ناجح في:</span><span>${passed} امتحان</span></div>
+        <div class="info-row"><span class="info-label">🚫 الحالة:</span><span>${s.banned?'<span class="badge badge-danger">محظور</span>':'<span class="badge badge-success">نشط</span>'}</span></div>
+      </div>
+      ${studentGrades.length ? `<div style="margin-top:12px"><strong style="font-size:.85rem;color:var(--text-muted)">الامتحانات:</strong>
+        <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:6px">${studentGrades.map(g => {
+          const pct = g.total ? Math.round(g.score/g.total*100) : 0;
+          return `<span class="badge ${pct>=50?'badge-success':'badge-danger'}">${g.examTitle||'—'}: ${g.score}/${g.total} (${pct}%)</span>`;
+        }).join('')}</div></div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+</script>
+</body>
+</html>
