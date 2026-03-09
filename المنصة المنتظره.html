@@ -646,65 +646,110 @@ textarea.form-input{resize:vertical;min-height:90px}
     <button class="modal-close" onclick="closeModal('register')"><i class="fas fa-times"></i></button>
     <div style="text-align:center;font-size:2.4rem;margin-bottom:10px">🎓</div>
     <h2 class="modal-title">إنشاء حساب جديد</h2>
-    <p class="modal-sub">انضم لآلاف الطلاب المتميزين الآن!</p>
-    <div class="form-group">
-      <label class="form-label">الاسم الأول</label>
-      <input type="text" class="form-input" id="regName1" placeholder="مثال: أحمد">
+
+    <!-- شريط التقدم -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:22px;direction:ltr">
+      <div id="step1Dot" style="width:32px;height:32px;border-radius:50%;background:var(--gradient);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;flex-shrink:0">1</div>
+      <div style="flex:1;height:3px;background:rgba(255,255,255,.1);border-radius:2px"><div id="stepBar" style="height:100%;width:0%;background:var(--gradient);border-radius:2px;transition:width .4s ease"></div></div>
+      <div id="step2Dot" style="width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.1);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.85rem;flex-shrink:0;transition:all .3s">2</div>
     </div>
-    <div class="form-row">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">الاسم الثاني</label>
-        <input type="text" class="form-input" id="regName2" placeholder="مثال: محمد">
+
+    <!-- ===== الخطوة الأولى: بيانات الطالب ===== -->
+    <div id="regStep1">
+      <p class="modal-sub" style="margin-bottom:20px">أدخل بياناتك الشخصية أولاً</p>
+      <div class="form-group">
+        <label class="form-label">الاسم الأول <span style="color:#E74C3C">*</span></label>
+        <input type="text" class="form-input" id="regName1" placeholder="مثال: أحمد">
       </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">الاسم الثالث</label>
-        <input type="text" class="form-input" id="regName3" placeholder="مثال: علي">
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">الاسم الثاني <span style="color:#E74C3C">*</span></label>
+          <input type="text" class="form-input" id="regName2" placeholder="مثال: محمد">
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">الاسم الثالث</label>
+          <input type="text" class="form-input" id="regName3" placeholder="اختياري">
+        </div>
       </div>
-    </div>
-    <div class="form-group" style="margin-top:16px">
-      <label class="form-label">الاسم الأخير</label>
-      <input type="text" class="form-input" id="regName4" placeholder="مثال: السيد">
-    </div>
-    <div class="form-group">
-      <label class="form-label">الإيميل</label>
-      <input type="email" class="form-input" id="regEmail" placeholder="example@email.com">
-    </div>
-    <div class="form-group">
-      <label class="form-label">رقم واتساب الطالب</label>
-      <div class="phone-input-wrap">
-        <select class="phone-flag" id="regStudentCode"></select>
-        <input type="tel" class="form-input" id="regStudentPhone" placeholder="رقم الواتساب" style="flex:1">
+      <div class="form-group" style="margin-top:16px">
+        <label class="form-label">الاسم الأخير <span style="color:#E74C3C">*</span></label>
+        <input type="text" class="form-input" id="regName4" placeholder="مثال: السيد">
       </div>
-    </div>
-    <div class="form-group">
-      <label class="form-label">رقم واتساب ولي الأمر</label>
-      <div class="phone-input-wrap">
-        <select class="phone-flag" id="regParentCode"></select>
-        <input type="tel" class="form-input" id="regParentPhone" placeholder="رقم الواتساب" style="flex:1">
+      <div class="form-group">
+        <label class="form-label">رقم واتساب الطالب <span style="color:#E74C3C">*</span></label>
+        <div class="phone-input-wrap">
+          <select class="phone-flag" id="regStudentCode"></select>
+          <input type="tel" class="form-input" id="regStudentPhone" placeholder="رقم الواتساب" style="flex:1">
+        </div>
       </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">المرحلة الدراسية</label>
-        <select class="form-select" id="regStage" onchange="updateGradeOptions()">
-          <option value="">اختر المرحلة</option>
-          <option value="prep">إعدادي</option>
-          <option value="sec">ثانوي</option>
-        </select>
+      <div class="form-group">
+        <label class="form-label">رقم واتساب ولي الأمر</label>
+        <div class="phone-input-wrap">
+          <select class="phone-flag" id="regParentCode"></select>
+          <input type="tel" class="form-input" id="regParentPhone" placeholder="رقم الواتساب" style="flex:1">
+        </div>
       </div>
-      <div class="form-group" style="margin-bottom:0">
-        <label class="form-label">الصف</label>
-        <select class="form-select" id="regGrade"><option value="">اختر الصف</option></select>
+      <div class="form-row">
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">المرحلة الدراسية <span style="color:#E74C3C">*</span></label>
+          <select class="form-select" id="regStage" onchange="updateGradeOptions()">
+            <option value="">اختر المرحلة</option>
+            <option value="prep">إعدادي</option>
+            <option value="sec">ثانوي</option>
+          </select>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label class="form-label">الصف <span style="color:#E74C3C">*</span></label>
+          <select class="form-select" id="regGrade"><option value="">اختر الصف</option></select>
+        </div>
       </div>
+      <button class="btn-form" onclick="goToRegStep2()" style="margin-top:20px"><i class="fas fa-arrow-left"></i> التالي — اختر طريقة الربط</button>
     </div>
-    <div class="form-group" style="margin-top:16px">
-      <label class="form-label">كلمة المرور</label>
-      <input type="password" class="form-input" id="regPass" placeholder="كلمة مرور قوية">
+
+    <!-- ===== الخطوة الثانية: طريقة الربط ===== -->
+    <div id="regStep2" style="display:none">
+      <p class="modal-sub" style="margin-bottom:24px">اختر طريقة ربط حسابك</p>
+
+      <!-- خيار الإيميل -->
+      <div id="emailOption" style="background:rgba(108,63,197,.08);border:1.5px solid rgba(108,63,197,.3);border-radius:14px;padding:18px;margin-bottom:14px;cursor:pointer;transition:all .3s" onclick="toggleEmailFields()" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="if(!document.getElementById('emailFields').style.display||document.getElementById('emailFields').style.display==='none')this.style.borderColor='rgba(108,63,197,.3)'">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:42px;height:42px;background:rgba(108,63,197,.2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0">✉️</div>
+          <div>
+            <div style="font-weight:800;font-size:.95rem">ربط بالإيميل وكلمة مرور</div>
+            <div style="font-size:.8rem;color:var(--text-muted)">أنشئ حساب بإيميلك وكلمة مرور خاصة بك</div>
+          </div>
+          <i class="fas fa-chevron-down" id="emailChevron" style="margin-right:auto;color:var(--text-muted);transition:transform .3s"></i>
+        </div>
+        <!-- حقول الإيميل مخفية -->
+        <div id="emailFields" style="display:none;margin-top:16px" onclick="event.stopPropagation()">
+          <div class="form-group">
+            <label class="form-label">الإيميل <span style="color:#E74C3C">*</span></label>
+            <input type="email" class="form-input" id="regEmail" placeholder="example@gmail.com">
+          </div>
+          <div class="form-group">
+            <label class="form-label">كلمة المرور <span style="color:#E74C3C">*</span></label>
+            <input type="password" class="form-input" id="regPass" placeholder="6 أحرف على الأقل">
+          </div>
+          <button class="btn-form" onclick="handleRegister()" style="margin-top:4px"><i class="fas fa-user-plus"></i> إنشاء الحساب بالإيميل</button>
+        </div>
+      </div>
+
+      <!-- خيار Google -->
+      <div style="background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);border-radius:14px;padding:18px;cursor:pointer;transition:all .3s" onclick="handleGoogleRegister()" onmouseover="this.style.borderColor='rgba(66,133,244,.6)';this.style.background='rgba(66,133,244,.08)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)';this.style.background='rgba(255,255,255,.04)'">
+        <div style="display:flex;align-items:center;gap:12px">
+          <div style="width:42px;height:42px;background:rgba(66,133,244,.15);border-radius:10px;display:flex;align-items:center;justify-content:center;flex-shrink:0"><i class="fab fa-google" style="color:#4285F4;font-size:1.3rem"></i></div>
+          <div>
+            <div style="font-weight:800;font-size:.95rem">ربط بحساب Google</div>
+            <div style="font-size:.8rem;color:var(--text-muted)">سجّل بضغطة واحدة عبر حسابك على Google</div>
+          </div>
+          <i class="fas fa-arrow-left" style="margin-right:auto;color:var(--text-muted)"></i>
+        </div>
+      </div>
+
+      <button onclick="backToRegStep1()" style="background:none;border:none;color:var(--text-muted);font-family:'Cairo',sans-serif;font-size:.85rem;cursor:pointer;margin-top:18px;display:flex;align-items:center;gap:6px;font-weight:700"><i class="fas fa-arrow-right"></i> رجوع لتعديل البيانات</button>
     </div>
-    <button class="btn-form" onclick="handleRegister()"><i class="fas fa-user-plus"></i> إنشاء الحساب</button>
-    <div class="divider"><span>أو</span></div>
-    <button class="btn-google" onclick="handleGoogleLogin()"><i class="fab fa-google" style="color:#4285F4"></i> التسجيل بجوجل</button>
-    <div class="modal-switch">عندك حساب بالفعل؟ <a onclick="switchModal('register','login')">سجّل دخولك</a></div>
+
+    <div class="modal-switch" style="margin-top:16px">عندك حساب بالفعل؟ <a onclick="switchModal('register','login')">سجّل دخولك</a></div>
   </div>
 </div>
 
@@ -1030,7 +1075,22 @@ function showNotification(msg,type='success'){
 
 // ====== MODALS ======
 function showModal(t){document.getElementById(t+'Modal').classList.add('active');document.body.style.overflow='hidden'}
-function closeModal(t){document.getElementById(t+'Modal').classList.remove('active');document.body.style.overflow=''}
+function closeModal(t){
+  document.getElementById(t+'Modal').classList.remove('active');
+  document.body.style.overflow='';
+  // إعادة ضبط خطوات التسجيل
+  if(t==='register'){
+    const s1=document.getElementById('regStep1'),s2=document.getElementById('regStep2');
+    if(s1)s1.style.display='block';
+    if(s2)s2.style.display='none';
+    const bar=document.getElementById('stepBar'),dot2=document.getElementById('step2Dot');
+    if(bar)bar.style.width='0%';
+    if(dot2)dot2.style.background='rgba(255,255,255,.1)';
+    const ef=document.getElementById('emailFields'),ec=document.getElementById('emailChevron');
+    if(ef)ef.style.display='none';
+    if(ec)ec.style.transform='';
+  }
+}
 function switchModal(f,t){closeModal(f);setTimeout(()=>showModal(t),200)}
 document.querySelectorAll('.modal-overlay').forEach(o=>{
   o.addEventListener('click',function(e){if(e.target===this){this.classList.remove('active');document.body.style.overflow=''}});
@@ -1131,7 +1191,7 @@ function handleForgotPassword() {
 }
 
 // ====== GOOGLE LOGIN ======
-function handleGoogleLogin() {
+function handleGoogleLogin(fromRegister) {
   const provider = new firebase.auth.GoogleAuthProvider();
   provider.setCustomParameters({ prompt: 'select_account' });
   auth.signInWithPopup(provider)
@@ -1139,17 +1199,40 @@ function handleGoogleLogin() {
       const user = result.user;
       return db.ref('website/students/' + user.uid).once('value').then(snap => {
         if (!snap.exists()) {
-          // مستخدم جديد — اعرض مودال إكمال البيانات
-          window._pendingGoogleUser = user;
-          closeModal('login');
-          closeModal('register');
-          const parts = (user.displayName || '').split(' ');
-          document.getElementById('gcName1').value = parts[0] || '';
-          document.getElementById('gcName2').value = parts[1] || '';
-          document.getElementById('gcName3').value = parts[2] || '';
-          document.getElementById('gcName4').value = parts[3] || '';
-          buildGCPhoneSelects();
-          document.getElementById('googleCompleteModal').classList.add('active');
+          // مستخدم جديد
+          if (fromRegister && window._pendingRegProfile) {
+            // جاء من نموذج التسجيل — لديه بيانات جاهزة، احفظها مباشرة
+            const p = window._pendingRegProfile;
+            const fullName = [p.name1, p.name2, p.name3, p.name4].filter(Boolean).join(' ');
+            const profile = {
+              ...p,
+              fullName,
+              email: user.email,
+              isAdmin: false,
+              authProvider: 'google',
+              createdAt: new Date().toLocaleDateString('ar-EG'),
+              createdTimestamp: Date.now()
+            };
+            return db.ref('website/students/' + user.uid).set(profile).then(() => {
+              window._pendingRegProfile = null;
+              closeModal('register');
+              showNotification('أهلاً بك ' + p.name1 + '! تم إنشاء حسابك بنجاح 🎉');
+              currentUser = { uid: user.uid, ...profile };
+              updateNavForUser();
+            });
+          } else {
+            // دخل من زر Login مباشرة — اطلب منه البيانات
+            window._pendingGoogleUser = user;
+            closeModal('login');
+            closeModal('register');
+            const parts = (user.displayName || '').split(' ');
+            document.getElementById('gcName1').value = parts[0] || '';
+            document.getElementById('gcName2').value = parts[1] || '';
+            document.getElementById('gcName3').value = parts[2] || '';
+            document.getElementById('gcName4').value = parts[3] || '';
+            buildGCPhoneSelects();
+            document.getElementById('googleCompleteModal').classList.add('active');
+          }
         } else {
           closeModal('login');
           closeModal('register');
@@ -1242,75 +1325,128 @@ function handleGoogleCompleteProfile() {
     });
 }
 
-// ====== REGISTER ======
-function handleRegister() {
+// ====== REGISTER STEPS ======
+function validateStep1() {
   const n1 = document.getElementById('regName1').value.trim();
   const n2 = document.getElementById('regName2').value.trim();
-  const n3 = document.getElementById('regName3').value.trim();
   const n4 = document.getElementById('regName4').value.trim();
-  const em = document.getElementById('regEmail').value.trim();
-  const sp = document.getElementById('regStudentCode').value + document.getElementById('regStudentPhone').value.trim();
-  const pp = document.getElementById('regParentCode').value + document.getElementById('regParentPhone').value.trim();
   const stage = document.getElementById('regStage').value;
   const grade = document.getElementById('regGrade').value;
-  const pw = document.getElementById('regPass').value;
-
-  if (!n1 || !n2 || !n4 || !em || !stage || !grade || !pw) {
-    showNotification('اكمل كل البيانات المطلوبة', 'error'); return;
-  }
-  if (pw.length < 6) { showNotification('كلمة المرور لازم تكون 6 حروف على الأقل', 'error'); return; }
-
   const rawStudentPhone = document.getElementById('regStudentPhone').value.trim();
   const rawParentPhone = document.getElementById('regParentPhone').value.trim();
-  if (!/^\d{7,15}$/.test(rawStudentPhone)) {
-    showNotification('رقم واتساب الطالب غير صحيح', 'error'); return;
-  }
-  if (rawParentPhone && !/^\d{7,15}$/.test(rawParentPhone)) {
-    showNotification('رقم واتساب ولي الأمر غير صحيح', 'error'); return;
-  }
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) {
-    showNotification('الإيميل غير صحيح', 'error'); return;
-  }
 
-  const btn = document.querySelector('#registerModal .btn-form');
+  if (!n1) { showNotification('أدخل الاسم الأول', 'error'); return false; }
+  if (!n2) { showNotification('أدخل الاسم الثاني', 'error'); return false; }
+  if (!n4) { showNotification('أدخل الاسم الأخير', 'error'); return false; }
+  if (!stage) { showNotification('اختر المرحلة الدراسية', 'error'); return false; }
+  if (!grade) { showNotification('اختر الصف', 'error'); return false; }
+  if (!rawStudentPhone) { showNotification('أدخل رقم واتساب الطالب', 'error'); return false; }
+  if (!/^\d{7,15}$/.test(rawStudentPhone)) { showNotification('رقم واتساب الطالب غير صحيح', 'error'); return false; }
+  if (rawParentPhone && !/^\d{7,15}$/.test(rawParentPhone)) { showNotification('رقم واتساب ولي الأمر غير صحيح', 'error'); return false; }
+  return true;
+}
+
+function goToRegStep2() {
+  if (!validateStep1()) return;
+  document.getElementById('regStep1').style.display = 'none';
+  document.getElementById('regStep2').style.display = 'block';
+  document.getElementById('stepBar').style.width = '100%';
+  document.getElementById('step2Dot').style.background = 'var(--gradient)';
+  // scroll to top of modal
+  document.querySelector('#registerModal .modal').scrollTop = 0;
+}
+
+function backToRegStep1() {
+  document.getElementById('regStep2').style.display = 'none';
+  document.getElementById('regStep1').style.display = 'block';
+  document.getElementById('stepBar').style.width = '0%';
+  document.getElementById('step2Dot').style.background = 'rgba(255,255,255,.1)';
+  // إغلاق حقول الإيميل
+  document.getElementById('emailFields').style.display = 'none';
+  document.getElementById('emailChevron').style.transform = '';
+}
+
+function toggleEmailFields() {
+  const fields = document.getElementById('emailFields');
+  const chevron = document.getElementById('emailChevron');
+  const emailOption = document.getElementById('emailOption');
+  const isOpen = fields.style.display !== 'none';
+  fields.style.display = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  emailOption.style.borderColor = isOpen ? 'rgba(108,63,197,.3)' : 'var(--primary)';
+}
+
+function getRegProfileData() {
+  return {
+    name1: document.getElementById('regName1').value.trim(),
+    name2: document.getElementById('regName2').value.trim(),
+    name3: document.getElementById('regName3').value.trim(),
+    name4: document.getElementById('regName4').value.trim(),
+    studentPhone: document.getElementById('regStudentCode').value + document.getElementById('regStudentPhone').value.trim(),
+    parentPhone: document.getElementById('regParentCode').value + document.getElementById('regParentPhone').value.trim(),
+    stage: document.getElementById('regStage').value,
+    grade: document.getElementById('regGrade').value,
+  };
+}
+
+// ====== REGISTER ======
+function handleRegister() {
+  if (!validateStep1()) { backToRegStep1(); return; }
+
+  const em = document.getElementById('regEmail').value.trim();
+  const pw = document.getElementById('regPass').value;
+
+  if (!em) { showNotification('أدخل الإيميل', 'error'); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(em)) { showNotification('الإيميل غير صحيح', 'error'); return; }
+  if (!pw) { showNotification('أدخل كلمة المرور', 'error'); return; }
+  if (pw.length < 6) { showNotification('كلمة المرور لازم تكون 6 أحرف على الأقل', 'error'); return; }
+
+  const btn = document.querySelector('#registerModal #emailFields .btn-form');
   if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> جاري الإنشاء...'; }
+
+  const profileData = getRegProfileData();
+  const fullName = [profileData.name1, profileData.name2, profileData.name3, profileData.name4].filter(Boolean).join(' ');
 
   auth.createUserWithEmailAndPassword(em, pw)
     .then(result => {
-      const uid = result.user.uid;
-      const fullName = [n1, n2, n3, n4].filter(Boolean).join(' ');
-      // تحديث displayName في Firebase Auth
       result.user.updateProfile({ displayName: fullName });
       const profile = {
-        name1: n1, name2: n2, name3: n3 || '', name4: n4,
-        fullName: fullName,
+        ...profileData,
+        fullName,
         email: em,
-        studentPhone: sp,
-        parentPhone: pp || '',
-        stage, grade,
         isAdmin: false,
         authProvider: 'email',
         createdAt: new Date().toLocaleDateString('ar-EG'),
         createdTimestamp: Date.now()
       };
-      return db.ref('website/students/' + uid).set(profile);
+      return db.ref('website/students/' + result.user.uid).set(profile);
     })
     .then(() => {
       closeModal('register');
-      showNotification('أهلاً بك ' + n1 + '! تم إنشاء حسابك بنجاح 🎉');
+      showNotification('أهلاً بك ' + profileData.name1 + '! تم إنشاء حسابك بنجاح 🎉');
     })
     .catch(err => {
       const msgs = {
         'auth/email-already-in-use': 'الإيميل ده مسجل بالفعل، جرب تسجيل الدخول',
         'auth/invalid-email': 'الإيميل غير صحيح',
-        'auth/weak-password': 'كلمة المرور ضعيفة جداً — استخدم 6 أحرف على الأقل'
+        'auth/weak-password': 'كلمة المرور ضعيفة — استخدم 6 أحرف أو أكتر'
       };
-      showNotification(msgs[err.code] || 'خطأ في إنشاء الحساب: ' + err.message, 'error');
+      showNotification(msgs[err.code] || 'خطأ: ' + err.message, 'error');
     })
     .finally(() => {
-      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب'; }
+      if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب بالإيميل'; }
     });
 }
+
+function handleGoogleRegister() {
+  if (!validateStep1()) { backToRegStep1(); return; }
+  // احفظ بيانات الخطوة الأولى مؤقتاً
+  window._pendingRegProfile = getRegProfileData();
+  handleGoogleLogin(true);
+}
+
+
+
 
 // ====== LOGOUT ======
 function logout() {
