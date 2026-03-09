@@ -853,7 +853,8 @@ textarea.form-input{resize:vertical;min-height:90px}
       <div class="sidebar-item active" onclick="showAdminSection('dashboard',this)"><i class="fas fa-home"></i> الرئيسية</div>
       <div class="sidebar-item" onclick="showAdminSection('students',this)"><i class="fas fa-users"></i> الطلاب</div>
       <div class="sidebar-item" onclick="showAdminSection('scores',this)"><i class="fas fa-trophy"></i> الدرجات</div>
-        <div class="sidebar-item" onclick="showAdminSection('exams',this)"><i class="fas fa-file-alt"></i> الامتحانات</div>
+      <div class="sidebar-item" onclick="showAdminSection('courses',this)"><i class="fas fa-book"></i> الكورسات</div>
+      <div class="sidebar-item" onclick="showAdminSection('exams',this)"><i class="fas fa-file-alt"></i> الامتحانات</div>
     </div>
     <div class="admin-main">
       <div class="admin-content-section active" id="section-dashboard">
@@ -898,16 +899,51 @@ textarea.form-input{resize:vertical;min-height:90px}
           <table class="data-table"><thead><tr><th>الاسم</th><th>الصف</th><th>الرأي</th><th>التقييم</th><th>الحالة</th><th>إجراء</th></tr></thead><tbody id="reviewsTable"></tbody></table>
         </div>
       </div>
-      <div class="admin-content-section" id="section-exams">
-        <p class="admin-section-title">📝 إضافة امتحان</p>
+      <div class="admin-content-section" id="section-courses">
+        <p class="admin-section-title">📚 إدارة الكورسات</p>
         <div class="admin-form-card">
-          <h3>إنشاء امتحان جديد (Firebuzz)</h3>
+          <h3>إضافة كورس جديد</h3>
+          <div class="admin-form-row">
+            <div class="form-group"><label class="form-label">اسم الكورس</label><input type="text" class="form-input" id="courseNameInput" placeholder="مثال: كورس الثانوية العامة"></div>
+            <div class="form-group"><label class="form-label">الصف الدراسي</label><input type="text" class="form-input" id="courseGradeInput" placeholder="مثال: تالتة ثانوي"></div>
+          </div>
+          <div class="form-group"><label class="form-label">رابط صورة الغلاف (اختياري)</label><input type="url" class="form-input" id="courseImageInput" placeholder="https://..."></div>
+          <button class="btn-form" onclick="adminAddCourse()" style="margin-top:14px"><i class="fas fa-plus"></i> إضافة الكورس</button>
+        </div>
+        <div style="margin-top:22px">
+          <p class="admin-section-title">الكورسات الحالية</p>
+          <div style="overflow-x:auto">
+            <table class="data-table"><thead><tr><th>اسم الكورس</th><th>الصف</th><th>عدد الفيديوهات</th><th>إضافة فيديو</th><th>حذف</th></tr></thead><tbody id="adminCoursesTable"></tbody></table>
+          </div>
+        </div>
+        <!-- نموذج إضافة فيديو -->
+        <div class="admin-form-card" id="addVideoSection" style="display:none;margin-top:18px">
+          <h3 id="addVideoTitle">إضافة فيديو للكورس</h3>
+          <input type="hidden" id="addVideoCourseKey">
+          <div class="admin-form-row">
+            <div class="form-group"><label class="form-label">اسم الفيديو</label><input type="text" class="form-input" id="videoNameInput" placeholder="مثال: الدرس الأول - المقدمة"></div>
+            <div class="form-group"><label class="form-label">YouTube ID</label><input type="text" class="form-input" id="videoYtIdInput" placeholder="مثال: dQw4w9WgXcQ"></div>
+          </div>
+          <button class="btn-form" onclick="adminAddVideo()" style="margin-top:14px"><i class="fas fa-video"></i> إضافة الفيديو</button>
+          <button onclick="document.getElementById('addVideoSection').style.display='none'" style="margin-top:14px;margin-right:10px;background:transparent;border:1px solid var(--card-border);color:var(--text-muted);padding:10px 20px;border-radius:10px;cursor:pointer">إلغاء</button>
+        </div>
+      </div>
+      <div class="admin-content-section" id="section-exams">
+        <p class="admin-section-title">📝 إدارة الامتحانات</p>
+        <div class="admin-form-card">
+          <h3>إنشاء امتحان جديد</h3>
           <div class="admin-form-row">
             <div class="form-group"><label class="form-label">اسم الامتحان</label><input type="text" class="form-input" id="examTitle" placeholder="اسم الامتحان"></div>
             <div class="form-group"><label class="form-label">الصف المستهدف</label><input type="text" class="form-input" id="examTarget" placeholder="مثال: تالتة ثانوي"></div>
           </div>
-          <div class="form-group"><label class="form-label">رابط الامتحان</label><input type="url" class="form-input" id="examLink" placeholder="https://..."></div>
+          <div class="form-group"><label class="form-label">رابط الامتحان (اختياري)</label><input type="url" class="form-input" id="examLink" placeholder="https://..."></div>
           <button class="btn-form" onclick="adminAddExam()" style="margin-top:14px"><i class="fas fa-plus"></i> إضافة الامتحان</button>
+        </div>
+        <div style="margin-top:22px">
+          <p class="admin-section-title">الامتحانات الحالية</p>
+          <div style="overflow-x:auto">
+            <table class="data-table"><thead><tr><th>اسم الامتحان</th><th>الصف</th><th>عدد الأسئلة</th><th>حذف</th></tr></thead><tbody id="adminExamsTable"></tbody></table>
+          </div>
         </div>
       </div>
     </div>
@@ -1426,12 +1462,18 @@ function handleRegister() {
       showNotification('أهلاً بك ' + profileData.name1 + '! تم إنشاء حسابك بنجاح 🎉');
     })
     .catch(err => {
+      console.error('Registration error:', err);
       const msgs = {
         'auth/email-already-in-use': 'الإيميل ده مسجل بالفعل، جرب تسجيل الدخول',
         'auth/invalid-email': 'الإيميل غير صحيح',
-        'auth/weak-password': 'كلمة المرور ضعيفة — استخدم 6 أحرف أو أكتر'
+        'auth/weak-password': 'كلمة المرور ضعيفة — استخدم 6 أحرف أو أكتر',
+        'auth/network-request-failed': 'مشكلة في الاتصال بالانترنت، جرب تاني',
+        'auth/operation-not-allowed': 'تسجيل الدخول بالإيميل غير مفعّل — تواصل مع الأدمن',
+        'PERMISSION_DENIED': 'خطأ في صلاحيات قاعدة البيانات — تواصل مع الأدمن'
       };
-      showNotification(msgs[err.code] || 'خطأ: ' + err.message, 'error');
+      // Check for Firebase Database PERMISSION_DENIED
+      const msg = msgs[err.code] || (err.message && err.message.includes('PERMISSION_DENIED') ? 'خطأ في صلاحيات قاعدة البيانات — تواصل مع الأدمن' : 'خطأ: ' + err.message);
+      showNotification(msg, 'error');
     })
     .finally(() => {
       if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fas fa-user-plus"></i> إنشاء الحساب بالإيميل'; }
@@ -1648,14 +1690,118 @@ function deleteReview(key, approved){
 }
 function adminAddExam(){
   const t=document.getElementById('examTitle').value.trim();
+  const target=document.getElementById('examTarget')?document.getElementById('examTarget').value.trim():'';
   const l=document.getElementById('examLink').value.trim();
   if(!t){showNotification('اكتب اسم الامتحان','error');return}
-  db.ref('website/exams').push({title:t,link:l||'#',active:true,createdAt:new Date().toLocaleDateString('ar-EG')})
-    .then(()=>{showNotification('تم إضافة الامتحان 📝');document.getElementById('examTitle').value='';document.getElementById('examLink').value='';})
-    .catch(()=>showNotification('تم الحفظ محلياً 📝'));
+  // ✅ مسار موحد: exams_v2 هو المسار اللي الموقع بيقرأ منه
+  const examData={
+    title:t,
+    grade:target||'عام',
+    link:l||'#',
+    active:true,
+    questions:[],
+    timer:0,
+    createdAt:new Date().toLocaleDateString('ar-EG')
+  };
+  db.ref('website/exams_v2').push(examData)
+    .then(()=>{
+      showNotification('تم إضافة الامتحان 📝');
+      document.getElementById('examTitle').value='';
+      if(document.getElementById('examTarget'))document.getElementById('examTarget').value='';
+      document.getElementById('examLink').value='';
+      renderAdminExamsList();
+    })
+    .catch(err=>{showNotification('خطأ: '+err.message,'error');});
 }
 
-// Smooth scroll
+function renderAdminExamsList(){
+  const tbody=document.getElementById('adminExamsTable');
+  if(!tbody)return;
+  const entries=Object.entries(allExamsV2);
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;padding:20px;color:var(--text-muted)">لا يوجد امتحانات بعد</td></tr>';return;}
+  tbody.innerHTML=entries.map(([key,e])=>`
+    <tr>
+      <td>${e.title}</td>
+      <td>${e.grade||'—'}</td>
+      <td>${e.questions?e.questions.length:0} سؤال</td>
+      <td><button class="action-btn delete" onclick="adminDeleteExam('${key}')">حذف</button></td>
+    </tr>`).join('');
+}
+
+function adminDeleteExam(key){
+  if(!confirm('هل تريد حذف هذا الامتحان؟'))return;
+  db.ref('website/exams_v2/'+key).remove()
+    .then(()=>showNotification('تم الحذف'))
+    .catch(()=>showNotification('خطأ في الحذف','error'));
+}
+
+// ====== ADMIN COURSES MANAGEMENT ======
+function adminAddCourse(){
+  const name=document.getElementById('courseNameInput').value.trim();
+  const grade=document.getElementById('courseGradeInput').value.trim();
+  const image=document.getElementById('courseImageInput').value.trim();
+  if(!name){showNotification('اكتب اسم الكورس','error');return;}
+  if(!grade){showNotification('اكتب الصف الدراسي','error');return;}
+  const courseData={name,grade,image:image||'',videos:{},createdAt:new Date().toLocaleDateString('ar-EG')};
+  db.ref('website/courses').push(courseData)
+    .then(()=>{
+      showNotification('تم إضافة الكورس 📚');
+      document.getElementById('courseNameInput').value='';
+      document.getElementById('courseGradeInput').value='';
+      document.getElementById('courseImageInput').value='';
+    })
+    .catch(err=>showNotification('خطأ: '+err.message,'error'));
+}
+
+function renderAdminCoursesList(){
+  const tbody=document.getElementById('adminCoursesTable');
+  if(!tbody)return;
+  const entries=Object.entries(allCourses);
+  if(!entries.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text-muted)">لا يوجد كورسات بعد</td></tr>';return;}
+  tbody.innerHTML=entries.map(([key,c])=>{
+    const vCount=c.videos?Object.keys(c.videos).length:0;
+    return `<tr>
+      <td>${c.name}</td>
+      <td>${c.grade}</td>
+      <td>${vCount} فيديو</td>
+      <td><button class="action-btn" onclick="showAddVideoForm('${key}','${c.name}')" style="background:rgba(108,63,197,.2);color:var(--primary-light)">+ فيديو</button></td>
+      <td><button class="action-btn delete" onclick="adminDeleteCourse('${key}')">حذف</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function showAddVideoForm(courseKey,courseName){
+  document.getElementById('addVideoCourseKey').value=courseKey;
+  document.getElementById('addVideoTitle').textContent='إضافة فيديو لـ: '+courseName;
+  document.getElementById('videoNameInput').value='';
+  document.getElementById('videoYtIdInput').value='';
+  document.getElementById('addVideoSection').style.display='block';
+  document.getElementById('addVideoSection').scrollIntoView({behavior:'smooth'});
+}
+
+function adminAddVideo(){
+  const courseKey=document.getElementById('addVideoCourseKey').value;
+  const name=document.getElementById('videoNameInput').value.trim();
+  const ytId=document.getElementById('videoYtIdInput').value.trim();
+  if(!name||!ytId){showNotification('اكتب اسم الفيديو وID اليوتيوب','error');return;}
+  const thumb=`https://img.youtube.com/vi/${ytId}/mqdefault.jpg`;
+  db.ref('website/courses/'+courseKey+'/videos').push({name,ytId,thumb})
+    .then(()=>{
+      showNotification('تم إضافة الفيديو 🎬');
+      document.getElementById('videoNameInput').value='';
+      document.getElementById('videoYtIdInput').value='';
+    })
+    .catch(err=>showNotification('خطأ: '+err.message,'error'));
+}
+
+function adminDeleteCourse(key){
+  if(!confirm('هل تريد حذف هذا الكورس وكل فيديوهاته؟'))return;
+  db.ref('website/courses/'+key).remove()
+    .then(()=>showNotification('تم الحذف'))
+    .catch(()=>showNotification('خطأ في الحذف','error'));
+}
+
+
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click',e=>{
     e.preventDefault();const t=document.querySelector(a.getAttribute('href'));
@@ -1670,6 +1816,7 @@ function loadCourses() {
   db.ref('website/courses').on('value', snap => {
     allCourses = snap.exists() ? snap.val() : {};
     renderPublicCourses();
+    renderAdminCoursesList();
   });
 }
 
@@ -1677,6 +1824,7 @@ function loadExamsV2() {
   db.ref('website/exams_v2').on('value', snap => {
     allExamsV2 = snap.exists() ? snap.val() : {};
     renderPublicExams();
+    renderAdminExamsList();
   });
 }
 
@@ -1956,6 +2104,7 @@ loadExamsV2();
     <button class="admin-mob-item active" onclick="showAdminSection('dashboard',this)"><i class="fas fa-home"></i>الرئيسية</button>
     <button class="admin-mob-item" onclick="showAdminSection('students',this)"><i class="fas fa-users"></i>الطلاب</button>
     <button class="admin-mob-item" onclick="showAdminSection('scores',this)"><i class="fas fa-trophy"></i>الدرجات</button>
+    <button class="admin-mob-item" onclick="showAdminSection('courses',this)"><i class="fas fa-book"></i>الكورسات</button>
     <button class="admin-mob-item" onclick="showAdminSection('exams',this)"><i class="fas fa-file-alt"></i>الامتحانات</button>
   </div>
 </div>
