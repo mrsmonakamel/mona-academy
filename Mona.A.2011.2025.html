@@ -282,7 +282,7 @@ tr:hover td{background:rgba(108,63,197,.05)}
           </select>
         </div>
         <div class="tbl-wrap">
-          <table><thead><tr><th>الاسم الكامل</th><th>الصف</th><th>واتساب الطالب</th><th>واتساب ولي الأمر</th><th>نوع الحساب</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
+          <table><thead><tr><th>الاسم الكامل</th><th>كود الطالب</th><th>الصف</th><th>واتساب الطالب</th><th>واتساب ولي الأمر</th><th>نوع الحساب</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th></tr></thead>
           <tbody id="studentsTable"></tbody></table>
         </div>
       </div>
@@ -443,9 +443,17 @@ tr:hover td{background:rgba(108,63,197,.05)}
       <code style="background:rgba(0,0,0,.3);padding:4px 8px;border-radius:6px;display:block;margin-top:6px;direction:ltr">"Convert questions to: Question, A: B: C: D: then correct letter alone. Empty line between questions."</code>
     </div>
 
-    <div class="fg"><label>اختر الكورس:</label>
+    <div class="fg"><label>نوع الامتحان:</label>
+      <select class="fi" id="examType" onchange="toggleExamType()">
+        <option value="course">📚 داخل كورس</option>
+        <option value="standalone">🌐 امتحان مستقل (يظهر في صفحة الامتحانات)</option>
+      </select>
+    </div>
+    <div id="examCourseWrap" class="fg"><label>اختر الكورس:</label>
       <select class="fi" id="examCourse"><option value="">-- اختر الكورس --</option></select>
     </div>
+    <div id="examGradeWrap" class="fg" style="display:none"><label>الصف المستهدف:</label>
+      <input class="fi" id="examStandaloneGrade" placeholder="مثال: تالتة ثانوي"></div>
     <div class="fg"><label>عنوان الامتحان:</label><input class="fi" id="examTitle" placeholder="مثال: Unit 1 Exam"></div>
     <div class="fg">
       <label>⏱️ وقت الامتحان (اختياري):</label>
@@ -610,6 +618,8 @@ async function loadAll() {
     allGrades = snap.exists() ? snap.val() : {};
     renderGrades();
   });
+  // Auto Honor List listener
+  listenToAutoHonor();
 }
 
 function updateStats() {
@@ -707,8 +717,22 @@ function openVideos(key) {
 }
 
 function getYTId(url) {
-  const m = url.match(/(?:v=|youtu\.be\/|embed\/)([^&?\/]+)/);
-  return m ? m[1] : null;
+  url = url.trim();
+  // Direct ID (11 chars)
+  if (/^[a-zA-Z0-9_-]{11}$/.test(url)) return url;
+  // youtu.be/ID
+  let m = url.match(/youtu\.be\/([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  // youtube.com/watch?v=ID
+  m = url.match(/[?&]v=([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  // youtube.com/embed/ID
+  m = url.match(/embed\/([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  // youtube.com/shorts/ID
+  m = url.match(/shorts\/([a-zA-Z0-9_-]{11})/);
+  if (m) return m[1];
+  return null;
 }
 
 function previewYT() {
@@ -728,9 +752,7 @@ function addVideo() {
   const url = document.getElementById('vUrl').value.trim();
   if (!name || !url) { notify('اكمل البيانات', 'error'); return; }
   const ytId = getYTId(url);
-  if (!ytId) { notify('رابط يوتيوب غير صحيح', 'error'); return; }
-  // ✅ التحقق من صحة رابط يوتيوب فقط
-  if (!/^[a-zA-Z0-9_-]{11}$/.test(ytId)) { notify('رابط يوتيوب غير صحيح', 'error'); return; }
+  if (!ytId) { notify('رابط يوتيوب غير صحيح — جرب تنسق: https://youtube.com/watch?v=XXXX', 'error'); return; }
   const thumb = `https://img.youtube.com/vi/${ytId}/hqdefault.jpg`;
   db.ref('website/courses/' + key + '/videos').push({ name, url, ytId, thumb, createdAt: new Date().toLocaleDateString('ar-EG') })
     .then(() => { notify('تم إضافة الفيديو ✅'); document.getElementById('vName').value=''; document.getElementById('vUrl').value=''; document.getElementById('ytPreviewWrap').style.display='none'; renderVideosList(key); })
@@ -769,8 +791,10 @@ function renderStudents(list) {
     const name = [s.name1,s.name2,s.name3,s.name4].filter(Boolean).join(' ') || s.name || '—';
     const authType = s.isGoogle ? '<span class="badge badge-info">جوجل</span>' : '<span class="badge badge-purple">إيميل</span>';
     const status = s.banned ? '<span class="badge badge-danger">محظور</span>' : '<span class="badge badge-success">نشط</span>';
+    const sid = s.studentId ? `<code style="background:rgba(108,63,197,.2);padding:2px 8px;border-radius:6px;font-size:.8rem;letter-spacing:1px">${s.studentId}</code>` : '—';
     return `<tr>
       <td>${name}</td>
+      <td>${sid}</td>
       <td>${s.grade||'—'}</td>
       <td>${s.studentPhone||'—'}</td>
       <td>${s.parentPhone||'—'}</td>
@@ -785,7 +809,7 @@ function renderStudents(list) {
         <button class="btn btn-danger" style="padding:5px 8px;font-size:.74rem" onclick="deleteStudent('${s._key}')"><i class="fas fa-trash"></i></button>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);padding:30px">لا يوجد نتائج</td></tr>';
+  }).join('') || '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);padding:30px">لا يوجد نتائج</td></tr>';
 }
 
 function filterStudents() {
@@ -910,17 +934,36 @@ B`;
   previewExam();
 }
 
+function toggleExamType() {
+  const t = document.getElementById('examType').value;
+  document.getElementById('examCourseWrap').style.display = t === 'course' ? '' : 'none';
+  document.getElementById('examGradeWrap').style.display = t === 'standalone' ? '' : 'none';
+}
+
 function saveExam() {
-  const courseKey = document.getElementById('examCourse').value;
+  const type = document.getElementById('examType').value;
   const title = document.getElementById('examTitle').value.trim();
   const timer = parseInt(document.getElementById('examTimer').value) || null;
   const text = document.getElementById('examText').value;
-  if (!courseKey) { notify('اختر الكورس', 'error'); return; }
   if (!title) { notify('اكتب عنوان الامتحان', 'error'); return; }
   const questions = parseExamText(text);
   if (!questions.length) { notify('مفيش أسئلة صحيحة', 'error'); return; }
-  const exam = { courseKey, title, timer, questions, createdAt: new Date().toLocaleDateString('ar-EG'), active: true };
-  db.ref('website/exams_v2').push(exam)
+
+  let examData = { title, timer, questions, createdAt: new Date().toLocaleDateString('ar-EG'), active: true };
+
+  if (type === 'course') {
+    const courseKey = document.getElementById('examCourse').value;
+    if (!courseKey) { notify('اختر الكورس', 'error'); return; }
+    examData.courseKey = courseKey;
+    examData.type = 'course';
+  } else {
+    const grade = document.getElementById('examStandaloneGrade').value.trim();
+    examData.grade = grade || 'عام';
+    examData.type = 'standalone';
+    examData.courseKey = '';
+  }
+
+  db.ref('website/exams_v2').push(examData)
     .then(() => { notify(`تم حفظ الامتحان (${questions.length} سؤال) ✅`); closeModal('addExam'); clearExamForm(); })
     .catch(() => notify('خطأ في الحفظ', 'error'));
 }
@@ -1012,6 +1055,35 @@ function renderScoresAdmin() {
       <td><strong style="color:var(--accent2)">${s.mark}</strong></td><td>${s.time||'—'}</td>
       <td><button class="btn btn-danger" style="padding:5px 10px;font-size:.78rem" onclick="deleteScore('${k}')"><i class="fas fa-trash"></i></button></td>
     </tr>`).join('') || '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:30px">قائمة الشرف فارغة</td></tr>';
+}
+
+// ====== AUTO HONOR LIST ======
+// يراقب grades ويضيف أي طالب حصل على 100% تلقائياً
+function listenToAutoHonor() {
+  db.ref('website/grades').on('child_added', async snap => {
+    const g = snap.val();
+    if (!g || !g.total || g.total === 0) return;
+    const pct = Math.round((g.score / g.total) * 100);
+    if (pct < 100) return;
+    // تحقق إنه مش موجود بالفعل في قائمة الشرف بنفس الامتحان واسم الطالب
+    const scSnap = await db.ref('website/scores').orderByChild('examKey').equalTo(g.examKey).once('value');
+    if (scSnap.exists()) {
+      let alreadyIn = false;
+      scSnap.forEach(ch => { if (ch.val().studentUid === g.studentUid) alreadyIn = true; });
+      if (alreadyIn) return;
+    }
+    // أضفه تلقائياً
+    db.ref('website/scores').push({
+      name: g.studentName || '—',
+      grade: g.studentGrade || '—',
+      exam: g.examTitle || '—',
+      mark: g.score + '/' + g.total,
+      examKey: g.examKey || '',
+      studentUid: g.studentUid || '',
+      time: g.date || new Date().toLocaleDateString('ar-EG'),
+      auto: true
+    });
+  });
 }
 
 function deleteScore(key) {
