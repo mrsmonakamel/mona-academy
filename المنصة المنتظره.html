@@ -9,6 +9,7 @@
 <style>
 :root{--primary:#6C3FC5;--primary-dark:#4A2A8A;--primary-light:#9B6EF0;--accent:#FF6B35;--accent2:#FFD93D;--dark:#0D0D1A;--dark2:#13132A;--card-bg:#1A1A35;--card-border:rgba(108,63,197,0.3);--text:#E8E8F5;--text-muted:#9898C0;--white:#ffffff;--success:#2ECC71;--gradient:linear-gradient(135deg,#6C3FC5 0%,#FF6B35 100%);--gradient2:linear-gradient(135deg,#4A2A8A 0%,#6C3FC5 100%)}
 *{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:80px}
 body{font-family:'Cairo',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;direction:rtl}
 ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--dark2)}::-webkit-scrollbar-thumb{background:var(--primary);border-radius:3px}
 .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(13,13,26,0.95);backdrop-filter:blur(20px);border-bottom:1px solid var(--card-border);padding:14px 30px;display:flex;align-items:center;justify-content:space-between;transition:all .3s}
@@ -910,8 +911,10 @@ const countries = [
 function buildPhoneSelects() {
   window._phoneCodes = countries.map(([n,c]) => ({ flag: '', code: c, name: n }));
   const opts = countries.map(([n,c]) => `<option value="${c}"${c==='+20'?' selected':''}>${c} ${n}</option>`).join('');
-  document.getElementById('regStudentCode').innerHTML = opts;
-  document.getElementById('regParentCode').innerHTML = opts;
+  ['regStudentCode','regParentCode','gcStudentCode','gcParentCode'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.innerHTML=opts;
+  });
 }
 buildPhoneSelects();
 
@@ -1073,7 +1076,7 @@ auth.onAuthStateChanged(user => {
         updateNavForUser();
       } else {
         // مستخدم جوجل سجل دخول بدون بيانات كاملة — اطلب منه يكمل
-        if (user.providerData && user.providerData[0]?.providerId === 'google.com') {
+        if (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com') {
           window._pendingGoogleUser = user;
           const parts = (user.displayName || '').split(' ');
           document.getElementById('gcName1').value = parts[0] || '';
@@ -1192,11 +1195,7 @@ function handleGoogleLogin(fromRegister) {
 }
 
 function buildGCPhoneSelects() {
-  const opts = countries.map(([n,c]) => `<option value="${c}"${c==='+20'?' selected':''}>${c} ${n}</option>`).join('');
-  ['gcStudentCode','gcParentCode'].forEach(id => {
-    const sel = document.getElementById(id);
-    if (sel) sel.innerHTML = opts;
-  });
+  buildPhoneSelects();
 }
 
 function updateGCGradeOptions() {
@@ -1644,8 +1643,15 @@ function adminDeleteCourse(key){
 
 document.querySelectorAll('a[href^="#"]').forEach(a=>{
   a.addEventListener('click',e=>{
-    e.preventDefault();const t=document.querySelector(a.getAttribute('href'));
-    if(t)t.scrollIntoView({behavior:'smooth',block:'start'});
+    e.preventDefault();
+    const href=a.getAttribute('href');
+    if(!href||href==='#')return;
+    const t=document.querySelector(href);
+    if(t){
+      const navH=document.getElementById('navbar')?.offsetHeight||70;
+      const top=t.getBoundingClientRect().top+window.pageYOffset-navH-10;
+      window.scrollTo({top,behavior:'smooth'});
+    }
   });
 });
 
