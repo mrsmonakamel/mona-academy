@@ -1242,6 +1242,8 @@ auth.onAuthStateChanged(user => {
       } else {
         // مستخدم جوجل سجل دخول بدون بيانات كاملة — اطلب منه يكمل
         if (user.providerData && user.providerData[0] && user.providerData[0].providerId === 'google.com') {
+          // ✅ إصلاح: لو في flow تسجيل شغال، handleGoogleLogin هيتكلم معاه — متفتحش modal تاني
+          if (window._pendingRegProfile) return;
           window._pendingGoogleUser = user;
           const parts = (user.displayName || '').split(' ');
           document.getElementById('gcName1').value = parts[0] || '';
@@ -1309,6 +1311,13 @@ function handleGoogleLogin(fromRegister) {
   auth.signInWithPopup(provider)
     .then(result => {
       const user = result.user;
+      // ✅ إصلاح: لو الأدمن سجل بجوجل، auth.onAuthStateChanged يتكلم معاه مباشرة
+      if (ADMIN_EMAILS.includes(user.email)) {
+        closeModal('login');
+        closeModal('register');
+        showNotification('أهلاً بك مجدداً! 🎉');
+        return;
+      }
       return db.ref('website/students/' + user.uid).once('value').then(snap => {
         if (!snap.exists()) {
           // مستخدم جديد
@@ -1355,8 +1364,17 @@ function handleGoogleLogin(fromRegister) {
       });
     })
     .catch(err => {
-      if (err.code !== 'auth/popup-closed-by-user')
+      const msgs = {
+        'auth/popup-closed-by-user': null,
+        'auth/popup-blocked-by-browser': 'المتصفح بلوك نافذة جوجل — سمح بالـ Popups وحاول تاني',
+        'auth/network-request-failed': 'مشكلة في الاتصال بالانترنت، جرب تاني',
+        'auth/cancelled-popup-request': null,
+      };
+      if (err.code in msgs) {
+        if (msgs[err.code]) showNotification(msgs[err.code], 'error');
+      } else {
         showNotification('مشكلة في تسجيل جوجل، حاول تاني', 'error');
+      }
     });
 }
 
@@ -1605,7 +1623,7 @@ function renderScores(){
 
 // ====== ADMIN ======
 function openAdminPanel(){
-  window.location.href = 'Mona.A.2011.2025.html';
+  window.location.href = 'Mona_A_2011_2025.html';
 }
 function closeAdminPanel(){document.getElementById('adminPanel').classList.remove('active');document.body.style.overflow=''}
 function showAdminSection(sec,el){
