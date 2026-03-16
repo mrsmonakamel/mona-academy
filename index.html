@@ -483,6 +483,7 @@ textarea.form-input{resize:vertical;min-height:90px}
 
 <nav class="mobile-menu" id="mobileMenu">
   <a href="#hero" onclick="closeMenu()">الرئيسية</a>
+  <a href="#courses" onclick="closeMenu()">الكورسات</a>
   <a href="#exams" onclick="closeMenu()">الامتحانات</a>
   <a href="#top-scores" onclick="closeMenu()">الدرجات النهائية</a>
   <a href="#about" onclick="closeMenu()">عن المس</a>
@@ -499,6 +500,7 @@ textarea.form-input{resize:vertical;min-height:90px}
   </a>
   <ul class="nav-links">
     <li><a href="#hero" class="active">الرئيسية</a></li>
+    <li><a href="#courses">الكورسات</a></li>
     <li><a href="#exams">الامتحانات</a></li>
     <li><a href="#top-scores">الدرجات النهائية</a></li>
     <li><a href="#about">عن المس</a></li>
@@ -1128,32 +1130,31 @@ const DEFAULT_SCORES = [];
 
 // ====== LOAD DATA FROM FIREBASE ======
 async function loadFromFirebase() {
+  // FIX 1: scores و students منفصلين في try/catch مستقلين
   try {
-    // تحميل الدرجات
     const scoresSnap = await db.ref('website/scores').once('value');
     if (scoresSnap.exists()) {
-      topScores = Object.values(scoresSnap.val());
+      // FIX 4: حفظ _key مع كل سجل
+      topScores = Object.entries(scoresSnap.val()).map(([k, v]) => ({ _key: k, ...v }));
     } else {
-      // لو مفيش بيانات في Firebase، ارفع البيانات الافتراضية
       topScores = DEFAULT_SCORES;
-      await db.ref('website/scores').set(
-        DEFAULT_SCORES.reduce((acc, s, i) => { acc['s'+i] = s; return acc; }, {})
-      );
+      // FIX 6: إزالة الـ write غير الضروري
     }
-
-    // تحميل الطلاب (للأدمن فقط)
+    renderScores();
+  } catch(err) {
+    console.warn('Firebase scores error:', err.message);
+    topScores = JSON.parse(localStorage.getItem('mk_scores') || JSON.stringify(DEFAULT_SCORES));
+    renderScores();
+  }
+  // تحميل الطلاب في try/catch مستقل - لو فشل ما يأثرش على باقي الصفحة
+  try {
     const studentsSnap = await db.ref('website/students').once('value');
     if (studentsSnap.exists()) {
       students = Object.entries(studentsSnap.val()).map(([key, val]) => ({ _key: key, ...val }));
     }
-
-    renderScores();
   } catch(err) {
-    console.warn('Firebase غير متصل، جاري استخدام البيانات المحلية:', err.message);
-    // fallback لـ localStorage لو Firebase مش شغال
-    students = JSON.parse(localStorage.getItem('mk_students')||'[]');
-    topScores = JSON.parse(localStorage.getItem('mk_scores') || JSON.stringify(DEFAULT_SCORES));
-    renderScores();
+    console.warn('Firebase students error:', err.message);
+    students = JSON.parse(localStorage.getItem('mk_students') || '[]');
   }
 }
 
@@ -1161,7 +1162,8 @@ async function loadFromFirebase() {
 function listenToScores() {
   db.ref('website/scores').on('value', snap => {
     if (snap.exists()) {
-      topScores = Object.values(snap.val());
+      // FIX 4: حفظ _key عشان الحذف يشتغل صح
+      topScores = Object.entries(snap.val()).map(([k, v]) => ({ _key: k, ...v }));
       renderScores();
     }
   });
@@ -1902,6 +1904,7 @@ function loadExamsV2() {
 
 function renderPublicCourses() {
   const grid = document.getElementById('publicCoursesGrid');
+  if (!grid) return; // FIX 8: null-check
   const entries = Object.entries(allCourses);
   if (!entries.length) {
     grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:50px;color:var(--text-muted)">لا يوجد كورسات بعد 📚</div>';
@@ -2008,11 +2011,7 @@ function shareExam(key) {
 
 // ====== EXAM PLAYER ======
 let examState = { exam: null, key: null, answers: {}, submitted: false, timerInterval: null, timeLeft: 0 };
-let allGrades = {};
-db.ref('website/grades').on('value', snap => {
-  allGrades = snap.exists() ? snap.val() : {};
-  renderPublicExams();
-});
+// FIX 2: allGrades معرف هنا بس - الـ listener موجود في آخر الملف (تجنب التكرار)
 
 async function openExamPlayer(key) {
   goToExamPage(key);
@@ -2023,7 +2022,8 @@ function openExam(url){ goToExamPage(url); }
 function closeExamModal() {
   if (examState.timerInterval) clearInterval(examState.timerInterval);
   examState.timerInterval = null;
-  document.getElementById('examPlayerModal').style.display = 'none';
+  // FIX 3: استخدام classList بدل style.display عشان المودال يفتح تاني
+  document.getElementById('examPlayerModal').classList.remove('active');
   document.getElementById('examPlayerContent').innerHTML = '';
 }
 
@@ -2208,7 +2208,8 @@ loadFromFirebase().then(()=>{
 });
 loadCourses();
 loadExamsV2();
-// Load grades for one-time exam check
+// FIX 2: grades listener واحد بس هنا - وتعريف allGrades جنبه
+let allGrades = {};
 db.ref('website/grades').on('value', snap => {
   allGrades = snap.exists() ? snap.val() : {};
   renderPublicExams(); // تحديث حالة الامتحانات
